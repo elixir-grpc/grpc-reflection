@@ -61,7 +61,7 @@ message HelloReply {
 
 ## Application Support
 
-This is **not** and exhaustive list
+This is **not** an exhaustive list
 
 | Application  | Reflection version required |
 | ------------- | ------------- |
