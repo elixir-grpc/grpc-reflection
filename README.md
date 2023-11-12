@@ -27,7 +27,8 @@ This is written and tested using grpcurl and postman.  It supports both v1alpha 
 
 1. Rebuild your protos with descriptors on.  Each module and/or service that you would like to expose through reflection must use the protoc elixir-out option `gen_descriptors=true`
 1. Add `run(GrpcReflection.Server.V1)` and/or `run(GrpcReflection.Server.V1alpha)`  to your grpc endpoint
-1. Configure reflection for your services ```
+1. Configure reflection for your services
+```
 config :grpc_reflection, services: [
   Helloworld.Greeter.Service, 
   Grpc.Reflection.V1.ServerReflection.Service,
@@ -57,3 +58,12 @@ message HelloReply {
   optional .google.protobuf.Timestamp today = 2;
 }
 ```
+
+## Application Support
+
+This is **not** and exhaustive list
+
+| Application  | Reflection version required |
+| ------------- | ------------- |
+| grpcurl  | V1  |
+| postman | V1alpha  |
