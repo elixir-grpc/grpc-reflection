@@ -6,9 +6,6 @@ defmodule GrpcReflection.Server do
 
   require Logger
 
-  # @services Application.compile_env!(:grpc_reflection, :services)
-  # IO.inspect(Application.get_env(:grpc_reflection, :services))
-
   def server_reflection_info(request_stream, server) do
     Enum.map(request_stream, fn request ->
       request.message_request
@@ -71,22 +68,37 @@ defmodule GrpcReflection.Server do
     filename
     |> String.split("-")
     |> then(fn [package, protoname] ->
-      [
-        package,
-        protoname |> String.replace(".proto", "") |> upcase_first() |> module_from_string()
-      ]
+      descriptor =
+        protoname
+        |> String.replace(".proto", "")
+        |> String.split(".")
+        |> Enum.reverse()
+        |> then(fn [m | segments] ->
+          [m | Enum.map(segments, &upcase_first/1)]
+        end)
+        |> Enum.reverse()
+        |> Enum.join(".")
+        |> module_from_string()
+
+      [package, descriptor]
     end)
-    |> IO.inspect()
     |> then(fn
       [_package, nil] ->
         {:error, :not_found}
 
-      [package, module] ->
+      [package, descriptor] ->
+        dependencies =
+          descriptor
+          |> types_from_descriptor()
+          |> Enum.map(fn name -> package <> "-" <> name <> ".proto" end)
+
         payload =
           %Google.Protobuf.FileDescriptorProto{
             name: filename,
             package: package,
-            message_type: [module.descriptor()]
+            message_type: [descriptor],
+            dependency: dependencies,
+            public_dependency: 0..length(dependencies)
           }
           |> Google.Protobuf.FileDescriptorProto.encode()
 
@@ -132,6 +144,19 @@ defmodule GrpcReflection.Server do
     |> Enum.flat_map(fn method ->
       [method.input_type, method.output_type]
     end)
+    |> Enum.reject(&is_atom/1)
+    |> Enum.map(fn
+      "." <> symbol -> symbol
+      symbol -> symbol
+    end)
+  end
+
+  defp types_from_descriptor(%Google.Protobuf.DescriptorProto{} = descriptor) do
+    descriptor.field
+    |> Enum.map(fn field ->
+      field.type
+    end)
+    |> Enum.reject(&is_atom/1)
     |> Enum.map(fn
       "." <> symbol -> symbol
       symbol -> symbol
@@ -140,19 +165,9 @@ defmodule GrpcReflection.Server do
 
   defp module_from_string(module_name) do
     mod = String.to_existing_atom("Elixir." <> module_name)
-
-    if function_exported?(mod, :descriptor, 0) do
-      IO.puts("descriptor exists")
-      mod
-    else
-      mod.descriptor() |> IO.inspect()
-      IO.puts("descriptor doesnt exist")
-      nil
-    end
+    mod.descriptor()
   rescue
-    _ ->
-      IO.puts("Rescued!!")
-      nil
+    _ -> nil
   end
 
   defp package_from_service_name(service_name) do
