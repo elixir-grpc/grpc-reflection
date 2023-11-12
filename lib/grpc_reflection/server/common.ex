@@ -1,4 +1,4 @@
-defmodule GrpcReflection.ServerCommon do
+defmodule GrpcReflection.Server.Common do
   @moduledoc false
   require Logger
 

@@ -11,7 +11,7 @@ defmodule GrpcReflection.Server.V1alpha do
       Logger.info("Received v1alpha reflection request: " <> inspect(request.message_request))
 
       request.message_request
-      |> GrpcReflection.ServerCommon.reflection_request()
+      |> GrpcReflection.Server.Common.reflection_request()
       |> case do
         {:ok, message_response} ->
           %ServerReflectionResponse{
