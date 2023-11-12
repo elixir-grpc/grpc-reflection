@@ -1,3 +1,6 @@
 import Config
 
-import_config "#{Mix.env}.exs"
+config :grpc_reflection,
+  services: [Helloworld.Greeter.Service]
+
+import_config "#{Mix.env()}.exs"
