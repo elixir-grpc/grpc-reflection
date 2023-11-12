@@ -23,13 +23,14 @@ defmodule GrpcReflection.Server do
             message_response: message_response
           }
 
-        {:not_found, message} ->
-          Logger.warning(message)
-
+        {:error, :not_found} ->
           %ServerReflectionResponse{
             message_response:
               {:error_response,
-               %ErrorResponse{error_code: GRPC.Status.not_found(), error_message: message}}
+               %ErrorResponse{
+                 error_code: GRPC.Status.not_found(),
+                 error_message: "Could not resolve"
+               }}
           }
 
         {:unexpected, message} ->
@@ -59,8 +60,19 @@ defmodule GrpcReflection.Server do
 
   defp file_containing_symbol(symbol) do
     case Enum.find(services(), fn service -> service.__meta__(:name) == symbol end) do
-      nil -> {:error, :not_found}
-      module -> {:ok, {:file_descriptor_response, build_descriptor(symbol, module)}}
+      nil ->
+        case Enum.find(services(), fn service ->
+               String.starts_with?(symbol, service.__meta__(:name))
+             end) do
+          nil ->
+            {:error, :not_found}
+
+          module ->
+            {:ok, {:file_descriptor_response, build_descriptor(module.__meta__(:name), module)}}
+        end
+
+      module ->
+        {:ok, {:file_descriptor_response, build_descriptor(symbol, module)}}
     end
   end
 
@@ -70,11 +82,11 @@ defmodule GrpcReflection.Server do
     |> then(fn [package, protoname] ->
       descriptor =
         protoname
-        |> String.replace(".proto", "")
         |> String.split(".")
         |> Enum.reverse()
-        |> then(fn [m | segments] ->
-          [m | Enum.map(segments, &upcase_first/1)]
+        |> then(fn
+          ["proto", m | segments] -> [m | Enum.map(segments, &upcase_first/1)]
+          [m | segments] -> [m | Enum.map(segments, &upcase_first/1)]
         end)
         |> Enum.reverse()
         |> Enum.join(".")
@@ -90,15 +102,14 @@ defmodule GrpcReflection.Server do
         dependencies =
           descriptor
           |> types_from_descriptor()
-          |> Enum.map(fn name -> package <> "-" <> name <> ".proto" end)
+          |> Enum.map(fn name -> package_from_name(name) <> "-" <> name <> ".proto" end)
 
         payload =
           %Google.Protobuf.FileDescriptorProto{
             name: filename,
             package: package,
             message_type: [descriptor],
-            dependency: dependencies,
-            public_dependency: 0..length(dependencies)
+            dependency: dependencies
           }
           |> Google.Protobuf.FileDescriptorProto.encode()
 
@@ -111,13 +122,15 @@ defmodule GrpcReflection.Server do
   defp upcase_first(<<first::utf8, rest::binary>>), do: String.upcase(<<first::utf8>>) <> rest
 
   defp build_descriptor(service_name, service_mod) do
-    package = package_from_service_name(service_name)
+    package = package_from_name(service_name)
     descriptor = service_mod.descriptor()
 
     dependencies =
       descriptor
       |> types_from_descriptor()
-      |> Enum.map(fn name -> package <> "-" <> name <> ".proto" end)
+      |> Enum.map(fn name ->
+        package_from_name(name) <> "-" <> name <> ".proto"
+      end)
 
     payload =
       %Google.Protobuf.FileDescriptorProto{
@@ -125,8 +138,7 @@ defmodule GrpcReflection.Server do
         package: package,
         service: [descriptor],
         # file dependencies, plug in pseudo names
-        dependency: dependencies,
-        public_dependency: 0..length(dependencies)
+        dependency: dependencies
       }
       |> Google.Protobuf.FileDescriptorProto.encode()
 
@@ -154,9 +166,9 @@ defmodule GrpcReflection.Server do
   defp types_from_descriptor(%Google.Protobuf.DescriptorProto{} = descriptor) do
     descriptor.field
     |> Enum.map(fn field ->
-      field.type
+      field.type_name
     end)
-    |> Enum.reject(&is_atom/1)
+    |> Enum.reject(&is_nil/1)
     |> Enum.map(fn
       "." <> symbol -> symbol
       symbol -> symbol
@@ -170,7 +182,7 @@ defmodule GrpcReflection.Server do
     _ -> nil
   end
 
-  defp package_from_service_name(service_name) do
+  defp package_from_name(service_name) do
     service_name
     |> String.split(".")
     |> Enum.reverse()
