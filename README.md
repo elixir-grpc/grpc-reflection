@@ -21,12 +21,12 @@ be found at <https://hexdocs.pm/grpc_reflection>.
 
 # Reflection
 
-this is written and tested using grpcurl
+This is written and tested using grpcurl and postman.  It supports both v1alpha and v1 reflection by using one or both of the provided servers: `rpcReflection.V1Server` or `rpcReflection.V1AlphaServer`
 
 ## Enable reflection on your application
 
 1. Rebuild your protos with descriptors on.  Each module and/or service that you would like to expose through reflection must use the protoc elixir-out option `gen_descriptors=true`
-1. Add `run(GrpcReflection.Server)` to your grpc endpoint
+1. Add `run(GrpcReflection.V1Server)` to your grpc endpoint
 
 ## interacting with your reflection
 

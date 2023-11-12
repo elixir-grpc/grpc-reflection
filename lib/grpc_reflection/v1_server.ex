@@ -1,4 +1,4 @@
-defmodule GrpcReflection.Server do
+defmodule GrpcReflection.V1Server do
   use GRPC.Server, service: Grpc.Reflection.V1.ServerReflection.Service
 
   alias GRPC.Server
