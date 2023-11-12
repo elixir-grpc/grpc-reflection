@@ -125,9 +125,7 @@ defmodule GrpcReflection.ServerCommon do
   end
 
   defp services do
-    (Application.get_env(:grpc_reflection, :services, []) ++
-       [Grpc.Reflection.V1.ServerReflection.Service])
-    |> Enum.uniq()
+    Application.get_env(:grpc_reflection, :services, [])
   end
 
   defp types_from_descriptor(%Google.Protobuf.ServiceDescriptorProto{} = descriptor) do

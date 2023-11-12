@@ -1,7 +1,5 @@
-defmodule GrpcReflection.ReflectionTest do
-  @moduledoc """
-  testing that reflection is on and we are exposing our types
-  """
+defmodule GrpcReflection.V1alphaReflectionTest do
+  @moduledoc false
 
   use ExUnit.Case
 
@@ -10,7 +8,7 @@ defmodule GrpcReflection.ReflectionTest do
     {:ok, _pid, port} = GRPC.Server.start_endpoint(endpoint, 0)
     host = "localhost:#{port}"
     {:ok, channel} = GRPC.Stub.connect(host)
-    req = %Grpc.Reflection.V1.ServerReflectionRequest{host: host}
+    req = %Grpc.Reflection.V1alpha.ServerReflectionRequest{host: host}
 
     on_exit(fn ->
       :ok = GRPC.Server.stop_endpoint(endpoint, [])
@@ -20,7 +18,7 @@ defmodule GrpcReflection.ReflectionTest do
   end
 
   test "unsupported call is rejected", ctx do
-    message = {:file_containing_extension, %Grpc.Reflection.V1.ExtensionRequest{}}
+    message = {:file_containing_extension, %Grpc.Reflection.V1alpha.ExtensionRequest{}}
     assert {:error, _} = run_request(message, ctx)
   end
 
@@ -29,7 +27,12 @@ defmodule GrpcReflection.ReflectionTest do
       message = {:list_services, ""}
       assert {:ok, %{service: service_list}} = run_request(message, ctx)
       names = Enum.map(service_list, &Map.get(&1, :name))
-      assert names == ["helloworld.Greeter", "grpc.reflection.v1.ServerReflection"]
+
+      assert names == [
+               "helloworld.Greeter",
+               "grpc.reflection.v1.ServerReflection",
+               "grpc.reflection.v1alpha.ServerReflection"
+             ]
     end
   end
 
@@ -168,7 +171,7 @@ defmodule GrpcReflection.ReflectionTest do
   end
 
   defp run_request(message_request, ctx) do
-    stream = Grpc.Reflection.V1.ServerReflection.Stub.server_reflection_info(ctx.channel)
+    stream = Grpc.Reflection.V1alpha.ServerReflection.Stub.server_reflection_info(ctx.channel)
     request = %{ctx.req | message_request: message_request}
     GRPC.Stub.send_request(stream, request, end_stream: true)
     assert {:ok, reply_stream} = GRPC.Stub.recv(stream)

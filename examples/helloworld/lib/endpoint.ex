@@ -4,6 +4,6 @@ defmodule Helloworld.Endpoint do
   intercept(GRPC.Server.Interceptors.Logger)
   run(Helloworld.Greeter.Server)
 
-  run(GrpcReflection.V1AlphaServer)
-  run(GrpcReflection.V1Server)
+  run(GrpcReflection.V1alpha.Server)
+  run(GrpcReflection.V1.Server)
 end

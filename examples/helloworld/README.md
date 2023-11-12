@@ -3,8 +3,8 @@
 This example is mostly copied directly from `grpc-elixir`, with the exception that this example has:
 
 1. Compiled protos with descriptors on.  This is required for the reflection service to run correctly
-1. Is running the `GrpcReflection.V1Server` server in its endpoint
-1. Configued the `GrpcReflection.V1Server` to include `helloworld` in its services
+1. Is running the `GrpcReflection.V1.Server` server in its endpoint
+1. Configured the `GrpcReflection.V1.Server` to include `helloworld` in its services
 
 ## Usage
 
