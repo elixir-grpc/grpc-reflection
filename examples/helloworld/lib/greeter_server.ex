@@ -8,9 +8,9 @@ defmodule Helloworld.Greeter.Server do
     seconds = div(nanos_epoch, 1_000_000_000)
     nanos = nanos_epoch - seconds * 1_000_000_000
 
-    Helloworld.HelloReply.new(
+    %Helloworld.HelloReply{
       message: "Hello #{request.name}",
       today: %Google.Protobuf.Timestamp{seconds: seconds, nanos: nanos}
-    )
+    }
   end
 end
