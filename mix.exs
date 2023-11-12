@@ -9,7 +9,18 @@ defmodule GrpcReflection.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      aliases: aliases()
+      aliases: aliases(),
+      test_coverage: [
+        ignore_modules: [
+          ~r/^Google\./,
+          ~r/^Grpc\./,
+          ~r/^Helloworld\./,
+          GrpcReflection.TestEndpoint,
+          GrpcReflection.TestEndpoint.ReflectionServer,
+          GrpcReflection.TestEndpoint.ReflectionServer.Stub,
+          GrpcReflection.TestEndpoint.Endpoint
+        ]
+      ]
     ]
   end
 

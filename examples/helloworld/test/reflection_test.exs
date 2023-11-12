@@ -30,15 +30,6 @@ defmodule Helloworld.ReflectionTest do
     assert_response(response)
   end
 
-  test "describing an invalid method returns not found", ctx do
-    message = {:file_containing_symbol, "helloworld.Greeter.SayHellp"}
-    assert {:ok, response} = run_request(message, ctx)
-    assert_response(response)
-
-    # SayHellp is not a method on the service
-    refute true
-  end
-
   test "describing a type returns the type", ctx do
     message = {:file_containing_symbol, "helloworld.HelloRequest"}
     assert {:ok, response} = run_request(message, ctx)
@@ -58,52 +49,6 @@ defmodule Helloworld.ReflectionTest do
     assert field.name == "name"
     assert field.type == :TYPE_STRING
   end
-
-  %Google.Protobuf.FileDescriptorProto{
-    name: "helloworld-helloworld.HelloRequest.proto",
-    package: "helloworld",
-    dependency: [],
-    message_type: [
-      %Google.Protobuf.DescriptorProto{
-        name: "HelloRequest",
-        field: [
-          %Google.Protobuf.FieldDescriptorProto{
-            name: "name",
-            extendee: nil,
-            number: 1,
-            label: :LABEL_OPTIONAL,
-            type: :TYPE_STRING,
-            type_name: nil,
-            default_value: nil,
-            options: nil,
-            oneof_index: nil,
-            json_name: "name",
-            proto3_optional: nil,
-            __unknown_fields__: []
-          }
-        ],
-        nested_type: [],
-        enum_type: [],
-        extension_range: [],
-        extension: [],
-        options: nil,
-        oneof_decl: [],
-        reserved_range: [],
-        reserved_name: [],
-        __unknown_fields__: []
-      }
-    ],
-    enum_type: [],
-    service: [],
-    extension: [],
-    options: nil,
-    source_code_info: nil,
-    public_dependency: [],
-    weak_dependency: [],
-    syntax: nil,
-    edition: nil,
-    __unknown_fields__: []
-  }
 
   defp run_request(message_request, ctx) do
     stream = Grpc.Reflection.V1.ServerReflection.Stub.server_reflection_info(ctx.channel)

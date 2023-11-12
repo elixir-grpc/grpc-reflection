@@ -8,8 +8,9 @@ defmodule GrpcReflection.Server do
 
   def server_reflection_info(request_stream, server) do
     Enum.map(request_stream, fn request ->
+      Logger.info("Received reflection request: " <> inspect(request.message_request))
+
       request.message_request
-      |> IO.inspect()
       |> case do
         {:list_services, _} -> list_services()
         {:file_containing_symbol, symbol} -> file_containing_symbol(symbol)
@@ -27,6 +28,8 @@ defmodule GrpcReflection.Server do
 
         {:error, :not_found} ->
           %ServerReflectionResponse{
+            valid_host: request.host,
+            original_request: request,
             message_response:
               {:error_response,
                %ErrorResponse{
@@ -39,6 +42,8 @@ defmodule GrpcReflection.Server do
           Logger.warning(message)
 
           %ServerReflectionResponse{
+            valid_host: request.host,
+            original_request: request,
             message_response:
               {:error_response,
                %ErrorResponse{
@@ -65,8 +70,6 @@ defmodule GrpcReflection.Server do
     # 1 - the name of a service
     # 2 - a service method {service_name}.{method}
     # 3 - a type name
-    #
-    # We can check cases 1 and 3 directly, but case 2 is indirect
 
     maybe_service_mod = Enum.find(services(), fn service -> service.__meta__(:name) == symbol end)
 
@@ -79,106 +82,50 @@ defmodule GrpcReflection.Server do
 
     cond do
       not is_nil(maybe_service_mod) -> build_response(symbol, maybe_service_mod.descriptor)
-      not is_nil(maybe_method) -> build_response(symbol, maybe_method.descriptor)
+      not is_nil(maybe_method) -> check_methods(symbol, maybe_method)
       not is_nil(maybe_module) -> build_response(symbol, maybe_module)
       true -> {:error, :not_found}
     end
+  end
 
-    # case Enum.find(services(), fn service -> service.__meta__(:name) == symbol end) do
-    #   nil ->
-    #     case module_from_string(symbol) do
-    #       nil -> {:error, :not_found}
-    #       descriptor -> build_response(symbol, descriptor)
-    #     end
+  defp check_methods(symbol, service_mod) do
+    # a symbol that starts_with a service name should be a service method
+    # but it might be wrong, check the methods before returning success
+    service_name = service_mod.__meta__(:name)
+    descriptor = service_mod.descriptor
 
-    #   service_module ->
-    #     build_response(symbol, service_module.descriptor())
-    # end
+    descriptor.method
+    |> Enum.find(fn method ->
+      service_name <> "." <> method.name == symbol
+    end)
+    |> case do
+      nil ->
+        {:error, :not_found}
 
-    # IO.inspect(symbol)
-    # IO.inspect(services())
-
-    # case Enum.find(services(), fn service -> service.__meta__(:name) == symbol end) do
-    #   nil ->
-    #     case Enum.find(services(), fn service ->
-    #            IO.inspect(service.__meta__(:name))
-    #            String.starts_with?(symbol, service.__meta__(:name))
-    #          end) do
-    #       nil ->
-    #         symbol
-    #         |> then(fn
-    #           "." <> symbol -> symbol
-    #           symbol -> symbol
-    #         end)
-    #         |> then(fn name -> package_from_name(name) <> "-" <> name <> ".proto" end)
-    #         |> file_by_filename()
-
-    #       module ->
-    #         IO.puts("service_starts_with")
-    #         {:ok, {:file_descriptor_response, build_descriptor(module.__meta__(:name), module)}}
-    #     end
-
-    #   module ->
-    #     {:ok, {:file_descriptor_response, build_descriptor(symbol, module)}}
-    # end
+      _ ->
+        IO.puts("method resolved")
+        build_response(service_name, descriptor)
+    end
   end
 
   defp file_by_filename(filename) do
     # we build filenames to map to types, which should be module names
     filename
-    |> String.split("-")
-    |> then(fn
-      [_pkg, protoname] -> module_from_string(protoname)
-      [protoname] -> module_from_string(protoname)
-    end)
+    |> module_from_string()
     |> case do
-      nil -> {:error, :not_found}
-      descriptor -> build_response(filename, descriptor)
+      nil ->
+        {:error, :not_found}
+
+      descriptor ->
+        IO.puts("filename #{filename} resolved")
+        build_response(filename, descriptor)
     end
-
-    # filename
-    # |> String.split("-")
-    # |> then(fn [package, protoname] ->
-    #   descriptor =
-    #     protoname
-    #     |> module_from_string()
-
-    #   [package, descriptor]
-    # end)
-    # |> then(fn
-    #   [_package, nil] ->
-    #     {:error, :not_found}
-
-    #   [package, descriptor] ->
-    #     dependencies =
-    #       descriptor
-    #       |> types_from_descriptor()
-    #       |> Enum.map(fn name -> package_from_name(name) <> "-" <> name <> ".proto" end)
-
-    #     payload =
-    #       %Google.Protobuf.FileDescriptorProto{
-    #         name: filename,
-    #         package: package,
-    #         message_type: [descriptor],
-    #         dependency: dependencies
-    #       }
-    #       |> Google.Protobuf.FileDescriptorProto.encode()
-
-    #     {:ok,
-    #      {:file_descriptor_response,
-    #       %Grpc.Reflection.V1.FileDescriptorResponse{file_descriptor_proto: [payload]}}}
-    # end)
   end
 
   defp build_response(name, descriptor) do
     # sanitize the name
     name =
       name
-      |> String.split("-")
-      |> then(fn
-        [_, n] -> n
-        [n] -> n
-      end)
       |> String.split(".")
       |> Enum.reverse()
       |> then(fn
@@ -194,11 +141,11 @@ defmodule GrpcReflection.Server do
       descriptor
       |> types_from_descriptor()
       |> Enum.map(fn name ->
-        package_from_name(name) <> "-" <> name <> ".proto"
+        name <> ".proto"
       end)
 
     response_stub = %Google.Protobuf.FileDescriptorProto{
-      name: package <> "-" <> name <> ".proto",
+      name: name <> ".proto",
       package: package,
       dependency: dependencies
     }
@@ -216,30 +163,6 @@ defmodule GrpcReflection.Server do
      {:file_descriptor_response,
       %Grpc.Reflection.V1.FileDescriptorResponse{file_descriptor_proto: [payload]}}}
   end
-
-  # defp build_descriptor(service_name, service_mod) do
-  #   package = package_from_name(service_name)
-  #   descriptor = service_mod.descriptor() |> IO.inspect()
-
-  #   dependencies =
-  #     descriptor
-  #     |> types_from_descriptor()
-  #     |> Enum.map(fn name ->
-  #       package_from_name(name) <> "-" <> name <> ".proto"
-  #     end)
-
-  #   payload =
-  #     %Google.Protobuf.FileDescriptorProto{
-  #       name: package <> ".proto",
-  #       package: package,
-  #       service: [descriptor],
-  #       # file dependencies, plug in pseudo names
-  #       dependency: dependencies
-  #     }
-  #     |> Google.Protobuf.FileDescriptorProto.encode()
-
-  #   %Grpc.Reflection.V1.FileDescriptorResponse{file_descriptor_proto: [payload]}
-  # end
 
   defp services do
     (Application.get_env(:grpc_reflection, :services, []) ++
@@ -297,18 +220,9 @@ defmodule GrpcReflection.Server do
   # these can be normal names or our pseudo file names
   defp package_from_name(service_name) do
     service_name
-    |> String.split("-")
-    |> case do
-      [_, name] -> name
-      [name] -> name
-    end
     |> String.split(".")
     |> Enum.reverse()
-    |> case do
-      ["proto", _ | rest] -> rest
-      [_ | rest] -> rest
-      _ -> [""]
-    end
+    |> then(fn [_ | rest] -> rest end)
     |> Enum.reverse()
     |> Enum.join(".")
   end
