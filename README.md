@@ -26,7 +26,7 @@ This is written and tested using grpcurl and postman.  It supports both v1alpha 
 ## Enable reflection on your application
 
 1. Rebuild your protos with descriptors on.  Each module and/or service that you would like to expose through reflection must use the protoc elixir-out option `gen_descriptors=true`
-1. Add `run(GrpcReflection.V1.Server)` and/or `run(GrpcReflection.V1alpha.Server)`  to your grpc endpoint
+1. Add `run(GrpcReflection.Server.V1)` and/or `run(GrpcReflection.Server.V1alpha)`  to your grpc endpoint
 1. Configure reflection for your services ```
 config :grpc_reflection, services: [
   Helloworld.Greeter.Service, 

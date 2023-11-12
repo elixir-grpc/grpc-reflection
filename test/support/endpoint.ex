@@ -13,7 +13,7 @@ defmodule GrpcReflection.TestEndpoint do
     use GRPC.Endpoint
 
     run(Helloworld.Greeter.Server)
-    run(GrpcReflection.V1.Server)
-    run(GrpcReflection.V1alpha.Server)
+    run(GrpcReflection.Server.V1)
+    run(GrpcReflection.Server.V1alpha)
   end
 end

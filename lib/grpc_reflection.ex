@@ -8,8 +8,8 @@ defmodule GrpcReflection do
 
   1. Add one or both of the refleciton servers to your grpc endpoing
   ```
-  run(GrpcReflection.V1alpha.Server)
-  run(GrpcReflection.V1.Server)
+  run(GrpcReflection.Server.V1alpha)
+  run(GrpcReflection.Server.V1)
   ```
 
   1. Configure grpc_reflection for the services you want to include in the `list_services` resposne

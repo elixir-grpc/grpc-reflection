@@ -1,14 +1,14 @@
-defmodule GrpcReflection.V1alpha.Server do
-  use GRPC.Server, service: Grpc.Reflection.V1alpha.ServerReflection.Service
+defmodule GrpcReflection.Server.V1 do
+  use GRPC.Server, service: Grpc.Reflection.V1.ServerReflection.Service
 
   alias GRPC.Server
-  alias Grpc.Reflection.V1alpha.{ServerReflectionResponse, ErrorResponse}
+  alias Grpc.Reflection.V1.{ServerReflectionResponse, ErrorResponse}
 
   require Logger
 
   def server_reflection_info(request_stream, server) do
     Enum.map(request_stream, fn request ->
-      Logger.info("Received v1alpha reflection request: " <> inspect(request.message_request))
+      Logger.info("Received v1 reflection request: " <> inspect(request.message_request))
 
       request.message_request
       |> GrpcReflection.ServerCommon.reflection_request()
