@@ -20,4 +20,14 @@ defmodule GrpcReflection do
   This service will return reflection data for any module that defined `descriptor()` when its module name is provided, with the following caveat:
   `protoc` using the grpc-elixir plugin will only downcase the first letter for the grpc symbpl  So Helloworld.HelloReply becomes helloworld.HelloReply.  This does not perform a case-insensitive search, but only upcases the first letter of each "."-separated word.  So the provided symbol must match that pattern, and then`descriptor` returns the grpc structs, or no response will be returned
   """
+
+  @doc false
+  def child_spec(opts) do
+    %{
+      id: GrpcReflection.Service,
+      start: {GrpcReflection.Service, :start_link, [opts]},
+      type: :worker,
+      restart: :permanent
+    }
+  end
 end
