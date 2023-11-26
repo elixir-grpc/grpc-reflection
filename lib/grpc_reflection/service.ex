@@ -8,6 +8,7 @@ defmodule GrpcReflection.Service do
   require Logger
 
   alias GrpcReflection.Builder
+  alias GrpcReflection.Lookup
 
   defstruct services: [], files: %{}, symbols: %{}
 
@@ -27,33 +28,19 @@ defmodule GrpcReflection.Service do
 
   @spec list_services :: list(binary)
   def list_services do
-    Agent.get(__MODULE__, fn %{services: services} ->
-      Enum.map(services, fn service_mod -> service_mod.__meta__(:name) end)
-    end)
+    Agent.get(__MODULE__, &Lookup.lookup_services/1)
   end
 
   @spec get_by_symbol(binary()) :: {:ok, descriptor_t()} | {:error, binary}
   def get_by_symbol("." <> symbol), do: get_by_symbol(symbol)
 
   def get_by_symbol(symbol) do
-    Agent.get(__MODULE__, fn %{symbols: symbols} ->
-      if Map.has_key?(symbols, symbol) do
-        {:ok, symbols[symbol]}
-      else
-        {:error, "symbol not found"}
-      end
-    end)
+    Agent.get(__MODULE__, &Lookup.lookup_symbol(symbol, &1))
   end
 
   @spec get_by_filename(binary()) :: {:ok, descriptor_t()} | {:error, binary}
   def get_by_filename(filename) do
-    Agent.get(__MODULE__, fn %{files: files} ->
-      if Map.has_key?(files, filename) do
-        {:ok, files[filename]}
-      else
-        {:error, "filename not found"}
-      end
-    end)
+    Agent.get(__MODULE__, &Lookup.lookup_filename(filename, &1))
   end
 
   @spec put_services(list(module())) :: :ok | {:error, binary()}
