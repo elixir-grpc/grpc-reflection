@@ -1,15 +1,9 @@
 defmodule GrpcReflection.V1alphaReflectionTest do
   @moduledoc false
 
-  use ExUnit.Case
+  use GrpcCase
 
   @moduletag capture_log: true
-
-  setup do
-    # clear state for empty setup and dynamic adding
-    {:ok, _pid} = GrpcReflection.Service.start_link()
-    :ok
-  end
 
   setup_all do
     endpoint = GrpcReflection.TestEndpoint.Endpoint
@@ -22,7 +16,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
       :ok = GRPC.Server.stop_endpoint(endpoint, [])
     end)
 
-    %{channel: channel, req: req}
+    %{channel: channel, req: req, stub: Grpc.Reflection.V1alpha.ServerReflection.Stub}
   end
 
   test "unsupported call is rejected", ctx do
@@ -161,42 +155,6 @@ defmodule GrpcReflection.V1alphaReflectionTest do
                  name: "Timestamp"
                }
              ] = response.message_type
-    end
-  end
-
-  defp assert_response(%{service: [service]}) do
-    assert service.name == "Greeter"
-    assert %{method: [method]} = service
-    assert method.name == "SayHello"
-    assert method.input_type == ".helloworld.HelloRequest"
-    assert method.output_type == ".helloworld.HelloReply"
-  end
-
-  defp assert_response(%{message_type: [%{name: "HelloRequest"} = type]}) do
-    assert %{field: [field]} = type
-    assert field.name == "name"
-    assert field.type == :TYPE_STRING
-  end
-
-  defp run_request(message_request, ctx) do
-    stream = Grpc.Reflection.V1alpha.ServerReflection.Stub.server_reflection_info(ctx.channel)
-    request = %{ctx.req | message_request: message_request}
-    GRPC.Stub.send_request(stream, request, end_stream: true)
-    assert {:ok, reply_stream} = GRPC.Stub.recv(stream)
-    assert [server_response] = Enum.to_list(reply_stream)
-    assert {:ok, response} = server_response
-    assert %{original_request: ^request} = response
-    assert %{message_response: msg_response} = response
-
-    case msg_response do
-      {:file_descriptor_response, %{file_descriptor_proto: [encoded_proto]}} ->
-        {:ok, Google.Protobuf.FileDescriptorProto.decode(encoded_proto)}
-
-      {:list_services_response, services} ->
-        {:ok, services}
-
-      {:error_response, resp} ->
-        {:error, resp}
     end
   end
 end
