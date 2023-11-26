@@ -53,21 +53,21 @@ defmodule GrpcReflection.Server.V1alpha do
   def reflection_request(message_request) do
     case message_request do
       {:list_services, _} ->
-        GrpcReflection.Service.list_services()
+        GrpcReflection.list_services()
         |> Enum.map(fn name -> %{name: name} end)
         |> then(fn services ->
           {:ok, {:list_services_response, %{service: services}}}
         end)
 
       {:file_containing_symbol, symbol} ->
-        with {:ok, description} <- GrpcReflection.Service.get_by_symbol(symbol) do
+        with {:ok, description} <- GrpcReflection.get_by_symbol(symbol) do
           {:ok,
            {:file_descriptor_response,
             struct(Grpc.Reflection.V1alpha.FileDescriptorResponse, description)}}
         end
 
       {:file_by_filename, filename} ->
-        with {:ok, description} <- GrpcReflection.Service.get_by_filename(filename) do
+        with {:ok, description} <- GrpcReflection.get_by_filename(filename) do
           {:ok,
            {:file_descriptor_response,
             struct(Grpc.Reflection.V1alpha.FileDescriptorResponse, description)}}
