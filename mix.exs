@@ -46,7 +46,8 @@ defmodule GrpcReflection.MixProject do
 
   defp aliases do
     [
-      build_protos: [&build_protos/1]
+      build_protos: [&build_protos/1],
+      check: ["dialyzer", "credo --strict"]
     ]
   end
 
