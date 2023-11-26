@@ -3,6 +3,12 @@ defmodule GrpcReflection.V1ReflectionTest do
 
   use ExUnit.Case
 
+  setup do
+    # clear state for empty setup and dynamic adding
+    {:ok, _pid} = GrpcReflection.Service.start_link()
+    :ok
+  end
+
   setup_all do
     endpoint = GrpcReflection.TestEndpoint.Endpoint
     {:ok, _pid, port} = GRPC.Server.start_endpoint(endpoint, 0)

@@ -11,7 +11,7 @@ defmodule GrpcReflection.Server.V1 do
       Logger.info("Received v1 reflection request: " <> inspect(request.message_request))
 
       request.message_request
-      |> GrpcReflection.Server.Common.reflection_request()
+      |> reflection_request()
       |> case do
         {:ok, message_response} ->
           %ServerReflectionResponse{
@@ -20,7 +20,7 @@ defmodule GrpcReflection.Server.V1 do
             message_response: message_response
           }
 
-        {:error, :not_found} ->
+        {:error, reason} ->
           %ServerReflectionResponse{
             valid_host: request.host,
             original_request: request,
@@ -28,7 +28,7 @@ defmodule GrpcReflection.Server.V1 do
               {:error_response,
                %ErrorResponse{
                  error_code: GRPC.Status.not_found(),
-                 error_message: "Could not resolve"
+                 error_message: reason
                }}
           }
 
@@ -48,5 +48,34 @@ defmodule GrpcReflection.Server.V1 do
       end
       |> then(&Server.send_reply(server, &1))
     end)
+  end
+
+  def reflection_request(message_request) do
+    case message_request do
+      {:list_services, _} ->
+        GrpcReflection.Service.list_services()
+        |> Enum.map(fn name -> %{name: name} end)
+        |> then(fn services ->
+          {:ok, {:list_services_response, %{service: services}}}
+        end)
+
+      {:file_containing_symbol, symbol} ->
+        with {:ok, description} <- GrpcReflection.Service.get_by_symbol(symbol) do
+          {:ok,
+           {:file_descriptor_response,
+            struct(Grpc.Reflection.V1.FileDescriptorResponse, description)}}
+        end
+
+      {:file_by_filename, filename} ->
+        with {:ok, description} <- GrpcReflection.Service.get_by_filename(filename) do
+          {:ok,
+           {:file_descriptor_response,
+            struct(Grpc.Reflection.V1.FileDescriptorResponse, description)}}
+        end
+
+      # {:file_containing_extension} not supported yet
+      other ->
+        {:unexpected, "received inexpected reflection request: #{inspect(other)}"}
+    end
   end
 end
