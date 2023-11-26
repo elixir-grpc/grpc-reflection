@@ -34,6 +34,13 @@ config :grpc_reflection, services: [
   Grpc.Reflection.V1.ServerReflection.Service,
   Grpc.Reflection.V1alpha.ServerReflection.Service]
 ```
+1. Once functional, it is recommended to enable the caching agent so we don't build the reflection tree for each request:
+```
+children = [
+  <your application dependencies...>,
+  GrpcReflection
+]
+```
 
 ## interacting with your reflection
 

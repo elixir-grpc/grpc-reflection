@@ -17,6 +17,8 @@ defmodule GrpcReflection do
   config :grpc_reflection, services: [<Your service module>, <another service module>, <maybe reflection service?>]
   ```
 
+  1. Optional, but highly recommended: Once reflection is working as desired, enable the caching agent by adding `GrpcReflection` to your application tree
+
   This service will return reflection data for any module that defined `descriptor()` when its module name is provided, with the following caveat:
   `protoc` using the grpc-elixir plugin will only downcase the first letter for the grpc symbpl  So Helloworld.HelloReply becomes helloworld.HelloReply.  This does not perform a case-insensitive search, but only upcases the first letter of each "."-separated word.  So the provided symbol must match that pattern, and then`descriptor` returns the grpc structs, or no response will be returned
   """
