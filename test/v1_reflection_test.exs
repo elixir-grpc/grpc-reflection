@@ -3,6 +3,8 @@ defmodule GrpcReflection.V1ReflectionTest do
 
   use ExUnit.Case
 
+  @moduletag capture_log: true
+
   setup do
     # clear state for empty setup and dynamic adding
     {:ok, _pid} = GrpcReflection.Service.start_link()
