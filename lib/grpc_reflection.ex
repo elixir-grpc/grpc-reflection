@@ -26,6 +26,9 @@ defmodule GrpcReflection do
   @type descriptor_t ::
           %Google.Protobuf.DescriptorProto{} | %Google.Protobuf.ServiceDescriptorProto{}
 
+  @doc """
+  Get the current list of configured services
+  """
   @spec list_services :: list(binary)
   def list_services do
     if service_running?() do
@@ -37,6 +40,9 @@ defmodule GrpcReflection do
     end
   end
 
+  @doc """
+  Get the reflection reponse containing the given symbol, if it is exposed by a configured service
+  """
   @spec get_by_symbol(binary()) :: {:ok, descriptor_t()} | {:error, binary}
   def get_by_symbol(symbol) do
     if service_running?() do
@@ -47,6 +53,9 @@ defmodule GrpcReflection do
     end
   end
 
+  @doc """
+  Get the reflection response for the named file, if it is exposed by a configured service
+  """
   @spec get_by_filename(binary()) :: {:ok, descriptor_t()} | {:error, binary}
   def get_by_filename(filename) do
     if service_running?() do
@@ -57,6 +66,11 @@ defmodule GrpcReflection do
     end
   end
 
+  @doc """
+  A runtime configuration option for setting the services.  Unless you are dynamically building and exposing services you should use the regular config options
+
+  If you are not running the caching agent, this has no effect.
+  """
   @spec put_services(list(module())) :: :ok | {:error, binary()}
   def put_services(services) do
     if service_running?() do
