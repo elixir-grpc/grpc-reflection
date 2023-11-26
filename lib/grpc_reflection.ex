@@ -29,7 +29,9 @@ defmodule GrpcReflection do
     if service_running?() do
       GrpcReflection.Service.list_services()
     else
-      configured_services()
+      GrpcReflection.Lookup.lookup_services(%GrpcReflection.Service{
+        services: configured_services()
+      })
     end
   end
 

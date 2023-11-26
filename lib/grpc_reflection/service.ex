@@ -35,8 +35,6 @@ defmodule GrpcReflection.Service do
   end
 
   @spec get_by_symbol(binary()) :: {:ok, descriptor_t()} | {:error, binary}
-  def get_by_symbol("." <> symbol), do: get_by_symbol(symbol)
-
   def get_by_symbol(symbol) do
     Agent.get(__MODULE__, &Lookup.lookup_symbol(symbol, &1))
   end
@@ -46,7 +44,6 @@ defmodule GrpcReflection.Service do
     Agent.get(__MODULE__, &Lookup.lookup_filename(filename, &1))
   end
 
-  @spec put_state(t()) :: :ok
   def put_state(%__MODULE__{} = state) do
     Agent.update(__MODULE__, fn _old_state -> state end)
   end

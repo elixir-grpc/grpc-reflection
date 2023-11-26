@@ -7,6 +7,8 @@ defmodule GrpcReflection.Lookup do
     Enum.map(services, fn service_mod -> service_mod.__meta__(:name) end)
   end
 
+  def lookup_symbol("." <> symbol, state), do: lookup_symbol(symbol, state)
+
   def lookup_symbol(symbol, %Service{symbols: symbols}) do
     if Map.has_key?(symbols, symbol) do
       {:ok, symbols[symbol]}
