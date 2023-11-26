@@ -5,6 +5,8 @@ defmodule GrpcReflection.V1alphaReflectionTest do
 
   @moduletag capture_log: true
 
+  alias Google.Protobuf.FileDescriptorProto
+
   setup do
     # clear state for empty setup and dynamic adding
     {:ok, _pid} = GrpcReflection.Service.start_link()
@@ -190,7 +192,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
 
     case msg_response do
       {:file_descriptor_response, %{file_descriptor_proto: [encoded_proto]}} ->
-        {:ok, Google.Protobuf.FileDescriptorProto.decode(encoded_proto)}
+        {:ok, FileDescriptorProto.decode(encoded_proto)}
 
       {:list_services_response, services} ->
         {:ok, services}

@@ -1,6 +1,7 @@
 defmodule GrpcReflection.Builder do
   @moduledoc false
 
+  alias Google.Protobuf.FileDescriptorProto
   alias GrpcReflection.Service
 
   def build_reflection_tree(services) do
@@ -28,12 +29,14 @@ defmodule GrpcReflection.Builder do
 
   defp get_services_and_references(services) do
     Enum.reduce_while(services, {%Service{services: services}, []}, fn service, {acc, refs} ->
-      with {:ok, %{files: files, symbols: symbols}, references} <- process_service(service) do
-        {:cont,
-         {%{acc | files: Map.merge(files, acc.files), symbols: Map.merge(symbols, acc.symbols)},
-          [refs | references]}}
-      else
-        {:error, reason} -> {:halt, {:error, reason}}
+      case process_service(service) do
+        {:ok, %{files: files, symbols: symbols}, references} ->
+          {:cont,
+           {%{acc | files: Map.merge(files, acc.files), symbols: Map.merge(symbols, acc.symbols)},
+            [refs | references]}}
+
+        {:error, reason} ->
+          {:halt, {:error, reason}}
       end
     end)
   end
@@ -50,7 +53,7 @@ defmodule GrpcReflection.Builder do
       )
 
     unencoded_payload = process_common(service_name, descriptor)
-    payload = Google.Protobuf.FileDescriptorProto.encode(unencoded_payload)
+    payload = FileDescriptorProto.encode(unencoded_payload)
     response = %{file_descriptor_proto: [payload]}
 
     root_symbols =
@@ -95,7 +98,7 @@ defmodule GrpcReflection.Builder do
 
       referenced_types = types_from_descriptor(descriptor)
       unencoded_payload = process_common(name, descriptor)
-      payload = Google.Protobuf.FileDescriptorProto.encode(unencoded_payload)
+      payload = FileDescriptorProto.encode(unencoded_payload)
       response = %{file_descriptor_proto: [payload]}
 
       root_symbols = %{symbol => response}
@@ -115,7 +118,7 @@ defmodule GrpcReflection.Builder do
         name <> ".proto"
       end)
 
-    response_stub = %Google.Protobuf.FileDescriptorProto{
+    response_stub = %FileDescriptorProto{
       name: name <> ".proto",
       package: package,
       dependency: dependencies

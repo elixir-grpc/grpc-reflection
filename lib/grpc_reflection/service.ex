@@ -20,9 +20,10 @@ defmodule GrpcReflection.Service do
   def start_link(_ \\ []) do
     services = Application.get_env(:grpc_reflection, :services, [])
 
-    with %__MODULE__{} = state <- Builder.build_reflection_tree(services) do
-      Agent.start_link(fn -> state end, name: __MODULE__)
-    else
+    case Builder.build_reflection_tree(services) do
+      %__MODULE__{} = state ->
+        Agent.start_link(fn -> state end, name: __MODULE__)
+
       err ->
         Logger.error("Failed to build reflection tree: #{inspect(err)}")
         Agent.start_link(fn -> %__MODULE__{} end, name: __MODULE__)

@@ -1,8 +1,11 @@
 defmodule GrpcReflection.Server.V1 do
+  @moduledoc false
+
   use GRPC.Server, service: Grpc.Reflection.V1.ServerReflection.Service
 
+  alias Grpc.Reflection.V1.ErrorResponse
+  alias Grpc.Reflection.V1.ServerReflectionResponse
   alias GRPC.Server
-  alias Grpc.Reflection.V1.{ServerReflectionResponse, ErrorResponse}
 
   require Logger
 
