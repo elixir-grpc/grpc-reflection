@@ -26,23 +26,48 @@ defmodule GrpcReflection do
 
   @spec list_services :: list(binary)
   def list_services do
-    GrpcReflection.Service.list_services()
+    if service_running?() do
+      GrpcReflection.Service.list_services()
+    else
+      configured_services()
+    end
   end
 
   @spec get_by_symbol(binary()) :: {:ok, descriptor_t()} | {:error, binary}
   def get_by_symbol(symbol) do
-    GrpcReflection.Service.get_by_symbol(symbol)
+    if service_running?() do
+      GrpcReflection.Service.get_by_symbol(symbol)
+    else
+      %{} = state = GrpcReflection.Builder.build_reflection_tree(configured_services())
+      GrpcReflection.Lookup.lookup_symbol(symbol, state)
+    end
   end
 
   @spec get_by_filename(binary()) :: {:ok, descriptor_t()} | {:error, binary}
   def get_by_filename(filename) do
-    GrpcReflection.Service.get_by_filename(filename)
+    if service_running?() do
+      GrpcReflection.Service.get_by_filename(filename)
+    else
+      %{} = state = GrpcReflection.Builder.build_reflection_tree(configured_services())
+      GrpcReflection.Lookup.lookup_filename(filename, state)
+    end
   end
 
   @spec put_services(list(module())) :: :ok | {:error, binary()}
   def put_services(services) do
-    GrpcReflection.Service.put_services(services)
+    if service_running?() do
+      with %GrpcReflection.Service{} = state <-
+             GrpcReflection.Builder.build_reflection_tree(services) do
+        GrpcReflection.Service.put_state(state)
+      end
+    else
+      :ok
+    end
   end
+
+  defp service_running?, do: is_pid(Process.whereis(GrpcReflection.Service))
+
+  defp configured_services, do: Application.get_env(:grpc_reflection, :services, [])
 
   @doc false
   def child_spec(opts) do

@@ -1,7 +1,5 @@
 defmodule GrpcReflection.Service do
-  @moduledoc """
-  A supervise-able memory store that holds and manages data for grpc reflection
-  """
+  @moduledoc false
 
   use Agent
 
@@ -13,6 +11,11 @@ defmodule GrpcReflection.Service do
   defstruct services: [], files: %{}, symbols: %{}
 
   @type descriptor_t :: GrpcReflection.descriptor_t()
+  @type t :: %{
+          required(:services) => list(module()),
+          required(:files) => %{optional(binary()) => descriptor_t()},
+          required(:symbols) => %{optional(binary()) => descriptor_t()}
+        }
 
   def start_link(_ \\ []) do
     services = Application.get_env(:grpc_reflection, :services, [])
@@ -43,10 +46,8 @@ defmodule GrpcReflection.Service do
     Agent.get(__MODULE__, &Lookup.lookup_filename(filename, &1))
   end
 
-  @spec put_services(list(module())) :: :ok | {:error, binary()}
-  def put_services(services) do
-    with %__MODULE__{} = state <- Builder.build_reflection_tree(services) do
-      Agent.update(__MODULE__, fn _old_state -> state end)
-    end
+  @spec put_state(t()) :: :ok
+  def put_state(%__MODULE__{} = state) do
+    Agent.update(__MODULE__, fn _old_state -> state end)
   end
 end
