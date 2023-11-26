@@ -21,6 +21,29 @@ defmodule GrpcReflection do
   `protoc` using the grpc-elixir plugin will only downcase the first letter for the grpc symbpl  So Helloworld.HelloReply becomes helloworld.HelloReply.  This does not perform a case-insensitive search, but only upcases the first letter of each "."-separated word.  So the provided symbol must match that pattern, and then`descriptor` returns the grpc structs, or no response will be returned
   """
 
+  @type descriptor_t ::
+          %Google.Protobuf.DescriptorProto{} | %Google.Protobuf.ServiceDescriptorProto{}
+
+  @spec list_services :: list(binary)
+  def list_services do
+    GrpcReflection.Service.list_services()
+  end
+
+  @spec get_by_symbol(binary()) :: {:ok, descriptor_t()} | {:error, binary}
+  def get_by_symbol(symbol) do
+    GrpcReflection.Service.get_by_symbol(symbol)
+  end
+
+  @spec get_by_filename(binary()) :: {:ok, descriptor_t()} | {:error, binary}
+  def get_by_filename(filename) do
+    GrpcReflection.Service.get_by_filename(filename)
+  end
+
+  @spec put_services(list(module())) :: :ok | {:error, binary()}
+  def put_services(services) do
+    GrpcReflection.Service.put_services(services)
+  end
+
   @doc false
   def child_spec(opts) do
     %{

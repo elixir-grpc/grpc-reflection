@@ -9,8 +9,7 @@ defmodule GrpcReflection.Service do
 
   defstruct services: [], files: %{}, symbols: %{}
 
-  @type descriptor_t ::
-          %Google.Protobuf.DescriptorProto{} | %Google.Protobuf.ServiceDescriptorProto{}
+  @type descriptor_t :: GrpcReflection.descriptor_t()
 
   def start_link(_ \\ []) do
     services = Application.get_env(:grpc_reflection, :services, [])
