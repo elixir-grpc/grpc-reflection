@@ -74,8 +74,16 @@ defmodule GrpcReflection.MixProject do
       end
     )
 
-    Mix.shell().cmd(
-      "protoc --elixir_out=#{options}:./test/support/protos --proto_path=priv/protos/ priv/protos/test_service.proto"
+    Enum.each(
+      [
+        "priv/protos/test_service_v2.proto",
+        "priv/protos/test_service_v3.proto"
+      ],
+      fn reflection_proto ->
+        Mix.shell().cmd(
+          "protoc --elixir_out=#{options}:./test/support/protos --proto_path=priv/protos/ #{reflection_proto}"
+        )
+      end
     )
   end
 end
