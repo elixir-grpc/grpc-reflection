@@ -4,7 +4,7 @@ defmodule GrpcReflection.Test do
   use ExUnit.Case
 
   defmodule Service do
-    use GrpcReflection, name: :test_agent, version: :v1
+    use GrpcReflection, version: :v1
   end
 
   setup do

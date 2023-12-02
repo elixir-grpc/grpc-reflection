@@ -26,21 +26,32 @@ This is written and tested using grpcurl and postman.  It supports both v1alpha 
 ## Enable reflection on your application
 
 1. Rebuild your protos with descriptors on.  Each module and/or service that you would like to expose through reflection must use the protoc elixir-out option `gen_descriptors=true`
-1. Add `run(GrpcReflection.Server.V1)` and/or `run(GrpcReflection.Server.V1alpha)`  to your grpc endpoint
-1. Configure reflection for your services
-```
-config :grpc_reflection, services: [
-  Helloworld.Greeter.Service, 
-  Grpc.Reflection.V1.ServerReflection.Service,
-  Grpc.Reflection.V1alpha.ServerReflection.Service]
-```
-1. Once functional, it is recommended to enable the caching agent so we don't build the reflection tree for each request:
-```
+1. Create a reflection server
+  ```elixir
+  defmodule Helloworld.Reflection.Server do
+    use GrpcReflection,
+      version: :v1,
+      services: [Helloworld.Greeter.Service]
+  end
+  ```
+  or
+  ```elixir
+  defmodule Helloworld.Reflection.Server2 do
+    use GrpcReflection,
+      version: :v1alpha,
+      services: [Helloworld.Greeter.Service]
+  end
+  ```
+  or both as desired.  `version` is the grpc reflection spec, which can be `v1` or `v1alpha`.  `services` is the services that will be exposed by that server by reflection.  You can expose a service through both services if desired.
+1. Add your server(s) to your supervision tree to activate their internal states
+```elixir
 children = [
-  <your application dependencies...>,
-  GrpcReflection
+  ...other children
+  Helloworld.Reflection.Server,
+  Helloworld.Reflection.Server2
 ]
 ```
+1. Add your servers to your grpc endpoint
 
 ## interacting with your reflection
 

@@ -7,17 +7,16 @@ defmodule GrpcReflection do
   To turn on reflection in your application, do the following:
 
   1. Create your reflection server
-  ```
+  ```elixir
   defmodule Helloworld.Reflection.Server do
-  use GrpcReflection,
-    version: :v1,
-    name: :v1_store,
-    services: [Helloworld.Greeter.Service]
+    use GrpcReflection,
+      version: :v1,
+      services: [Helloworld.Greeter.Service]
   end
   ```
 
   2. Add your reflection server to yuor supervision tree
-  ```
+  ```elixir
   children = [
     {GRPC.Server.Supervisor, endpoint: Helloworld.Endpoint, port: 50051, start_server: true},
     Helloworld.Reflection.Server
@@ -25,7 +24,7 @@ defmodule GrpcReflection do
   ```
 
   3. Add your reflection server to your endpoint
-  ```
+  ```elixir
   defmodule Helloworld.Endpoint do
     use GRPC.Endpoint
 
@@ -41,7 +40,6 @@ defmodule GrpcReflection do
 
   # credo:disable-for-next-line
   defmacro __using__(opts) when is_list(opts) do
-    agent_name = Keyword.get(opts, :name, __MODULE__)
     services = Keyword.get(opts, :services, [])
     version = Keyword.get(opts, :version, :none)
 
@@ -55,7 +53,7 @@ defmodule GrpcReflection do
              [
                [
                  services: unquote(services),
-                 name: unquote(agent_name)
+                 name: __MODULE__
                ]
              ]},
           type: :worker,
@@ -68,7 +66,7 @@ defmodule GrpcReflection do
       """
       @spec list_services :: list(binary)
       def list_services do
-        GrpcReflection.Service.Agent.list_services(unquote(agent_name))
+        GrpcReflection.Service.Agent.list_services(__MODULE__)
       end
 
       @doc """
@@ -76,7 +74,7 @@ defmodule GrpcReflection do
       """
       @spec get_by_symbol(binary()) :: {:ok, GrpcReflection.descriptor_t()} | {:error, binary}
       def get_by_symbol(symbol) do
-        GrpcReflection.Service.Agent.get_by_symbol(unquote(agent_name), symbol)
+        GrpcReflection.Service.Agent.get_by_symbol(__MODULE__, symbol)
       end
 
       @doc """
@@ -84,7 +82,7 @@ defmodule GrpcReflection do
       """
       @spec get_by_filename(binary()) :: {:ok, GrpcReflection.descriptor_t()} | {:error, binary}
       def get_by_filename(filename) do
-        GrpcReflection.Service.Agent.get_by_filename(unquote(agent_name), filename)
+        GrpcReflection.Service.Agent.get_by_filename(__MODULE__, filename)
       end
 
       @doc """
@@ -94,7 +92,7 @@ defmodule GrpcReflection do
       def put_services(services) do
         case GrpcReflection.Service.Builder.build_reflection_tree(services) do
           %GrpcReflection.Service.Agent{} = state ->
-            GrpcReflection.Service.Agent.put_state(unquote(agent_name), state)
+            GrpcReflection.Service.Agent.put_state(__MODULE__, state)
 
           err ->
             err
