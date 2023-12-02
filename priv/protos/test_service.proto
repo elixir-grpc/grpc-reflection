@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+package testservice;
+
+service TestService {
+  rpc CallFunction (TestRequest) returns (TestReply) {}
+}
+
+message TestRequest {
+  string name = 1;
+  Enum enum = 2;
+  oneof test_oneof {
+    string label = 3;
+    int32 value = 4;
+  }
+  map<string, int32> g = 5;
+  google.protobuf.Any instrument = 6;
+}
+
+message TestReply {
+  google.protobuf.Timestamp today = 2;
+}
+
+enum Enum {
+  A = 0;
+  B = 1;
+}

@@ -66,6 +66,10 @@ message HelloReply {
 }
 ```
 
+## Protobuf Version Support
+
+This utility currently only supports proto3.  It does not support some of the features of proto2, including extensions.
+
 ## Application Support
 
 This is **not** an exhaustive list
