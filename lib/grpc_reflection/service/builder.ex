@@ -1,8 +1,8 @@
-defmodule GrpcReflection.Builder do
+defmodule GrpcReflection.Service.Builder do
   @moduledoc false
 
   alias Google.Protobuf.FileDescriptorProto
-  alias GrpcReflection.Service
+  alias GrpcReflection.Service.Agent
 
   def build_reflection_tree(services) do
     with :ok <- validate_services(services),
@@ -28,7 +28,7 @@ defmodule GrpcReflection.Builder do
   end
 
   defp get_services_and_references(services) do
-    Enum.reduce_while(services, {%Service{services: services}, []}, fn service, {acc, refs} ->
+    Enum.reduce_while(services, {%Agent{services: services}, []}, fn service, {acc, refs} ->
       case process_service(service) do
         {:ok, %{files: files, symbols: symbols}, references} ->
           {:cont,
@@ -63,7 +63,7 @@ defmodule GrpcReflection.Builder do
 
     root_files = %{(service_name <> ".proto") => response}
 
-    {:ok, %Service{files: root_files, symbols: root_symbols}, referenced_types}
+    {:ok, %Agent{files: root_files, symbols: root_symbols}, referenced_types}
   rescue
     _ -> {:error, "Couldn't process #{inspect(service)}"}
   end
@@ -104,7 +104,7 @@ defmodule GrpcReflection.Builder do
       root_symbols = %{symbol => response}
       root_files = %{(symbol <> ".proto") => response}
 
-      {%Service{files: root_files, symbols: root_symbols}, referenced_types}
+      {%Agent{files: root_files, symbols: root_symbols}, referenced_types}
     end)
   end
 
