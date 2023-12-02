@@ -3,8 +3,13 @@ defmodule GrpcReflection.BuilderTest do
 
   use ExUnit.Case
 
-  test "supports all reflection types" do
-    tree = GrpcReflection.Builder.build_reflection_tree([Testservice.TestService.Service])
-    assert %GrpcReflection.Service{services: [Testservice.TestService.Service]} = tree
+  test "supports all reflection types in proto3" do
+    tree = GrpcReflection.Builder.build_reflection_tree([TestserviceV3.TestService.Service])
+    assert %GrpcReflection.Service{services: [TestserviceV3.TestService.Service]} = tree
+  end
+
+  test "supports all reflection types in proto2" do
+    tree = GrpcReflection.Builder.build_reflection_tree([TestserviceV2.TestService.Service])
+    assert %GrpcReflection.Service{services: [TestserviceV2.TestService.Service]} = tree
   end
 end
