@@ -127,6 +127,7 @@ defmodule GrpcReflection.Builder do
     case descriptor do
       %Google.Protobuf.DescriptorProto{} -> %{response_stub | message_type: [descriptor]}
       %Google.Protobuf.ServiceDescriptorProto{} -> %{response_stub | service: [descriptor]}
+      %Google.Protobuf.EnumDescriptorProto{} -> %{response_stub | enum_type: [descriptor]}
     end
   end
 
@@ -152,6 +153,10 @@ defmodule GrpcReflection.Builder do
       "." <> symbol -> symbol
       symbol -> symbol
     end)
+  end
+
+  defp types_from_descriptor(%Google.Protobuf.EnumDescriptorProto{}) do
+    []
   end
 
   defp package_from_name(service_name) do

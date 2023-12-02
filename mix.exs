@@ -73,5 +73,9 @@ defmodule GrpcReflection.MixProject do
         )
       end
     )
+
+    Mix.shell().cmd(
+      "protoc --elixir_out=#{options}:./test/support/protos --proto_path=priv/protos/ priv/protos/test_service.proto"
+    )
   end
 end
