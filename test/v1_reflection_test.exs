@@ -12,11 +12,13 @@ defmodule GrpcReflection.V1ReflectionTest do
     {:ok, channel} = GRPC.Stub.connect(host)
     req = %Grpc.Reflection.V1.ServerReflectionRequest{host: host}
 
+    {:ok, _} = start_supervised(GrpcReflection.TestEndpoint.V1Server)
+
     on_exit(fn ->
       :ok = GRPC.Server.stop_endpoint(endpoint, [])
     end)
 
-    %{channel: channel, req: req, stub: Grpc.Reflection.V1.ServerReflection.Stub}
+    %{channel: channel, req: req, stub: GrpcReflection.TestEndpoint.V1Server.Stub}
   end
 
   test "unsupported call is rejected", ctx do

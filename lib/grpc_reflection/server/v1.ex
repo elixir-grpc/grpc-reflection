@@ -1,20 +1,18 @@
 defmodule GrpcReflection.Server.V1 do
   @moduledoc false
 
-  use GRPC.Server, service: Grpc.Reflection.V1.ServerReflection.Service
-
   alias Grpc.Reflection.V1.ErrorResponse
   alias Grpc.Reflection.V1.ServerReflectionResponse
   alias GRPC.Server
 
   require Logger
 
-  def server_reflection_info(request_stream, server) do
+  def server_reflection_info(state_mod, request_stream, server) do
     Enum.map(request_stream, fn request ->
       Logger.info("Received v1 reflection request: " <> inspect(request.message_request))
 
-      request.message_request
-      |> reflection_request()
+      state_mod
+      |> reflection_request(request.message_request)
       |> case do
         {:ok, message_response} ->
           %ServerReflectionResponse{
@@ -53,24 +51,24 @@ defmodule GrpcReflection.Server.V1 do
     end)
   end
 
-  def reflection_request(message_request) do
+  def reflection_request(state_mod, message_request) do
     case message_request do
       {:list_services, _} ->
-        GrpcReflection.list_services()
+        state_mod.list_services()
         |> Enum.map(fn name -> %{name: name} end)
         |> then(fn services ->
           {:ok, {:list_services_response, %{service: services}}}
         end)
 
       {:file_containing_symbol, symbol} ->
-        with {:ok, description} <- GrpcReflection.get_by_symbol(symbol) do
+        with {:ok, description} <- state_mod.get_by_symbol(symbol) do
           {:ok,
            {:file_descriptor_response,
             struct(Grpc.Reflection.V1.FileDescriptorResponse, description)}}
         end
 
       {:file_by_filename, filename} ->
-        with {:ok, description} <- GrpcReflection.get_by_filename(filename) do
+        with {:ok, description} <- state_mod.get_by_filename(filename) do
           {:ok,
            {:file_descriptor_response,
             struct(Grpc.Reflection.V1.FileDescriptorResponse, description)}}

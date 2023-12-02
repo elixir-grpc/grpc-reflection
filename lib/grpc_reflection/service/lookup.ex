@@ -1,15 +1,15 @@
-defmodule GrpcReflection.Lookup do
+defmodule GrpcReflection.Service.Lookup do
   @moduledoc false
 
-  alias GrpcReflection.Service
+  alias GrpcReflection.Service.Agent
 
-  def lookup_services(%Service{services: services}) do
+  def lookup_services(%Agent{services: services}) do
     Enum.map(services, fn service_mod -> service_mod.__meta__(:name) end)
   end
 
   def lookup_symbol("." <> symbol, state), do: lookup_symbol(symbol, state)
 
-  def lookup_symbol(symbol, %Service{symbols: symbols}) do
+  def lookup_symbol(symbol, %Agent{symbols: symbols}) do
     if Map.has_key?(symbols, symbol) do
       {:ok, symbols[symbol]}
     else
@@ -17,7 +17,7 @@ defmodule GrpcReflection.Lookup do
     end
   end
 
-  def lookup_filename(filename, %Service{files: files}) do
+  def lookup_filename(filename, %Agent{files: files}) do
     if Map.has_key?(files, filename) do
       {:ok, files[filename]}
     else

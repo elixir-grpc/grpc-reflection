@@ -11,7 +11,12 @@ defmodule GrpcCase do
 
   setup do
     # clear state for empty setup and dynamic adding
-    {:ok, _pid} = GrpcReflection.Service.start_link()
+    {:ok, _pid} =
+      GrpcReflection.Service.Agent.start_link(
+        name: :test_agent,
+        services: [Helloworld.Greeter.Service]
+      )
+
     :ok
   end
 
@@ -31,7 +36,6 @@ defmodule GrpcCase do
 
   def run_request(message_request, ctx) do
     stream = ctx.stub.server_reflection_info(ctx.channel)
-    # stream = Grpc.Reflection.V1alpha.ServerReflection.Stub.server_reflection_info(ctx.channel)
     request = %{ctx.req | message_request: message_request}
     GRPC.Stub.send_request(stream, request, end_stream: true)
     assert {:ok, reply_stream} = GRPC.Stub.recv(stream)

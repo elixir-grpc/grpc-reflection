@@ -1,19 +1,37 @@
 defmodule GrpcReflection.TestEndpoint do
-  defmodule ReflectionServer do
-    use GRPC.Server, service: Helloworld.Greeter.Service
-
-    def say_hello(_request, _stream), do: %Helloworld.HelloReply{}
+  defmodule V1Server do
+    use GrpcReflection,
+      version: :v1,
+      services: [
+        Helloworld.Greeter.Service,
+        Grpc.Reflection.V1.ServerReflection.Service,
+        Grpc.Reflection.V1alpha.ServerReflection.Service
+      ]
   end
 
-  defmodule ReflectionServer.Stub do
-    use GRPC.Stub, service: Helloworld.Greeter.Service
+  defmodule V1Server.Stub do
+    use GRPC.Stub, service: Grpc.Reflection.V1.ServerReflection.Service
+  end
+
+  defmodule V1AlphaServer do
+    use GrpcReflection,
+      version: :v1alpha,
+      services: [
+        Helloworld.Greeter.Service,
+        Grpc.Reflection.V1.ServerReflection.Service,
+        Grpc.Reflection.V1alpha.ServerReflection.Service
+      ]
+  end
+
+  defmodule V1AlphaServer.Stub do
+    use GRPC.Stub, service: Grpc.Reflection.V1alpha.ServerReflection.Service
   end
 
   defmodule Endpoint do
     use GRPC.Endpoint
 
     run(Helloworld.Greeter.Server)
-    run(GrpcReflection.Server.V1)
-    run(GrpcReflection.Server.V1alpha)
+    run(V1Server)
+    run(V1AlphaServer)
   end
 end

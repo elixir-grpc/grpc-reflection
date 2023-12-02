@@ -15,9 +15,9 @@ defmodule GrpcReflection.MixProject do
           ~r/^Google\./,
           ~r/^Grpc\./,
           ~r/^Helloworld\./,
+          ~r/^TestserviceV2\./,
+          ~r/^TestserviceV3\./,
           GrpcReflection.TestEndpoint,
-          GrpcReflection.TestEndpoint.ReflectionServer,
-          GrpcReflection.TestEndpoint.ReflectionServer.Stub,
           GrpcReflection.TestEndpoint.Endpoint
         ]
       ]
