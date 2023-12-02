@@ -3,9 +3,12 @@ defmodule GrpcReflection.BuilderTest do
 
   use ExUnit.Case
 
+  alias GrpcReflection.Service.Agent
+  alias GrpcReflection.Service.Builder
+
   test "supports all reflection types in proto3" do
-    tree = GrpcReflection.Builder.build_reflection_tree([TestserviceV3.TestService.Service])
-    assert %GrpcReflection.Service{services: [TestserviceV3.TestService.Service]} = tree
+    tree = Builder.build_reflection_tree([TestserviceV3.TestService.Service])
+    assert %Agent{services: [TestserviceV3.TestService.Service]} = tree
 
     assert Map.keys(tree.files) == [
              "google.protobuf.Any.proto",
@@ -30,8 +33,8 @@ defmodule GrpcReflection.BuilderTest do
   end
 
   test "supports all reflection types in proto2" do
-    tree = GrpcReflection.Builder.build_reflection_tree([TestserviceV2.TestService.Service])
-    assert %GrpcReflection.Service{services: [TestserviceV2.TestService.Service]} = tree
+    tree = Builder.build_reflection_tree([TestserviceV2.TestService.Service])
+    assert %Agent{services: [TestserviceV2.TestService.Service]} = tree
 
     assert Map.keys(tree.files) == [
              "google.protobuf.Any.proto",

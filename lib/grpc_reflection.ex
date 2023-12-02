@@ -2,7 +2,7 @@ defmodule GrpcReflection do
   @moduledoc """
   Reflection support for the grpc-elixir package
 
-  To use these servers, all protos must be comppiled with the `gen_descriptors=true` option, as that is the source of truth for the reflection service.
+  To use these servers, all protos must be compiled with the `gen_descriptors=true` option, as that is the source of truth for the reflection service.
 
   To turn on reflection in your application, do the following:
 
@@ -39,6 +39,7 @@ defmodule GrpcReflection do
   @type descriptor_t ::
           %Google.Protobuf.DescriptorProto{} | %Google.Protobuf.ServiceDescriptorProto{}
 
+  # credo:disable-for-next-line
   defmacro __using__(opts) when is_list(opts) do
     agent_name = Keyword.get(opts, :name, __MODULE__)
     services = Keyword.get(opts, :services, [])
@@ -93,7 +94,7 @@ defmodule GrpcReflection do
       def put_services(services) do
         case GrpcReflection.Service.Builder.build_reflection_tree(services) do
           %GrpcReflection.Service.Agent{} = state ->
-            GrpcReflection.Service.Agent.put_state(unquote(agent_name), services)
+            GrpcReflection.Service.Agent.put_state(unquote(agent_name), state)
 
           err ->
             err
@@ -123,7 +124,7 @@ defmodule GrpcReflection do
             )
           end
 
-        true ->
+        _ ->
           raise "Invalid version #{unquote(version)}, should be in [:v1, :v1alpha]"
       end
     end

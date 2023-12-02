@@ -3,17 +3,47 @@ defmodule GrpcReflection.Test do
 
   use ExUnit.Case
 
-  setup do
-    Application.put_env(:grpc_reflection, :services, [
-      Helloworld.Greeter.Service,
-      Grpc.Reflection.V1.ServerReflection.Service,
-      Grpc.Reflection.V1alpha.ServerReflection.Service
-    ])
+  defmodule Service do
+    use GrpcReflection, name: :test_agent, version: :v1
   end
 
-  describe "reflection state testing without running agent" do
+  setup do
+    # clear state for empty setup and dynamic adding
+    {:ok, _pid} = start_supervised(Service)
+    :ok
+  end
+
+  test "adding a service changes responses" do
+    assert Service.list_services() == []
+
+    assert Service.get_by_symbol("helloworld.Greeter") ==
+             {:error, "symbol not found"}
+
+    assert Service.get_by_filename("helloworld.Greeter.proto") ==
+             {:error, "filename not found"}
+
+    assert :ok == Service.put_services([Helloworld.Greeter.Service])
+
+    assert Service.list_services() == ["helloworld.Greeter"]
+
+    assert {:ok, %{file_descriptor_proto: proto}} =
+             Service.get_by_symbol("helloworld.Greeter")
+
+    assert {:ok, %{file_descriptor_proto: ^proto}} =
+             Service.get_by_filename("helloworld.Greeter.proto")
+  end
+
+  describe "reflection state testing" do
+    setup do
+      Service.put_services([
+        Helloworld.Greeter.Service,
+        Grpc.Reflection.V1.ServerReflection.Service,
+        Grpc.Reflection.V1alpha.ServerReflection.Service
+      ])
+    end
+
     test "expected services are present" do
-      assert GrpcReflection.list_services() == [
+      assert Service.list_services() == [
                "helloworld.Greeter",
                "grpc.reflection.v1.ServerReflection",
                "grpc.reflection.v1alpha.ServerReflection"
@@ -22,26 +52,26 @@ defmodule GrpcReflection.Test do
 
     test "method files return service descriptors" do
       assert {:ok, %{file_descriptor_proto: proto}} =
-               GrpcReflection.get_by_symbol("helloworld.Greeter")
+               Service.get_by_symbol("helloworld.Greeter")
 
       assert {:ok, %{file_descriptor_proto: ^proto}} =
-               GrpcReflection.get_by_symbol("helloworld.Greeter.SayHello")
+               Service.get_by_symbol("helloworld.Greeter.SayHello")
     end
 
     test "describing a type returns the type" do
       assert {:ok, %{file_descriptor_proto: proto}} =
-               GrpcReflection.get_by_symbol("helloworld.HelloRequest")
+               Service.get_by_symbol("helloworld.HelloRequest")
 
       assert {:ok, %{file_descriptor_proto: ^proto}} =
-               GrpcReflection.get_by_filename("helloworld.HelloRequest.proto")
+               Service.get_by_filename("helloworld.HelloRequest.proto")
     end
 
     test "type with leading period still resolves" do
       assert {:ok, %{file_descriptor_proto: proto}} =
-               GrpcReflection.get_by_symbol(".helloworld.HelloRequest")
+               Service.get_by_symbol(".helloworld.HelloRequest")
 
       assert {:ok, %{file_descriptor_proto: ^proto}} =
-               GrpcReflection.get_by_filename("helloworld.HelloRequest.proto")
+               Service.get_by_filename("helloworld.HelloRequest.proto")
     end
   end
 end
