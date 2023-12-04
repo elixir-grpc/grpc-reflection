@@ -15,11 +15,11 @@ defmodule GrpcReflection do
   end
   ```
 
-  2. Add your reflection server to yuor supervision tree
+  2. Add the reflection supervisor to your supervision tree
   ```elixir
   children = [
     {GRPC.Server.Supervisor, endpoint: Helloworld.Endpoint, port: 50051, start_server: true},
-    Helloworld.Reflection.Server
+    GrpcReflection
   ]
   ```
 
@@ -44,29 +44,14 @@ defmodule GrpcReflection do
     version = Keyword.get(opts, :version, :none)
 
     quote do
-      @doc false
-      def child_spec(opts) do
-        %{
-          id: GrpcReflection.Service.Agent,
-          start:
-            {GrpcReflection.Service.Agent, :start_link,
-             [
-               [
-                 services: unquote(services),
-                 name: __MODULE__
-               ]
-             ]},
-          type: :worker,
-          restart: :permanent
-        }
-      end
+      @cfg {__MODULE__, unquote(services)}
 
       @doc """
       Get the current list of configured services
       """
       @spec list_services :: list(binary)
       def list_services do
-        GrpcReflection.Service.Agent.list_services(__MODULE__)
+        GrpcReflection.Service.Agent.list_services(@cfg)
       end
 
       @doc """
@@ -74,7 +59,7 @@ defmodule GrpcReflection do
       """
       @spec get_by_symbol(binary()) :: {:ok, GrpcReflection.descriptor_t()} | {:error, binary}
       def get_by_symbol(symbol) do
-        GrpcReflection.Service.Agent.get_by_symbol(__MODULE__, symbol)
+        GrpcReflection.Service.Agent.get_by_symbol(@cfg, symbol)
       end
 
       @doc """
@@ -82,7 +67,7 @@ defmodule GrpcReflection do
       """
       @spec get_by_filename(binary()) :: {:ok, GrpcReflection.descriptor_t()} | {:error, binary}
       def get_by_filename(filename) do
-        GrpcReflection.Service.Agent.get_by_filename(__MODULE__, filename)
+        GrpcReflection.Service.Agent.get_by_filename(@cfg, filename)
       end
 
       @doc """
@@ -92,7 +77,7 @@ defmodule GrpcReflection do
       def put_services(services) do
         case GrpcReflection.Service.Builder.build_reflection_tree(services) do
           %GrpcReflection.Service.Agent{} = state ->
-            GrpcReflection.Service.Agent.put_state(__MODULE__, state)
+            GrpcReflection.Service.Agent.put_state(@cfg, state)
 
           err ->
             err
@@ -126,5 +111,15 @@ defmodule GrpcReflection do
           raise "Invalid version #{unquote(version)}, should be in [:v1, :v1alpha]"
       end
     end
+  end
+
+  @doc false
+  def child_spec(opts) do
+    %{
+      id: GrpcReflection.DynamicSupervisor,
+      start: {GrpcReflection.DynamicSupervisor, :start_link, [opts]},
+      type: :supervisor,
+      restart: :permanent
+    }
   end
 end

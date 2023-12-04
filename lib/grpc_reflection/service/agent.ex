@@ -17,9 +17,9 @@ defmodule GrpcReflection.Service.Agent do
           required(:symbols) => %{optional(binary()) => descriptor_t()}
         }
 
-  def start_link(options) do
-    services = Keyword.get(options, :services, [])
-    name = Keyword.get(options, :name, __MODULE__)
+  def start_link(_, opts) do
+    name = Keyword.get(opts, :name)
+    services = Keyword.get(opts, :services)
 
     case Builder.build_reflection_tree(services) do
       %__MODULE__{} = state ->
@@ -32,21 +32,34 @@ defmodule GrpcReflection.Service.Agent do
   end
 
   @spec list_services(atom()) :: list(binary)
-  def list_services(name) do
+  def list_services(cfg) do
+    name = start_agent_on_first_call(cfg)
     Agent.get(name, &Lookup.lookup_services/1)
   end
 
   @spec get_by_symbol(atom(), binary()) :: {:ok, descriptor_t()} | {:error, binary}
-  def get_by_symbol(name, symbol) do
+  def get_by_symbol(cfg, symbol) do
+    name = start_agent_on_first_call(cfg)
     Agent.get(name, &Lookup.lookup_symbol(symbol, &1))
   end
 
   @spec get_by_filename(atom(), binary()) :: {:ok, descriptor_t()} | {:error, binary}
-  def get_by_filename(name, filename) do
+  def get_by_filename(cfg, filename) do
+    name = start_agent_on_first_call(cfg)
     Agent.get(name, &Lookup.lookup_filename(filename, &1))
   end
 
-  def put_state(name, %__MODULE__{} = state) do
+  def put_state(cfg, %__MODULE__{} = state) do
+    name = start_agent_on_first_call(cfg)
     Agent.update(name, fn _old_state -> state end)
+  end
+
+  defp start_agent_on_first_call({name, services}) do
+    # lazy start agent on call
+    if match?({:ok, _}, GrpcReflection.DynamicSupervisor.start_child(name, services)) do
+      Logger.info("Started reflection agent #{name}")
+    end
+
+    name
   end
 end

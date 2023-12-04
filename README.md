@@ -43,17 +43,16 @@ This is written and tested using grpcurl and postman.  It supports both v1alpha 
   end
   ```
   or both as desired.  `version` is the grpc reflection spec, which can be `v1` or `v1alpha`.  `services` is the services that will be exposed by that server by reflection.  You can expose a service through both services if desired.
-1. Add your server(s) to your supervision tree to activate their internal states
+1. Add the reflection supervisor to your supervision tree to host the cached reflection state
 ```elixir
 children = [
-  ...other children
-  Helloworld.Reflection.Server,
-  Helloworld.Reflection.Server2
+  ...other children,
+  GrpcReflection
 ]
 ```
 1. Add your servers to your grpc endpoint
 
-## interacting with your reflection
+## interacting with your reflection server
 
 Here are some example `grpcurl` commands and responses excersizing the reflection capabilities
 

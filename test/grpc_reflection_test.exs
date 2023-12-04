@@ -1,16 +1,10 @@
 defmodule GrpcReflection.Test do
   @moduledoc false
 
-  use ExUnit.Case
+  use GrpcCase
 
   defmodule Service do
     use GrpcReflection, version: :v1
-  end
-
-  setup do
-    # clear state for empty setup and dynamic adding
-    {:ok, _pid} = start_supervised(Service)
-    :ok
   end
 
   test "adding a service changes responses" do

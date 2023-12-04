@@ -12,8 +12,6 @@ defmodule GrpcReflection.V1alphaReflectionTest do
     {:ok, channel} = GRPC.Stub.connect(host)
     req = %Grpc.Reflection.V1alpha.ServerReflectionRequest{host: host}
 
-    {:ok, _} = start_supervised(GrpcReflection.TestEndpoint.V1AlphaServer)
-
     on_exit(fn ->
       :ok = GRPC.Server.stop_endpoint(endpoint, [])
     end)

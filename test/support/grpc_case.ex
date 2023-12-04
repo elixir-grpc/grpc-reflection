@@ -10,13 +10,7 @@ defmodule GrpcCase do
   alias Google.Protobuf.FileDescriptorProto
 
   setup do
-    # clear state for empty setup and dynamic adding
-    {:ok, _pid} =
-      GrpcReflection.Service.Agent.start_link(
-        name: :test_agent,
-        services: [Helloworld.Greeter.Service]
-      )
-
+    {:ok, _} = start_supervised(GrpcReflection)
     :ok
   end
 
