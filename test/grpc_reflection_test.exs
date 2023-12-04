@@ -1,15 +1,10 @@
 defmodule GrpcReflection.Test do
   @moduledoc false
 
-  use ExUnit.Case
+  use GrpcCase
 
   defmodule Service do
     use GrpcReflection, version: :v1
-  end
-
-  setup do
-    {:ok, _pid} = start_supervised(GrpcReflection)
-    :ok
   end
 
   test "adding a service changes responses" do
