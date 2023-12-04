@@ -8,8 +8,7 @@ defmodule GrpcReflection.Test do
   end
 
   setup do
-    # clear state for empty setup and dynamic adding
-    {:ok, _pid} = start_supervised(Service)
+    {:ok, _pid} = start_supervised(GrpcReflection)
     :ok
   end
 
