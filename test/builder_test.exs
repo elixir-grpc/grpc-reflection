@@ -30,6 +30,13 @@ defmodule GrpcReflection.BuilderTest do
              "testserviceV3.TestService",
              "testserviceV3.TestService.CallFunction"
            ]
+
+    (Map.values(tree.files) ++ Map.values(tree.symbols))
+    |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))
+    |> Enum.map(&Google.Protobuf.FileDescriptorProto.decode/1)
+    |> Enum.each(fn payload ->
+      assert payload.syntax == "proto3"
+    end)
   end
 
   test "supports all reflection types in proto2" do
@@ -56,5 +63,14 @@ defmodule GrpcReflection.BuilderTest do
              "testserviceV2.TestService",
              "testserviceV2.TestService.CallFunction"
            ]
+
+    (Map.values(tree.files) ++ Map.values(tree.symbols))
+    |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))
+    |> Enum.map(&Google.Protobuf.FileDescriptorProto.decode/1)
+    |> Enum.each(fn
+      # the google types are proto3
+      %{name: "google" <> _} = payload -> assert payload.syntax == "proto3"
+      payload -> assert payload.syntax == "proto2"
+    end)
   end
 end

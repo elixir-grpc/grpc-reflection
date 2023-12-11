@@ -52,7 +52,7 @@ defmodule GrpcReflection.Service.Builder do
         fn method -> service_name <> "." <> method.name end
       )
 
-    unencoded_payload = process_common(service_name, descriptor)
+    unencoded_payload = process_common(service_name, service, descriptor)
     payload = FileDescriptorProto.encode(unencoded_payload)
     response = %{file_descriptor_proto: [payload]}
 
@@ -97,7 +97,7 @@ defmodule GrpcReflection.Service.Builder do
       name = symbol
 
       referenced_types = types_from_descriptor(descriptor)
-      unencoded_payload = process_common(name, descriptor)
+      unencoded_payload = process_common(name, mod, descriptor)
       payload = FileDescriptorProto.encode(unencoded_payload)
       response = %{file_descriptor_proto: [payload]}
 
@@ -108,7 +108,7 @@ defmodule GrpcReflection.Service.Builder do
     end)
   end
 
-  defp process_common(name, descriptor) do
+  defp process_common(name, module, descriptor) do
     package = package_from_name(name)
 
     dependencies =
@@ -118,16 +118,45 @@ defmodule GrpcReflection.Service.Builder do
         name <> ".proto"
       end)
 
-    response_stub = %FileDescriptorProto{
-      name: name <> ".proto",
-      package: package,
-      dependency: dependencies
-    }
+    response_stub =
+      %FileDescriptorProto{
+        name: name <> ".proto",
+        package: package,
+        dependency: dependencies,
+        syntax: get_syntax(module)
+      }
 
     case descriptor do
       %Google.Protobuf.DescriptorProto{} -> %{response_stub | message_type: [descriptor]}
       %Google.Protobuf.ServiceDescriptorProto{} -> %{response_stub | service: [descriptor]}
       %Google.Protobuf.EnumDescriptorProto{} -> %{response_stub | enum_type: [descriptor]}
+    end
+  end
+
+  defp get_syntax(module) do
+    cond do
+      Keyword.has_key?(module.__info__(:functions), :__message_props__) ->
+        # this is a message type
+        case module.__message_props__().syntax do
+          :proto2 -> "proto2"
+          :proto3 -> "proto3"
+        end
+
+      Keyword.has_key?(module.__info__(:functions), :__rpc_calls__) ->
+        # this is a service definition, grab a message and recurse
+        module.__rpc_calls__()
+        |> Enum.find(fn
+          {_, _, _} -> true
+          _ -> false
+        end)
+        |> then(fn
+          nil -> raise "bad module, no biscuit"
+          {_, {req, _}, _} -> get_syntax(req)
+          {_, req, _} -> get_syntax(req)
+        end)
+
+      true ->
+        raise "Module #{inspect(module)} has neither rcp_calls nor __message_props__"
     end
   end
 
