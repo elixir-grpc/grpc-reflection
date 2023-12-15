@@ -150,9 +150,9 @@ defmodule GrpcReflection.Service.Builder do
           _ -> false
         end)
         |> then(fn
-          nil -> raise "bad module, no biscuit"
+          nil -> "proto2"
           {_, {req, _}, _} -> get_syntax(req)
-          {_, req, _} -> get_syntax(req)
+          {_, _, {req, _}} -> get_syntax(req)
         end)
 
       true ->

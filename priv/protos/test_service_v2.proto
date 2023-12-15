@@ -9,6 +9,10 @@ service TestService {
   rpc CallFunction (TestRequest) returns (TestReply) {}
 }
 
+service EmptyService {
+  
+}
+
 message TestRequest {
   required string name = 1;
   optional Enum enum = 2;

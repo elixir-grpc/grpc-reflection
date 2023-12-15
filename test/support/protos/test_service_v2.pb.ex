@@ -347,3 +347,21 @@ end
 defmodule TestserviceV2.TestService.Stub do
   use GRPC.Stub, service: TestserviceV2.TestService.Service
 end
+
+defmodule TestserviceV2.EmptyService.Service do
+  use GRPC.Service, name: "testserviceV2.EmptyService", protoc_gen_elixir_version: "0.12.0"
+
+  def descriptor do
+    # credo:disable-for-next-line
+    %Google.Protobuf.ServiceDescriptorProto{
+      name: "EmptyService",
+      method: [],
+      options: nil,
+      __unknown_fields__: []
+    }
+  end
+end
+
+defmodule TestserviceV2.EmptyService.Stub do
+  use GRPC.Stub, service: TestserviceV2.EmptyService.Service
+end
