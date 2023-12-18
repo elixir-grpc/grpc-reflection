@@ -40,6 +40,7 @@ defmodule GrpcReflection.BuilderTest do
   end
 
   test "supports all reflection types in proto2" do
+    Protobuf.load_extensions()
     tree = Builder.build_reflection_tree([TestserviceV2.TestService.Service])
     assert %Agent{services: [TestserviceV2.TestService.Service]} = tree
 
@@ -50,6 +51,7 @@ defmodule GrpcReflection.BuilderTest do
              "testserviceV2.TestReply.proto",
              "testserviceV2.TestRequest.GEntry.proto",
              "testserviceV2.TestRequest.proto",
+             "testserviceV2.TestRequestExtension.proto",
              "testserviceV2.TestService.proto"
            ]
 
@@ -63,6 +65,10 @@ defmodule GrpcReflection.BuilderTest do
              "testserviceV2.TestService",
              "testserviceV2.TestService.CallFunction"
            ]
+
+    assert tree.extensions == %{
+             "testserviceV2.TestRequest" => [10]
+           }
 
     (Map.values(tree.files) ++ Map.values(tree.symbols))
     |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))

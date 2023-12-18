@@ -24,4 +24,22 @@ defmodule GrpcReflection.Service.Lookup do
       {:error, "filename not found"}
     end
   end
+
+  def lookup_extension(extendee, %Agent{files: files}) do
+    file = extendee <> "Extension.proto"
+
+    if Map.has_key?(files, file) do
+      {:ok, files[file]}
+    else
+      {:error, "extension not found"}
+    end
+  end
+
+  def lookup_extension_numbers(mod, %Agent{extensions: extensions}) do
+    if Map.has_key?(extensions, mod) do
+      {:ok, extensions[mod]}
+    else
+      {:error, "extension numbers not found"}
+    end
+  end
 end

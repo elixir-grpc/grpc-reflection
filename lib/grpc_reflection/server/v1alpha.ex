@@ -74,7 +74,27 @@ defmodule GrpcReflection.Server.V1alpha do
             struct(Grpc.Reflection.V1alpha.FileDescriptorResponse, description)}}
         end
 
-      # {:file_containing_extension} not supported yet
+      {:file_containing_extension,
+       %Grpc.Reflection.V1alpha.ExtensionRequest{
+         containing_type: containing_type,
+         extension_number: _extension_number
+       }} ->
+        with {:ok, description} <- state_mod.get_by_extension(containing_type) do
+          {:ok,
+           {:file_descriptor_response,
+            struct(Grpc.Reflection.V1alpha.FileDescriptorResponse, description)}}
+        end
+
+      {:all_extension_numbers_of_type, mod} ->
+        with {:ok, extension_numbers} <- state_mod.get_extension_numbers_by_type(mod) do
+          {:ok,
+           {:all_extension_numbers_response,
+            struct(
+              Grpc.Reflection.V1alpha.ExtensionNumberResponse,
+              %{base_type_name: mod, extension_number: extension_numbers}
+            )}}
+        end
+
       other ->
         {:unexpected, "received inexpected reflection request: #{inspect(other)}"}
     end

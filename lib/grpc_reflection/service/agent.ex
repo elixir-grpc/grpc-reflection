@@ -8,13 +8,14 @@ defmodule GrpcReflection.Service.Agent do
   alias GrpcReflection.Service.Builder
   alias GrpcReflection.Service.Lookup
 
-  defstruct services: [], files: %{}, symbols: %{}
+  defstruct services: [], files: %{}, symbols: %{}, extensions: %{}
 
   @type descriptor_t :: GrpcReflection.descriptor_t()
   @type t :: %{
           required(:services) => list(module()),
           required(:files) => %{optional(binary()) => descriptor_t()},
-          required(:symbols) => %{optional(binary()) => descriptor_t()}
+          required(:symbols) => %{optional(binary()) => descriptor_t()},
+          required(:extensions) => %{optional(binary()) => list(integer())}
         }
 
   def start_link(_, opts) do
@@ -47,6 +48,19 @@ defmodule GrpcReflection.Service.Agent do
   def get_by_filename(cfg, filename) do
     name = start_agent_on_first_call(cfg)
     Agent.get(name, &Lookup.lookup_filename(filename, &1))
+  end
+
+  @spec get_by_extension(atom(), binary()) :: {:ok, descriptor_t()} | {:error, binary}
+  def get_by_extension(cfg, containing_type) do
+    name = start_agent_on_first_call(cfg)
+    Agent.get(name, &Lookup.lookup_extension(containing_type, &1))
+  end
+
+  @spec get_extension_numbers_by_type(atom(), binary()) ::
+          {:ok, list(integer())} | {:error, binary}
+  def get_extension_numbers_by_type(cfg, mod) do
+    name = start_agent_on_first_call(cfg)
+    Agent.get(name, &Lookup.lookup_extension_numbers(mod, &1))
   end
 
   def put_state(cfg, %__MODULE__{} = state) do

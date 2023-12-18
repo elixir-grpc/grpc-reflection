@@ -71,6 +71,20 @@ defmodule GrpcReflection do
       end
 
       @doc """
+      Get the extension numbers for the given type, if it is exposed by a configured service
+      """
+      def get_extension_numbers_by_type(mod) do
+        GrpcReflection.Service.Agent.get_extension_numbers_by_type(@cfg, mod)
+      end
+
+      @doc """
+      Get the reflection response for the given extension, if it is exposed by a configured service
+      """
+      def get_by_extension(containing_type) do
+        GrpcReflection.Service.Agent.get_by_extension(@cfg, containing_type)
+      end
+
+      @doc """
       A runtime configuration option for setting the services
       """
       @spec put_services(list(module())) :: :ok | {:error, binary()}

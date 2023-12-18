@@ -1,0 +1,21 @@
+syntax = "proto2";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.helloworld";
+option java_outer_classname = "HelloWorldProto";
+option objc_class_prefix = "HLW";
+
+import "helloworld_v2.proto";
+
+package helloworld;
+
+message Tracer {
+    optional int32 id = 1;
+    optional string name = 2;
+}
+
+extend HelloReply {
+    optional string extend_message = 100;
+    optional int32 extend_number = 102;
+    optional Tracer tracer = 502;
+}
