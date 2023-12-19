@@ -19,7 +19,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 25.1.x
-          elixir-version: 1.14.x
+          elixir-version: 1.15.x
 
       - name: Restore dependencies cache
         id: mix_cache
