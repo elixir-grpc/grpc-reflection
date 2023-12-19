@@ -6,6 +6,7 @@ option java_outer_classname = "HelloWorldProto";
 option objc_class_prefix = "HLW";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 
 package helloworld;
 
@@ -24,4 +25,7 @@ message HelloRequest {
 message HelloReply {
   string message = 1;
   google.protobuf.Timestamp today = 2;
+
+  google.protobuf.StringValue ext_1 = 3;
+  google.protobuf.StringValue ext_2 = 4;
 }

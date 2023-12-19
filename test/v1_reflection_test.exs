@@ -100,7 +100,11 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
       assert response.package == "helloworld"
-      assert response.dependency == ["google.protobuf.Timestamp.proto"]
+
+      assert response.dependency == [
+               "google.protobuf.Timestamp.proto",
+               "google.protobuf.StringValue.proto"
+             ]
 
       assert [
                %Google.Protobuf.DescriptorProto{
@@ -120,6 +124,22 @@ defmodule GrpcReflection.V1ReflectionTest do
                      type: :TYPE_MESSAGE,
                      type_name: ".google.protobuf.Timestamp",
                      json_name: "today"
+                   },
+                   %Google.Protobuf.FieldDescriptorProto{
+                     name: "ext_1",
+                     extendee: nil,
+                     number: 3,
+                     label: :LABEL_OPTIONAL,
+                     type: :TYPE_MESSAGE,
+                     type_name: ".google.protobuf.StringValue"
+                   },
+                   %Google.Protobuf.FieldDescriptorProto{
+                     name: "ext_2",
+                     extendee: nil,
+                     number: 4,
+                     label: :LABEL_OPTIONAL,
+                     type: :TYPE_MESSAGE,
+                     type_name: ".google.protobuf.StringValue"
                    }
                  ]
                }
