@@ -32,6 +32,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
 
       assert names == [
                "helloworld.Greeter",
+               "testserviceV3.TestService",
                "grpc.reflection.v1.ServerReflection",
                "grpc.reflection.v1alpha.ServerReflection"
              ]
@@ -100,11 +101,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
       assert response.package == "helloworld"
-
-      assert response.dependency == [
-               "google.protobuf.Timestamp.proto",
-               "google.protobuf.StringValue.proto"
-             ]
+      assert response.dependency == ["google.protobuf.Timestamp.proto"]
 
       assert [
                %Google.Protobuf.DescriptorProto{
@@ -124,22 +121,6 @@ defmodule GrpcReflection.V1alphaReflectionTest do
                      type: :TYPE_MESSAGE,
                      type_name: ".google.protobuf.Timestamp",
                      json_name: "today"
-                   },
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "ext_1",
-                     extendee: nil,
-                     number: 3,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_MESSAGE,
-                     type_name: ".google.protobuf.StringValue"
-                   },
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "ext_2",
-                     extendee: nil,
-                     number: 4,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_MESSAGE,
-                     type_name: ".google.protobuf.StringValue"
                    }
                  ]
                }
@@ -175,6 +156,15 @@ defmodule GrpcReflection.V1alphaReflectionTest do
                  name: "Timestamp"
                }
              ] = response.message_type
+    end
+
+    test "ensures file descriptor dependencies are unique", ctx do
+      filename = "testserviceV3.TestReply.proto"
+      message = {:file_by_filename, filename}
+      assert {:ok, response} = run_request(message, ctx)
+      assert response.name == filename
+      assert response.package == "testserviceV3"
+      assert response.dependency ==  ["google.protobuf.Timestamp.proto", "google.protobuf.StringValue.proto"]
     end
   end
 end

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
+import "google/protobuf/wrappers.proto";
 
 package testserviceV3;
 
@@ -22,6 +23,9 @@ message TestRequest {
 
 message TestReply {
   google.protobuf.Timestamp today = 2;
+
+  google.protobuf.StringValue ext_1 = 3;
+  google.protobuf.StringValue ext_2 = 4;
 }
 
 enum Enum {

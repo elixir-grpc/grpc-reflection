@@ -75,34 +75,6 @@ defmodule Helloworld.HelloReply do
           json_name: "today",
           proto3_optional: nil,
           __unknown_fields__: []
-        },
-        %Google.Protobuf.FieldDescriptorProto{
-          name: "ext_1",
-          extendee: nil,
-          number: 3,
-          label: :LABEL_OPTIONAL,
-          type: :TYPE_MESSAGE,
-          type_name: ".google.protobuf.StringValue",
-          default_value: nil,
-          options: nil,
-          oneof_index: nil,
-          json_name: "ext1",
-          proto3_optional: nil,
-          __unknown_fields__: []
-        },
-        %Google.Protobuf.FieldDescriptorProto{
-          name: "ext_2",
-          extendee: nil,
-          number: 4,
-          label: :LABEL_OPTIONAL,
-          type: :TYPE_MESSAGE,
-          type_name: ".google.protobuf.StringValue",
-          default_value: nil,
-          options: nil,
-          oneof_index: nil,
-          json_name: "ext2",
-          proto3_optional: nil,
-          __unknown_fields__: []
         }
       ],
       nested_type: [],
@@ -119,8 +91,6 @@ defmodule Helloworld.HelloReply do
 
   field :message, 1, type: :string
   field :today, 2, type: Google.Protobuf.Timestamp
-  field :ext_1, 3, type: Google.Protobuf.StringValue, json_name: "ext1"
-  field :ext_2, 4, type: Google.Protobuf.StringValue, json_name: "ext2"
 end
 
 defmodule Helloworld.Greeter.Service do
