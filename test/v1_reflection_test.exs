@@ -32,6 +32,7 @@ defmodule GrpcReflection.V1ReflectionTest do
 
       assert names == [
                "helloworld.Greeter",
+               "testserviceV3.TestService",
                "grpc.reflection.v1.ServerReflection",
                "grpc.reflection.v1alpha.ServerReflection"
              ]
@@ -155,6 +156,15 @@ defmodule GrpcReflection.V1ReflectionTest do
                  name: "Timestamp"
                }
              ] = response.message_type
+    end
+
+    test "ensures file descriptor dependencies are unique", ctx do
+      filename = "testserviceV3.TestReply.proto"
+      message = {:file_by_filename, filename}
+      assert {:ok, response} = run_request(message, ctx)
+      assert response.name == filename
+      assert response.package == "testserviceV3"
+      assert response.dependency ==  ["google.protobuf.Timestamp.proto", "google.protobuf.StringValue.proto"]
     end
   end
 end

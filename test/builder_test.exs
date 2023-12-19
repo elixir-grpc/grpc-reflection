@@ -12,6 +12,7 @@ defmodule GrpcReflection.BuilderTest do
 
     assert Map.keys(tree.files) == [
              "google.protobuf.Any.proto",
+             "google.protobuf.StringValue.proto",
              "google.protobuf.Timestamp.proto",
              "testserviceV3.Enum.proto",
              "testserviceV3.TestReply.proto",
@@ -22,6 +23,7 @@ defmodule GrpcReflection.BuilderTest do
 
     assert Map.keys(tree.symbols) == [
              "google.protobuf.Any",
+             "google.protobuf.StringValue",
              "google.protobuf.Timestamp",
              "testserviceV3.Enum",
              "testserviceV3.TestReply",
