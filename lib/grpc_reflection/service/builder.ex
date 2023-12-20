@@ -174,7 +174,7 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   defp types_from_descriptor(%Google.Protobuf.DescriptorProto{} = descriptor) do
-    descriptor.field
+    (descriptor.field ++ Enum.flat_map(descriptor.nested_type, & &1.field))
     |> Enum.map(fn field ->
       field.type_name
     end)

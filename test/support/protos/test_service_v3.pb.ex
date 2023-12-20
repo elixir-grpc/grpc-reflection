@@ -1,6 +1,4 @@
 defmodule TestserviceV3.Enum do
-  @moduledoc false
-
   use Protobuf, enum: true, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
 
   def descriptor do
@@ -33,8 +31,6 @@ defmodule TestserviceV3.Enum do
 end
 
 defmodule TestserviceV3.TestRequest.GEntry do
-  @moduledoc false
-
   use Protobuf, map: true, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
 
   def descriptor do
@@ -96,9 +92,156 @@ defmodule TestserviceV3.TestRequest.GEntry do
   field :value, 2, type: :int32
 end
 
-defmodule TestserviceV3.TestRequest do
-  @moduledoc false
+defmodule TestserviceV3.TestRequest.Payload.Location do
+  use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
 
+  def descriptor do
+    # credo:disable-for-next-line
+    %Google.Protobuf.DescriptorProto{
+      name: "Location",
+      field: [
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "latitude",
+          extendee: nil,
+          number: 1,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_DOUBLE,
+          type_name: nil,
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "latitude",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "longitude",
+          extendee: nil,
+          number: 2,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_DOUBLE,
+          type_name: nil,
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "longitude",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        }
+      ],
+      nested_type: [],
+      enum_type: [],
+      extension_range: [],
+      extension: [],
+      options: nil,
+      oneof_decl: [],
+      reserved_range: [],
+      reserved_name: [],
+      __unknown_fields__: []
+    }
+  end
+
+  field :latitude, 1, type: :double
+  field :longitude, 2, type: :double
+end
+
+defmodule TestserviceV3.TestRequest.Payload do
+  use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
+
+  def descriptor do
+    # credo:disable-for-next-line
+    %Google.Protobuf.DescriptorProto{
+      name: "Payload",
+      field: [
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "data",
+          extendee: nil,
+          number: 1,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".google.protobuf.StringValue",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "data",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "location",
+          extendee: nil,
+          number: 2,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".testserviceV3.TestRequest.Payload.Location",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "location",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        }
+      ],
+      nested_type: [
+        %Google.Protobuf.DescriptorProto{
+          name: "Location",
+          field: [
+            %Google.Protobuf.FieldDescriptorProto{
+              name: "latitude",
+              extendee: nil,
+              number: 1,
+              label: :LABEL_OPTIONAL,
+              type: :TYPE_DOUBLE,
+              type_name: nil,
+              default_value: nil,
+              options: nil,
+              oneof_index: nil,
+              json_name: "latitude",
+              proto3_optional: nil,
+              __unknown_fields__: []
+            },
+            %Google.Protobuf.FieldDescriptorProto{
+              name: "longitude",
+              extendee: nil,
+              number: 2,
+              label: :LABEL_OPTIONAL,
+              type: :TYPE_DOUBLE,
+              type_name: nil,
+              default_value: nil,
+              options: nil,
+              oneof_index: nil,
+              json_name: "longitude",
+              proto3_optional: nil,
+              __unknown_fields__: []
+            }
+          ],
+          nested_type: [],
+          enum_type: [],
+          extension_range: [],
+          extension: [],
+          options: nil,
+          oneof_decl: [],
+          reserved_range: [],
+          reserved_name: [],
+          __unknown_fields__: []
+        }
+      ],
+      enum_type: [],
+      extension_range: [],
+      extension: [],
+      options: nil,
+      oneof_decl: [],
+      reserved_range: [],
+      reserved_name: [],
+      __unknown_fields__: []
+    }
+  end
+
+  field :data, 1, type: Google.Protobuf.StringValue
+  field :location, 2, type: TestserviceV3.TestRequest.Payload.Location
+end
+
+defmodule TestserviceV3.TestRequest do
   use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
 
   def descriptor do
@@ -189,6 +332,20 @@ defmodule TestserviceV3.TestRequest do
           json_name: "instrument",
           proto3_optional: nil,
           __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "payload",
+          extendee: nil,
+          number: 7,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".testserviceV3.TestRequest.Payload",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "payload",
+          proto3_optional: nil,
+          __unknown_fields__: []
         }
       ],
       nested_type: [
@@ -242,6 +399,91 @@ defmodule TestserviceV3.TestRequest do
           reserved_range: [],
           reserved_name: [],
           __unknown_fields__: []
+        },
+        %Google.Protobuf.DescriptorProto{
+          name: "Payload",
+          field: [
+            %Google.Protobuf.FieldDescriptorProto{
+              name: "data",
+              extendee: nil,
+              number: 1,
+              label: :LABEL_OPTIONAL,
+              type: :TYPE_MESSAGE,
+              type_name: ".google.protobuf.StringValue",
+              default_value: nil,
+              options: nil,
+              oneof_index: nil,
+              json_name: "data",
+              proto3_optional: nil,
+              __unknown_fields__: []
+            },
+            %Google.Protobuf.FieldDescriptorProto{
+              name: "location",
+              extendee: nil,
+              number: 2,
+              label: :LABEL_OPTIONAL,
+              type: :TYPE_MESSAGE,
+              type_name: ".testserviceV3.TestRequest.Payload.Location",
+              default_value: nil,
+              options: nil,
+              oneof_index: nil,
+              json_name: "location",
+              proto3_optional: nil,
+              __unknown_fields__: []
+            }
+          ],
+          nested_type: [
+            %Google.Protobuf.DescriptorProto{
+              name: "Location",
+              field: [
+                %Google.Protobuf.FieldDescriptorProto{
+                  name: "latitude",
+                  extendee: nil,
+                  number: 1,
+                  label: :LABEL_OPTIONAL,
+                  type: :TYPE_DOUBLE,
+                  type_name: nil,
+                  default_value: nil,
+                  options: nil,
+                  oneof_index: nil,
+                  json_name: "latitude",
+                  proto3_optional: nil,
+                  __unknown_fields__: []
+                },
+                %Google.Protobuf.FieldDescriptorProto{
+                  name: "longitude",
+                  extendee: nil,
+                  number: 2,
+                  label: :LABEL_OPTIONAL,
+                  type: :TYPE_DOUBLE,
+                  type_name: nil,
+                  default_value: nil,
+                  options: nil,
+                  oneof_index: nil,
+                  json_name: "longitude",
+                  proto3_optional: nil,
+                  __unknown_fields__: []
+                }
+              ],
+              nested_type: [],
+              enum_type: [],
+              extension_range: [],
+              extension: [],
+              options: nil,
+              oneof_decl: [],
+              reserved_range: [],
+              reserved_name: [],
+              __unknown_fields__: []
+            }
+          ],
+          enum_type: [],
+          extension_range: [],
+          extension: [],
+          options: nil,
+          oneof_decl: [],
+          reserved_range: [],
+          reserved_name: [],
+          __unknown_fields__: []
         }
       ],
       enum_type: [],
@@ -269,11 +511,10 @@ defmodule TestserviceV3.TestRequest do
   field :value, 4, type: :int32, oneof: 0
   field :g, 5, repeated: true, type: TestserviceV3.TestRequest.GEntry, map: true
   field :instrument, 6, type: Google.Protobuf.Any
+  field :payload, 7, type: TestserviceV3.TestRequest.Payload
 end
 
 defmodule TestserviceV3.TestReply do
-  @moduledoc false
-
   use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
 
   def descriptor do
@@ -342,8 +583,6 @@ defmodule TestserviceV3.TestReply do
 end
 
 defmodule TestserviceV3.TestService.Service do
-  @moduledoc false
-
   use GRPC.Service, name: "testserviceV3.TestService", protoc_gen_elixir_version: "0.12.0"
 
   def descriptor do
@@ -376,7 +615,5 @@ defmodule TestserviceV3.TestService.Service do
 end
 
 defmodule TestserviceV3.TestService.Stub do
-  @moduledoc false
-
   use GRPC.Stub, service: TestserviceV3.TestService.Service
 end

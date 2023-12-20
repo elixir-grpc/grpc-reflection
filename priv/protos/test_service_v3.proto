@@ -19,6 +19,19 @@ message TestRequest {
   }
   map<string, int32> g = 5;
   google.protobuf.Any instrument = 6;
+
+  message Payload {
+    google.protobuf.StringValue data = 1;
+
+    message Location {
+      double latitude = 1;
+      double longitude = 2;
+    }
+
+    Location location = 2;
+  }
+
+  Payload payload = 7;
 }
 
 message TestReply {
