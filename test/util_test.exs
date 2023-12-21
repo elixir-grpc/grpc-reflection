@@ -22,6 +22,23 @@ defmodule GrpcReflection.UtilTest do
   describe "utils for dealing with proto2 only" do
     test "convert %Google.Protobuf.FieldProps{} to %Google.Protobuf.FieldDescriptorProto{}" do
       extendee = TestserviceV2.TestRequest
+
+      # test for a POD(aka Plain Old Data) type
+      extension_number = 10
+
+      assert {TestserviceV2.PbExtension, extension} =
+               Protobuf.Extension.get_extension_props_by_tag(extendee, extension_number)
+
+      assert %Google.Protobuf.FieldDescriptorProto{
+               name: "data",
+               extendee: ^extendee,
+               number: ^extension_number,
+               label: 1
+             } = result = Util.convert_to_field_descriptor(extendee, extension)
+      assert 9 == result.type
+      assert nil == result.type_name
+
+      # test for a message type
       extension_number = 11
 
       assert {TestserviceV2.PbExtension, extension} =
@@ -29,12 +46,12 @@ defmodule GrpcReflection.UtilTest do
 
       assert %Google.Protobuf.FieldDescriptorProto{
                name: "location",
-               extendee: extendee,
-               number: extension_number,
-               label: 1,
-               type: 11,
-               type_name: "testserviceV2.Location"
-             } == Util.convert_to_field_descriptor(extendee, extension)
+               extendee: ^extendee,
+               number: ^extension_number,
+               label: 1
+             } = result = Util.convert_to_field_descriptor(extendee, extension)
+      assert 11 == result.type
+      assert "testserviceV2.Location" == result.type_name
     end
   end
 end
