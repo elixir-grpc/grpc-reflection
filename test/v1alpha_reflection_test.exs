@@ -6,6 +6,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
   @moduletag capture_log: true
 
   setup_all do
+    Protobuf.load_extensions()
     endpoint = GrpcReflection.TestEndpoint.Endpoint
     {:ok, _pid, port} = GRPC.Server.start_endpoint(endpoint, 0)
     host = "localhost:#{port}"
@@ -32,6 +33,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
 
       assert names == [
                "helloworld.Greeter",
+               "testserviceV2.TestService",
                "testserviceV3.TestService",
                "grpc.reflection.v1.ServerReflection",
                "grpc.reflection.v1alpha.ServerReflection"
@@ -164,7 +166,79 @@ defmodule GrpcReflection.V1alphaReflectionTest do
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
       assert response.package == "testserviceV3"
-      assert response.dependency ==  ["google.protobuf.Timestamp.proto", "google.protobuf.StringValue.proto"]
+
+      assert response.dependency == [
+               "google.protobuf.Timestamp.proto",
+               "google.protobuf.StringValue.proto"
+             ]
+    end
+  end
+
+  describe "proto2 extensions" do
+    test "get all extension numbers by type", ctx do
+      type = "testserviceV2.TestRequest"
+      message = {:all_extension_numbers_of_type, type}
+      assert {:ok, response} = run_request(message, ctx)
+      assert response.base_type_name == type
+      assert response.extension_number == [10, 11]
+    end
+
+    test "get extension descriptor file by extendee", ctx do
+      extendee = "testserviceV2.TestRequest"
+
+      message =
+        {:file_containing_extension,
+         %Grpc.Reflection.V1alpha.ExtensionRequest{
+           containing_type: extendee,
+           extension_number: 10
+         }}
+
+      assert {:ok, response} = run_request(message, ctx)
+      assert response.name == extendee <> "Extension.proto"
+      assert response.package == "testserviceV2"
+      assert response.dependency == [extendee <> ".proto"]
+
+      assert response.extension == [
+               %Google.Protobuf.FieldDescriptorProto{
+                 name: "data",
+                 extendee: extendee,
+                 number: 10,
+                 label: :LABEL_OPTIONAL,
+                 type: :TYPE_STRING,
+                 type_name: nil
+               },
+               %Google.Protobuf.FieldDescriptorProto{
+                 name: "location",
+                 extendee: extendee,
+                 number: 11,
+                 label: :LABEL_OPTIONAL,
+                 type: :TYPE_MESSAGE,
+                 type_name: "testserviceV2.Location"
+               }
+             ]
+
+      assert response.message_type == [
+               %Google.Protobuf.DescriptorProto{
+                 name: "Location",
+                 field: [
+                   %Google.Protobuf.FieldDescriptorProto{
+                     name: "latitude",
+                     number: 1,
+                     label: :LABEL_OPTIONAL,
+                     type: :TYPE_DOUBLE,
+                     json_name: "latitude"
+                   },
+                   %Google.Protobuf.FieldDescriptorProto{
+                     name: "longitude",
+                     extendee: nil,
+                     number: 2,
+                     label: :LABEL_OPTIONAL,
+                     type: :TYPE_DOUBLE,
+                     json_name: "longitude"
+                   }
+                 ]
+               }
+             ]
     end
   end
 end

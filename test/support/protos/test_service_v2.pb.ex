@@ -274,6 +274,59 @@ defmodule TestserviceV2.TestRequest do
   extensions [{10, 21}]
 end
 
+defmodule TestserviceV2.Location do
+  use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto2
+
+  def descriptor do
+    # credo:disable-for-next-line
+    %Google.Protobuf.DescriptorProto{
+      name: "Location",
+      field: [
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "latitude",
+          extendee: nil,
+          number: 1,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_DOUBLE,
+          type_name: nil,
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "latitude",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "longitude",
+          extendee: nil,
+          number: 2,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_DOUBLE,
+          type_name: nil,
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "longitude",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        }
+      ],
+      nested_type: [],
+      enum_type: [],
+      extension_range: [],
+      extension: [],
+      options: nil,
+      oneof_decl: [],
+      reserved_range: [],
+      reserved_name: [],
+      __unknown_fields__: []
+    }
+  end
+
+  field :latitude, 1, optional: true, type: :double
+  field :longitude, 2, optional: true, type: :double
+end
+
 defmodule TestserviceV2.TestReply do
   use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto2
 

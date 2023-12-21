@@ -68,7 +68,7 @@ defmodule GrpcReflection.BuilderTest do
            ]
 
     assert tree.extensions == %{
-             "testserviceV2.TestRequest" => [10]
+             "testserviceV2.TestRequest" => [10, 11]
            }
 
     (Map.values(tree.files) ++ Map.values(tree.symbols))

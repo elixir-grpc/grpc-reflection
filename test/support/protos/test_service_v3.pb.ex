@@ -1,6 +1,4 @@
 defmodule TestserviceV3.Enum do
-  @moduledoc false
-
   use Protobuf, enum: true, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
 
   def descriptor do
@@ -33,8 +31,6 @@ defmodule TestserviceV3.Enum do
 end
 
 defmodule TestserviceV3.TestRequest.GEntry do
-  @moduledoc false
-
   use Protobuf, map: true, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
 
   def descriptor do
@@ -97,8 +93,6 @@ defmodule TestserviceV3.TestRequest.GEntry do
 end
 
 defmodule TestserviceV3.TestRequest do
-  @moduledoc false
-
   use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
 
   def descriptor do
@@ -272,8 +266,6 @@ defmodule TestserviceV3.TestRequest do
 end
 
 defmodule TestserviceV3.TestReply do
-  @moduledoc false
-
   use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
 
   def descriptor do
@@ -342,8 +334,6 @@ defmodule TestserviceV3.TestReply do
 end
 
 defmodule TestserviceV3.TestService.Service do
-  @moduledoc false
-
   use GRPC.Service, name: "testserviceV3.TestService", protoc_gen_elixir_version: "0.12.0"
 
   def descriptor do
@@ -376,7 +366,5 @@ defmodule TestserviceV3.TestService.Service do
 end
 
 defmodule TestserviceV3.TestService.Stub do
-  @moduledoc false
-
   use GRPC.Stub, service: TestserviceV3.TestService.Service
 end

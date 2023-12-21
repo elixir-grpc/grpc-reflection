@@ -4,6 +4,7 @@ defmodule GrpcReflection.TestEndpoint do
       version: :v1,
       services: [
         Helloworld.Greeter.Service,
+        TestserviceV2.TestService.Service,
         TestserviceV3.TestService.Service,
         Grpc.Reflection.V1.ServerReflection.Service,
         Grpc.Reflection.V1alpha.ServerReflection.Service
@@ -19,6 +20,7 @@ defmodule GrpcReflection.TestEndpoint do
       version: :v1alpha,
       services: [
         Helloworld.Greeter.Service,
+        TestserviceV2.TestService.Service,
         TestserviceV3.TestService.Service,
         Grpc.Reflection.V1.ServerReflection.Service,
         Grpc.Reflection.V1alpha.ServerReflection.Service
