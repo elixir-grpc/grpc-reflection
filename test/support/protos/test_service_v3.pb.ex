@@ -1,4 +1,6 @@
 defmodule TestserviceV3.Enum do
+  @moduledoc false
+
   use Protobuf, enum: true, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
 
   def descriptor do
@@ -31,6 +33,8 @@ defmodule TestserviceV3.Enum do
 end
 
 defmodule TestserviceV3.TestRequest.GEntry do
+  @moduledoc false
+
   use Protobuf, map: true, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
 
   def descriptor do
@@ -93,6 +97,8 @@ defmodule TestserviceV3.TestRequest.GEntry do
 end
 
 defmodule TestserviceV3.TestRequest do
+  @moduledoc false
+
   use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
 
   def descriptor do
@@ -266,6 +272,8 @@ defmodule TestserviceV3.TestRequest do
 end
 
 defmodule TestserviceV3.TestReply do
+  @moduledoc false
+
   use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
 
   def descriptor do
@@ -286,6 +294,34 @@ defmodule TestserviceV3.TestReply do
           json_name: "today",
           proto3_optional: nil,
           __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "ext_1",
+          extendee: nil,
+          number: 3,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".google.protobuf.StringValue",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "ext1",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "ext_2",
+          extendee: nil,
+          number: 4,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".google.protobuf.StringValue",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "ext2",
+          proto3_optional: nil,
+          __unknown_fields__: []
         }
       ],
       nested_type: [],
@@ -301,9 +337,13 @@ defmodule TestserviceV3.TestReply do
   end
 
   field :today, 2, type: Google.Protobuf.Timestamp
+  field :ext_1, 3, type: Google.Protobuf.StringValue, json_name: "ext1"
+  field :ext_2, 4, type: Google.Protobuf.StringValue, json_name: "ext2"
 end
 
 defmodule TestserviceV3.TestService.Service do
+  @moduledoc false
+
   use GRPC.Service, name: "testserviceV3.TestService", protoc_gen_elixir_version: "0.12.0"
 
   def descriptor do
@@ -336,5 +376,7 @@ defmodule TestserviceV3.TestService.Service do
 end
 
 defmodule TestserviceV3.TestService.Stub do
+  @moduledoc false
+
   use GRPC.Stub, service: TestserviceV3.TestService.Service
 end

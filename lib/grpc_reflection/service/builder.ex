@@ -202,6 +202,7 @@ defmodule GrpcReflection.Service.Builder do
       |> Enum.map(fn name ->
         name <> ".proto"
       end)
+      |> Enum.uniq()
 
     response_stub =
       %FileDescriptorProto{
