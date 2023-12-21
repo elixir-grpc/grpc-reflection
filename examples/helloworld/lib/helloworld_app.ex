@@ -7,7 +7,6 @@ defmodule HelloworldApp do
       GrpcReflection
     ]
 
-    Protobuf.load_extensions()
     opts = [strategy: :one_for_one, name: HelloworldApp]
     Supervisor.start_link(children, opts)
   end

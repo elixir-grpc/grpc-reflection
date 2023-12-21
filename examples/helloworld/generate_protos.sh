@@ -17,17 +17,10 @@ for file in $GOOGLE_PROTOS; do
   protoc --elixir_out=plugins=grpc,gen_descriptors=true:./lib/protos --proto_path=protobuf/src/ $file
 done
 
-# protos for protobuf3
 PROTOS=("
     priv/protos/helloworld.proto
 ")
 
-# protos for protobuf2
-PROTOS2=("
-    priv/protos/helloworld_v2.proto
-    priv/protos/helloworld_ext_v2.proto
-")
-
-for file in $PROTOS2; do
+for file in $PROTOS; do
   protoc --elixir_out=plugins=grpc,gen_descriptors=true:./lib/protos --proto_path=priv/protos/ $file
 done

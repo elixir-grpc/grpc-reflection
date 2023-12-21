@@ -40,7 +40,6 @@ defmodule GrpcReflection.BuilderTest do
   end
 
   test "supports all reflection types in proto2" do
-    Protobuf.load_extensions()
     tree = Builder.build_reflection_tree([TestserviceV2.TestService.Service])
     assert %Agent{services: [TestserviceV2.TestService.Service]} = tree
 
