@@ -17,6 +17,8 @@ defmodule GrpcReflection.BuilderTest do
              "testserviceV3.Enum.proto",
              "testserviceV3.TestReply.proto",
              "testserviceV3.TestRequest.GEntry.proto",
+             "testserviceV3.TestRequest.Payload.Location.proto",
+             "testserviceV3.TestRequest.Payload.proto",
              "testserviceV3.TestRequest.proto",
              "testserviceV3.TestService.proto"
            ]
@@ -29,6 +31,8 @@ defmodule GrpcReflection.BuilderTest do
              "testserviceV3.TestReply",
              "testserviceV3.TestRequest",
              "testserviceV3.TestRequest.GEntry",
+             "testserviceV3.TestRequest.Payload",
+             "testserviceV3.TestRequest.Payload.Location",
              "testserviceV3.TestService",
              "testserviceV3.TestService.CallFunction"
            ]

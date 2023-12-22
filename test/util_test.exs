@@ -35,6 +35,7 @@ defmodule GrpcReflection.UtilTest do
                number: ^extension_number,
                label: 1
              } = result = Util.convert_to_field_descriptor(extendee, extension)
+
       assert 9 == result.type
       assert nil == result.type_name
 
@@ -50,6 +51,7 @@ defmodule GrpcReflection.UtilTest do
                number: ^extension_number,
                label: 1
              } = result = Util.convert_to_field_descriptor(extendee, extension)
+
       assert 11 == result.type
       assert "testserviceV2.Location" == result.type_name
     end

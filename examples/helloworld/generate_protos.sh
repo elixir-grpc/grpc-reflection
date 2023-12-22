@@ -14,7 +14,7 @@ GOOGLE_PROTOS=("
 ")
 
 for file in $GOOGLE_PROTOS; do
-  protoc --elixir_out=plugins=grpc,gen_descriptors=true:./lib/protos --proto_path=protobuf/src/ $file
+  protoc --elixir_opt=include_docs=true --elixir_out=plugins=grpc,gen_descriptors=true:./lib/protos --proto_path=protobuf/src/ $file
 done
 
 PROTOS=("
@@ -22,5 +22,5 @@ PROTOS=("
 ")
 
 for file in $PROTOS; do
-  protoc --elixir_out=plugins=grpc,gen_descriptors=true:./lib/protos --proto_path=priv/protos/ $file
+  protoc --elixir_opt=include_docs=true --elixir_out=plugins=grpc,gen_descriptors=true:./lib/protos --proto_path=priv/protos/ $file
 done

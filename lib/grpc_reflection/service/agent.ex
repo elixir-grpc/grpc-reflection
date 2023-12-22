@@ -11,11 +11,12 @@ defmodule GrpcReflection.Service.Agent do
   defstruct services: [], files: %{}, symbols: %{}, extensions: %{}
 
   @type descriptor_t :: GrpcReflection.descriptor_t()
-  @type t :: %{
-          required(:services) => list(module()),
-          required(:files) => %{optional(binary()) => descriptor_t()},
-          required(:symbols) => %{optional(binary()) => descriptor_t()},
-          required(:extensions) => %{optional(binary()) => list(integer())}
+  @type cfg_t :: {atom(), list(atom)}
+  @type t :: %__MODULE__{
+          services: list(module()),
+          files: %{optional(binary()) => descriptor_t()},
+          symbols: %{optional(binary()) => descriptor_t()},
+          extensions: %{optional(binary()) => list(integer())}
         }
 
   def start_link(_, opts) do
@@ -33,37 +34,38 @@ defmodule GrpcReflection.Service.Agent do
     end
   end
 
-  @spec list_services(atom()) :: list(binary)
+  @spec list_services(cfg_t()) :: list(binary)
   def list_services(cfg) do
     name = start_agent_on_first_call(cfg)
     Agent.get(name, &Lookup.lookup_services/1)
   end
 
-  @spec get_by_symbol(atom(), binary()) :: {:ok, descriptor_t()} | {:error, binary}
+  @spec get_by_symbol(cfg_t(), binary()) :: {:ok, descriptor_t()} | {:error, binary}
   def get_by_symbol(cfg, symbol) do
     name = start_agent_on_first_call(cfg)
     Agent.get(name, &Lookup.lookup_symbol(symbol, &1))
   end
 
-  @spec get_by_filename(atom(), binary()) :: {:ok, descriptor_t()} | {:error, binary}
+  @spec get_by_filename(cfg_t(), binary()) :: {:ok, descriptor_t()} | {:error, binary}
   def get_by_filename(cfg, filename) do
     name = start_agent_on_first_call(cfg)
     Agent.get(name, &Lookup.lookup_filename(filename, &1))
   end
 
-  @spec get_by_extension(atom(), binary()) :: {:ok, descriptor_t()} | {:error, binary}
+  @spec get_by_extension(cfg_t(), binary()) :: {:ok, descriptor_t()} | {:error, binary}
   def get_by_extension(cfg, containing_type) do
     name = start_agent_on_first_call(cfg)
     Agent.get(name, &Lookup.lookup_extension(containing_type, &1))
   end
 
-  @spec get_extension_numbers_by_type(atom(), binary()) ::
+  @spec get_extension_numbers_by_type(cfg_t(), binary()) ::
           {:ok, list(integer())} | {:error, binary}
   def get_extension_numbers_by_type(cfg, mod) do
     name = start_agent_on_first_call(cfg)
     Agent.get(name, &Lookup.lookup_extension_numbers(mod, &1))
   end
 
+  @spec put_state(cfg_t(), t()) :: :ok
   def put_state(cfg, %__MODULE__{} = state) do
     name = start_agent_on_first_call(cfg)
     Agent.update(name, fn _old_state -> state end)
