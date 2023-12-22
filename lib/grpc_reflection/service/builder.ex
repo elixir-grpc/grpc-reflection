@@ -349,7 +349,7 @@ defmodule GrpcReflection.Service.Builder do
         |> Module.split()
         |> Enum.split(-1)
 
-      Enum.map_join(packs, ".", &downcase_first/1) <> name
+      Enum.map_join(packs, ".", &downcase_first/1) <> "." <> name
     end
   end
 end

@@ -20,7 +20,6 @@ defmodule GrpcReflection.Service.Agent do
         }
 
   def start_link(_, opts) do
-    Protobuf.load_extensions()
     name = Keyword.get(opts, :name)
     services = Keyword.get(opts, :services)
 

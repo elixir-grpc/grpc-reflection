@@ -34,6 +34,7 @@ defmodule GrpcReflection do
   end
   ```
   """
+  use Supervisor
 
   @type descriptor_t ::
           %Google.Protobuf.DescriptorProto{} | %Google.Protobuf.ServiceDescriptorProto{}
@@ -129,13 +130,35 @@ defmodule GrpcReflection do
     end
   end
 
-  @doc false
-  def child_spec(opts) do
-    %{
-      id: GrpcReflection.DynamicSupervisor,
-      start: {GrpcReflection.DynamicSupervisor, :start_link, [opts]},
-      type: :supervisor,
-      restart: :permanent
-    }
+  def start_link(opts) do
+    Supervisor.start_link(__MODULE__, opts, name: __MODULE__)
+  end
+
+  @impl true
+  def init(opts) do
+    children = [
+      %{
+        id: OneOffTask,
+        start: {Task, :start_link, [__MODULE__, :one_off_task, []]},
+        type: :worker,
+        restart: :temporary
+      },
+      %{
+        id: GrpcReflection.DynamicSupervisor,
+        start: {GrpcReflection.DynamicSupervisor, :start_link, [opts]},
+        type: :supervisor,
+        restart: :permanent
+      }
+    ]
+
+    Supervisor.init(children, strategy: :one_for_one)
+  end
+
+  @doc """
+  Load the protobuf extensions
+  """
+  def one_off_task do
+    Protobuf.load_extensions()
+    :ignore
   end
 end
