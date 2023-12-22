@@ -29,7 +29,7 @@ This is written and tested using grpcurl and postman.  It supports both v1alpha 
 1. Create a reflection server
   ```elixir
   defmodule Helloworld.Reflection.Server do
-    use GrpcReflection,
+    use GrpcReflection.Server,
       version: :v1,
       services: [Helloworld.Greeter.Service]
   end
@@ -37,7 +37,7 @@ This is written and tested using grpcurl and postman.  It supports both v1alpha 
   or
   ```elixir
   defmodule Helloworld.Reflection.Server2 do
-    use GrpcReflection,
+    use GrpcReflection.Server,
       version: :v1alpha,
       services: [Helloworld.Greeter.Service]
   end

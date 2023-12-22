@@ -4,7 +4,7 @@ defmodule GrpcReflection.Test do
   use GrpcCase
 
   defmodule Service do
-    use GrpcReflection, version: :v1
+    use GrpcReflection.Server, version: :v1
   end
 
   test "adding a service changes responses" do

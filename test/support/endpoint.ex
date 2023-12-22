@@ -1,6 +1,6 @@
 defmodule GrpcReflection.TestEndpoint do
   defmodule V1Server do
-    use GrpcReflection,
+    use GrpcReflection.Server,
       version: :v1,
       services: [
         Helloworld.Greeter.Service,
@@ -16,7 +16,7 @@ defmodule GrpcReflection.TestEndpoint do
   end
 
   defmodule V1AlphaServer do
-    use GrpcReflection,
+    use GrpcReflection.Server,
       version: :v1alpha,
       services: [
         Helloworld.Greeter.Service,
