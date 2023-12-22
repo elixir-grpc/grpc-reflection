@@ -3,13 +3,17 @@ defmodule GrpcReflection.UtilTest do
 
   use ExUnit.Case
 
-  alias GrpcReflection.Service.Util
+  alias GrpcReflection.Service.Builder.Util
 
   setup_all do
     Protobuf.load_extensions()
   end
 
   describe "common utils" do
+    test "get package from module name" do
+      assert "a.b" == Util.package_from_name("a.b.CService")
+    end
+
     test "upcase_first" do
       assert "Hello" == Util.upcase_first("hello")
     end
@@ -36,7 +40,7 @@ defmodule GrpcReflection.UtilTest do
                label: 1
              } = result = Util.convert_to_field_descriptor(extendee, extension)
 
-      assert 9 == result.type
+      assert Google.Protobuf.FieldDescriptorProto.Type.mapping()[:TYPE_STRING] == result.type
       assert nil == result.type_name
 
       # test for a message type
@@ -52,7 +56,7 @@ defmodule GrpcReflection.UtilTest do
                label: 1
              } = result = Util.convert_to_field_descriptor(extendee, extension)
 
-      assert 11 == result.type
+      assert Google.Protobuf.FieldDescriptorProto.Type.mapping()[:TYPE_MESSAGE] == result.type
       assert "testserviceV2.Location" == result.type_name
     end
   end
