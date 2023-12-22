@@ -56,6 +56,7 @@ defmodule GrpcReflection.BuilderTest do
              "testserviceV2.TestReply.proto",
              "testserviceV2.TestRequest.GEntry.proto",
              "testserviceV2.TestRequest.proto",
+             "testserviceV2.TestRequestExtension.proto",
              "testserviceV2.TestService.proto"
            ]
 
@@ -69,6 +70,10 @@ defmodule GrpcReflection.BuilderTest do
              "testserviceV2.TestService",
              "testserviceV2.TestService.CallFunction"
            ]
+
+    assert tree.extensions == %{
+             "testserviceV2.TestRequest" => [10, 11]
+           }
 
     (Map.values(tree.files) ++ Map.values(tree.symbols))
     |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))

@@ -34,6 +34,7 @@ defmodule GrpcReflection do
   end
   ```
   """
+  use Supervisor
 
   @type descriptor_t ::
           %Google.Protobuf.DescriptorProto{} | %Google.Protobuf.ServiceDescriptorProto{}
@@ -68,6 +69,22 @@ defmodule GrpcReflection do
       @spec get_by_filename(binary()) :: {:ok, GrpcReflection.descriptor_t()} | {:error, binary}
       def get_by_filename(filename) do
         GrpcReflection.Service.Agent.get_by_filename(@cfg, filename)
+      end
+
+      @doc """
+      Get the extension numbers for the given type, if it is exposed by a configured service
+      """
+      @spec get_extension_numbers_by_type(module()) :: {:ok, list(integer())} | {:error, binary}
+      def get_extension_numbers_by_type(mod) do
+        GrpcReflection.Service.Agent.get_extension_numbers_by_type(@cfg, mod)
+      end
+
+      @doc """
+      Get the reflection response for the given extension, if it is exposed by a configured service
+      """
+      @spec get_by_extension(binary()) :: {:ok, GrpcReflection.descriptor_t()} | {:error, binary}
+      def get_by_extension(containing_type) do
+        GrpcReflection.Service.Agent.get_by_extension(@cfg, containing_type)
       end
 
       @doc """
@@ -113,13 +130,35 @@ defmodule GrpcReflection do
     end
   end
 
-  @doc false
-  def child_spec(opts) do
-    %{
-      id: GrpcReflection.DynamicSupervisor,
-      start: {GrpcReflection.DynamicSupervisor, :start_link, [opts]},
-      type: :supervisor,
-      restart: :permanent
-    }
+  def start_link(opts) do
+    Supervisor.start_link(__MODULE__, opts, name: __MODULE__)
+  end
+
+  @impl true
+  def init(opts) do
+    children = [
+      %{
+        id: OneOffTask,
+        start: {Task, :start_link, [__MODULE__, :one_off_task, []]},
+        type: :worker,
+        restart: :temporary
+      },
+      %{
+        id: GrpcReflection.DynamicSupervisor,
+        start: {GrpcReflection.DynamicSupervisor, :start_link, [opts]},
+        type: :supervisor,
+        restart: :permanent
+      }
+    ]
+
+    Supervisor.init(children, strategy: :one_for_one)
+  end
+
+  @doc """
+  Load the protobuf extensions
+  """
+  def one_off_task do
+    Protobuf.load_extensions()
+    :ignore
   end
 end

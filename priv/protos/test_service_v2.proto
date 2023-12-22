@@ -25,8 +25,14 @@ message TestRequest {
   extensions 10 to 20;
 }
 
+message Location {
+  optional double latitude = 1;
+  optional double longitude = 2;
+}
+
 extend TestRequest {
-   optional string extended_field = 10;
+   optional string data = 10;
+   optional Location location = 11;
 }
 
 message TestReply {

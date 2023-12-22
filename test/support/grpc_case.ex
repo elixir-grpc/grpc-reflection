@@ -45,6 +45,9 @@ defmodule GrpcCase do
       {:list_services_response, services} ->
         {:ok, services}
 
+      {:all_extension_numbers_response, response} ->
+        {:ok, response}
+
       {:error_response, resp} ->
         {:error, resp}
     end
