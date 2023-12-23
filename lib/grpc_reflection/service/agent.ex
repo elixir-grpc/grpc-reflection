@@ -10,7 +10,7 @@ defmodule GrpcReflection.Service.Agent do
 
   defstruct services: [], files: %{}, symbols: %{}, extensions: %{}
 
-  @type descriptor_t :: GrpcReflection.descriptor_t()
+  @type descriptor_t :: GrpcReflection.Server.descriptor_t()
   @type cfg_t :: {atom(), list(atom)}
   @type t :: %__MODULE__{
           services: list(module()),

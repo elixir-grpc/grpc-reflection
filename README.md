@@ -29,7 +29,7 @@ This is written and tested using grpcurl and postman.  It supports both v1alpha 
 1. Create a reflection server
   ```elixir
   defmodule Helloworld.Reflection.Server do
-    use GrpcReflection,
+    use GrpcReflection.Server,
       version: :v1,
       services: [Helloworld.Greeter.Service]
   end
@@ -37,7 +37,7 @@ This is written and tested using grpcurl and postman.  It supports both v1alpha 
   or
   ```elixir
   defmodule Helloworld.Reflection.Server2 do
-    use GrpcReflection,
+    use GrpcReflection.Server,
       version: :v1alpha,
       services: [Helloworld.Greeter.Service]
   end
@@ -78,11 +78,11 @@ message HelloReply {
 
 ## Protobuf Version Support
 
-This utility currently only supports proto3.  It does not support some of the features of proto2, including extensions.
+This module is more thoroughly tested with proto3, but it has some testing with proto2.  In either case feedback is appreciated as we approach full proto support in this module.
 
 ## Application Support
 
-This is **not** an exhaustive list
+This is **not** an exhaustive list, contributions are appreciated.
 
 | Application  | Reflection version required |
 | ------------- | ------------- |
