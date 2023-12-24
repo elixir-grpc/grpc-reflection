@@ -5,45 +5,32 @@ defmodule GrpcReflection.Service.Builder do
   alias GrpcReflection.Service.State
   alias GrpcReflection.Service.Builder.Util
 
-  @type_message Map.fetch!(Google.Protobuf.FieldDescriptorProto.Type.mapping(), :TYPE_MESSAGE)
-
   def build_reflection_tree(services) do
-    with :ok <- validate_services(services),
-         {:ok, {state, references}} <- get_services_and_references(services) do
-      references
-      |> List.flatten()
-      |> Enum.uniq()
-      |> process_references(state)
-      |> then(&{:ok, &1})
+    with :ok <- Util.validate_services(services),
+         {:ok, state} <- process_services(services) do
+      process_references(state)
     end
   end
 
-  defp validate_services(services) do
-    services
-    |> Enum.reject(fn service_mod ->
-      is_binary(service_mod.__meta__(:name)) and is_struct(service_mod.descriptor())
-    end)
-    |> then(fn
-      [] -> :ok
-      _ -> {:error, "non-service module provided"}
-    end)
-  rescue
-    _ -> {:error, "non-service module provided"}
+  defp process_references(%State{} = state) do
+    # references is a growing set.  Processing references can add new references
+    case State.get_missing_references(state) do
+      [] ->
+        {:ok, state}
+
+      missing_refs ->
+        missing_refs
+        |> Enum.reduce(state, &State.merge(&2, process_reference(&1)))
+        |> process_references()
+    end
   end
 
-  defp get_services_and_references(services) do
+  defp process_services(services) do
     services
-    |> Enum.reduce_while({State.new(services), []}, fn service, {state, refs} ->
+    |> Enum.reduce_while(State.new(services), fn service, state ->
       case process_service(service) do
-        {:ok, new_state, references} ->
-          {:cont,
-           {
-             State.merge(state, new_state),
-             [refs | references]
-           }}
-
-        {:error, reason} ->
-          {:halt, {:error, reason}}
+        {:ok, new_state} -> {:cont, State.merge(state, new_state)}
+        {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
     |> then(fn
@@ -55,7 +42,7 @@ defmodule GrpcReflection.Service.Builder do
   defp process_service(service) do
     descriptor = service.descriptor()
     service_name = service.__meta__(:name)
-    referenced_types = types_from_descriptor(descriptor)
+    referenced_types = Util.types_from_descriptor(descriptor)
 
     method_symbols =
       Enum.map(
@@ -75,51 +62,21 @@ defmodule GrpcReflection.Service.Builder do
         |> Map.put(service_name, response)
       )
       |> State.add_files(%{(service_name <> ".proto") => response})
+      |> State.add_references(referenced_types)
 
-    {:ok, state, referenced_types}
+    {:ok, state}
   rescue
     _ -> {:error, "Couldn't process #{inspect(service)}"}
   end
 
-  defp process_references([], state), do: state
-
-  defp process_references([reference | rest], state) do
-    case State.lookup_symbol(reference, state) do
-      {:ok, _} ->
-        process_references(rest, state)
-
-      _ ->
-        {ref_state, references} = process_reference(reference)
-        references = (rest ++ references) |> List.flatten() |> Enum.uniq()
-        process_references(references, State.merge(state, ref_state))
-    end
-  end
-
-  defp convert_symbol_to_module(symbol) do
-    symbol
-    |> then(fn
-      "." <> name -> name
-      name -> name
-    end)
-    |> String.split(".")
-    |> Enum.reverse()
-    |> then(fn
-      [m | segments] -> [m | Enum.map(segments, &Util.upcase_first/1)]
-    end)
-    |> Enum.reverse()
-    |> Enum.join(".")
-    |> then(fn name -> "Elixir." <> name end)
-    |> String.to_existing_atom()
-  end
-
   defp process_reference(symbol) do
     symbol
-    |> convert_symbol_to_module()
+    |> Util.convert_symbol_to_module()
     |> then(fn mod ->
       descriptor = mod.descriptor()
       name = symbol
 
-      referenced_types = types_from_descriptor(descriptor)
+      referenced_types = Util.types_from_descriptor(descriptor)
       unencoded_payload = process_common(name, mod, descriptor)
       payload = FileDescriptorProto.encode(unencoded_payload)
       response = %{file_descriptor_proto: [payload]}
@@ -132,13 +89,11 @@ defmodule GrpcReflection.Service.Builder do
       {root_extensions, root_files} =
         process_extensions(mod, symbol, extension_file, descriptor, root_files)
 
-      {
-        State.new()
-        |> State.add_files(root_files)
-        |> State.add_symbols(root_symbols)
-        |> State.add_extensions(root_extensions),
-        referenced_types
-      }
+      State.new()
+      |> State.add_files(root_files)
+      |> State.add_symbols(root_symbols)
+      |> State.add_extensions(root_extensions)
+      |> State.add_references(referenced_types)
     end)
   end
 
@@ -167,7 +122,7 @@ defmodule GrpcReflection.Service.Builder do
       name: extension_file,
       package: Util.package_from_name(symbol),
       dependency: [symbol <> ".proto"],
-      syntax: get_syntax(mod)
+      syntax: Util.get_syntax(mod)
     }
 
     {extension_numbers, extension_files} =
@@ -183,9 +138,9 @@ defmodule GrpcReflection.Service.Builder do
       )
 
     message_list =
-      for ext <- extension_files, is_message_descriptor?(ext) do
+      for ext <- extension_files, Util.is_message_descriptor?(ext) do
         ext.type_name
-        |> convert_symbol_to_module()
+        |> Util.convert_symbol_to_module()
         |> then(& &1.descriptor())
       end
 
@@ -200,17 +155,12 @@ defmodule GrpcReflection.Service.Builder do
 
   defp process_extensions(_, _, _, _), do: {:ignore, {nil, nil}}
 
-  defp is_message_descriptor?(%Google.Protobuf.FieldDescriptorProto{type: @type_message}),
-    do: true
-
-  defp is_message_descriptor?(_), do: false
-
   defp process_common(name, module, descriptor) do
     package = Util.package_from_name(name)
 
     dependencies =
       descriptor
-      |> types_from_descriptor()
+      |> Util.types_from_descriptor()
       |> Enum.map(fn name ->
         name <> ".proto"
       end)
@@ -221,7 +171,7 @@ defmodule GrpcReflection.Service.Builder do
         name: name <> ".proto",
         package: package,
         dependency: dependencies,
-        syntax: get_syntax(module)
+        syntax: Util.get_syntax(module)
       }
 
     case descriptor do
@@ -229,60 +179,5 @@ defmodule GrpcReflection.Service.Builder do
       %Google.Protobuf.ServiceDescriptorProto{} -> %{response_stub | service: [descriptor]}
       %Google.Protobuf.EnumDescriptorProto{} -> %{response_stub | enum_type: [descriptor]}
     end
-  end
-
-  defp get_syntax(module) do
-    cond do
-      Keyword.has_key?(module.__info__(:functions), :__message_props__) ->
-        # this is a message type
-        case module.__message_props__().syntax do
-          :proto2 -> "proto2"
-          :proto3 -> "proto3"
-        end
-
-      Keyword.has_key?(module.__info__(:functions), :__rpc_calls__) ->
-        # this is a service definition, grab a message and recurse
-        module.__rpc_calls__()
-        |> Enum.find(fn
-          {_, _, _} -> true
-          _ -> false
-        end)
-        |> then(fn
-          nil -> "proto2"
-          {_, {req, _}, _} -> get_syntax(req)
-          {_, _, {req, _}} -> get_syntax(req)
-        end)
-
-      true ->
-        raise "Module #{inspect(module)} has neither rcp_calls nor __message_props__"
-    end
-  end
-
-  defp types_from_descriptor(%Google.Protobuf.ServiceDescriptorProto{} = descriptor) do
-    descriptor.method
-    |> Enum.flat_map(fn method ->
-      [method.input_type, method.output_type]
-    end)
-    |> Enum.reject(&is_atom/1)
-    |> Enum.map(fn
-      "." <> symbol -> symbol
-      symbol -> symbol
-    end)
-  end
-
-  defp types_from_descriptor(%Google.Protobuf.DescriptorProto{} = descriptor) do
-    (descriptor.field ++ Enum.flat_map(descriptor.nested_type, & &1.field))
-    |> Enum.map(fn field ->
-      field.type_name
-    end)
-    |> Enum.reject(&is_nil/1)
-    |> Enum.map(fn
-      "." <> symbol -> symbol
-      symbol -> symbol
-    end)
-  end
-
-  defp types_from_descriptor(%Google.Protobuf.EnumDescriptorProto{}) do
-    []
   end
 end
