@@ -9,11 +9,11 @@ defmodule GrpcReflection.Service.Builder do
 
   def build_reflection_tree(services) do
     with :ok <- validate_services(services),
-         {%{files: _, symbols: _} = data, references} <- get_services_and_references(services) do
+         {:ok, {state, references}} <- get_services_and_references(services) do
       references
       |> List.flatten()
       |> Enum.uniq()
-      |> process_references(data)
+      |> process_references(state)
       |> then(&{:ok, &1})
     end
   end
@@ -32,16 +32,23 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   defp get_services_and_references(services) do
-    Enum.reduce_while(services, {%State{services: services}, []}, fn service, {acc, refs} ->
+    services
+    |> Enum.reduce_while({State.new(services), []}, fn service, {state, refs} ->
       case process_service(service) do
-        {:ok, %{files: files, symbols: symbols}, references} ->
+        {:ok, new_state, references} ->
           {:cont,
-           {%{acc | files: Map.merge(files, acc.files), symbols: Map.merge(symbols, acc.symbols)},
-            [refs | references]}}
+           {
+             State.merge(state, new_state),
+             [refs | references]
+           }}
 
         {:error, reason} ->
           {:halt, {:error, reason}}
       end
+    end)
+    |> then(fn
+      {:error, _resp} = err -> err
+      ok -> {:ok, ok}
     end)
   end
 
@@ -60,35 +67,31 @@ defmodule GrpcReflection.Service.Builder do
     payload = FileDescriptorProto.encode(unencoded_payload)
     response = %{file_descriptor_proto: [payload]}
 
-    root_symbols =
-      method_symbols
-      |> Enum.reduce(%{}, fn name, acc -> Map.put(acc, name, response) end)
-      |> Map.put(service_name, response)
+    state =
+      State.new()
+      |> State.add_symbols(
+        method_symbols
+        |> Enum.reduce(%{}, fn name, acc -> Map.put(acc, name, response) end)
+        |> Map.put(service_name, response)
+      )
+      |> State.add_files(%{(service_name <> ".proto") => response})
 
-    root_files = %{(service_name <> ".proto") => response}
-
-    {:ok, %State{files: root_files, symbols: root_symbols}, referenced_types}
+    {:ok, state, referenced_types}
   rescue
     _ -> {:error, "Couldn't process #{inspect(service)}"}
   end
 
-  defp process_references([], data), do: data
+  defp process_references([], state), do: state
 
-  defp process_references([reference | rest], data) do
-    if Map.has_key?(data.symbols, reference) do
-      process_references(rest, data)
-    else
-      {%{files: f, symbols: s, extensions: e}, references} = process_reference(reference)
+  defp process_references([reference | rest], state) do
+    case State.lookup_symbol(reference, state) do
+      {:ok, _} ->
+        process_references(rest, state)
 
-      data = %{
-        data
-        | files: Map.merge(data.files, f),
-          symbols: Map.merge(data.symbols, s),
-          extensions: Map.merge(data.extensions, e)
-      }
-
-      references = (rest ++ references) |> List.flatten() |> Enum.uniq()
-      process_references(references, data)
+      _ ->
+        {ref_state, references} = process_reference(reference)
+        references = (rest ++ references) |> List.flatten() |> Enum.uniq()
+        process_references(references, State.merge(state, ref_state))
     end
   end
 
@@ -129,8 +132,13 @@ defmodule GrpcReflection.Service.Builder do
       {root_extensions, root_files} =
         process_extensions(mod, symbol, extension_file, descriptor, root_files)
 
-      {%State{extensions: root_extensions, files: root_files, symbols: root_symbols},
-       referenced_types}
+      {
+        State.new()
+        |> State.add_files(root_files)
+        |> State.add_symbols(root_symbols)
+        |> State.add_extensions(root_extensions),
+        referenced_types
+      }
     end)
   end
 
@@ -276,81 +284,5 @@ defmodule GrpcReflection.Service.Builder do
 
   defp types_from_descriptor(%Google.Protobuf.EnumDescriptorProto{}) do
     []
-  end
-
-  defmodule Util do
-    @moduledoc """
-    Utility functions for the builder.
-    """
-    @field_type_mapping Google.Protobuf.FieldDescriptorProto.Type.mapping()
-    @field_label_mapping Google.Protobuf.FieldDescriptorProto.Label.mapping()
-
-    def package_from_name(service_name) do
-      service_name
-      |> String.split(".")
-      |> Enum.reverse()
-      |> then(fn [_ | rest] -> rest end)
-      |> Enum.reverse()
-      |> Enum.join(".")
-    end
-
-    def upcase_first(<<first::utf8, rest::binary>>), do: String.upcase(<<first::utf8>>) <> rest
-
-    def downcase_first(<<first::utf8, rest::binary>>),
-      do: String.downcase(<<first::utf8>>) <> rest
-
-    # Generates a field descriptor from a field props struct. This function is compatible with proto2 only.
-    def convert_to_field_descriptor(
-          extendee,
-          %Protobuf.Extension.Props.Extension{field_props: field_props}
-        ) do
-      {type, type_name} = type_from_field_props(field_props)
-
-      %Google.Protobuf.FieldDescriptorProto{
-        name: field_props.name,
-        number: field_props.fnum,
-        label: label_from_field_props(field_props),
-        type: type,
-        type_name: type_name,
-        extendee: extendee
-      }
-    end
-
-    # Google.Protobuf.FieldDescriptorProto.Label
-    defp label_from_field_props(%Protobuf.FieldProps{optional?: true}),
-      do: @field_label_mapping[:LABEL_OPTIONAL]
-
-    defp label_from_field_props(%Protobuf.FieldProps{repeated?: true}),
-      do: @field_label_mapping[:LABEL_REPEATED]
-
-    defp label_from_field_props(%Protobuf.FieldProps{required?: true}),
-      do: @field_label_mapping[:LABEL_REQUIRED]
-
-    # Google.Protobuf.FieldDescriptorProto.Type
-    defp type_from_field_props(%Protobuf.FieldProps{type: type}) do
-      @field_type_mapping
-      |> Map.get(:"TYPE_#{type |> Atom.to_string() |> String.upcase()}", type)
-      |> then(fn type ->
-        cond do
-          is_integer(type) ->
-            {type, nil}
-
-          is_atom(type) and Code.ensure_loaded?(type) and function_exported?(type, :descriptor, 0) ->
-            {@field_type_mapping[:TYPE_MESSAGE], get_pb_type_name(type)}
-
-          true ->
-            raise("Unsupported type")
-        end
-      end)
-    end
-
-    defp get_pb_type_name(type) do
-      {packs, [name]} =
-        type
-        |> Module.split()
-        |> Enum.split(-1)
-
-      Enum.map_join(packs, ".", &downcase_first/1) <> "." <> name
-    end
   end
 end
