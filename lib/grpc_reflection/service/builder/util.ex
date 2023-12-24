@@ -76,16 +76,16 @@ defmodule GrpcReflection.Service.Builder.Util do
   end
 
   def validate_services(services) do
-    services
-    |> Enum.reject(fn service_mod ->
-      is_binary(service_mod.__meta__(:name)) and is_struct(service_mod.descriptor())
-    end)
-    |> then(fn
+    invalid_services =
+      Enum.reject(services, fn service_mod ->
+        is_binary(service_mod.__meta__(:name)) and
+          is_struct(service_mod.descriptor())
+      end)
+
+    case invalid_services do
       [] -> :ok
       _ -> {:error, "non-service module provided"}
-    end)
-  rescue
-    _ -> {:error, "non-service module provided"}
+    end
   end
 
   def convert_symbol_to_module(symbol) do
@@ -139,18 +139,14 @@ defmodule GrpcReflection.Service.Builder.Util do
 
   def types_from_descriptor(%Google.Protobuf.ServiceDescriptorProto{} = descriptor) do
     descriptor.method
-    |> Enum.flat_map(fn method ->
-      [method.input_type, method.output_type]
-    end)
+    |> Enum.flat_map(fn method -> [method.input_type, method.output_type] end)
     |> Enum.reject(&is_atom/1)
     |> Enum.map(&String.trim_leading(&1, "."))
   end
 
   def types_from_descriptor(%Google.Protobuf.DescriptorProto{} = descriptor) do
     (descriptor.field ++ Enum.flat_map(descriptor.nested_type, & &1.field))
-    |> Enum.map(fn field ->
-      field.type_name
-    end)
+    |> Enum.map(fn field -> field.type_name end)
     |> Enum.reject(&is_nil/1)
     |> Enum.map(&String.trim_leading(&1, "."))
   end

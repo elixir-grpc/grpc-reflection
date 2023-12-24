@@ -6,9 +6,10 @@ defmodule GrpcReflection.Service.Builder do
   alias GrpcReflection.Service.Builder.Util
 
   def build_reflection_tree(services) do
-    with :ok <- Util.validate_services(services),
-         {:ok, state} <- process_services(services) do
-      process_references(state)
+    with :ok <- Util.validate_services(services) do
+      services
+      |> process_services()
+      |> process_references()
     end
   end
 
@@ -26,16 +27,8 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   defp process_services(services) do
-    services
-    |> Enum.reduce_while(State.new(services), fn service, state ->
-      case process_service(service) do
-        {:ok, new_state} -> {:cont, State.merge(state, new_state)}
-        {:error, reason} -> {:halt, {:error, reason}}
-      end
-    end)
-    |> then(fn
-      {:error, _resp} = err -> err
-      ok -> {:ok, ok}
+    Enum.reduce(services, State.new(services), fn service, state ->
+      State.merge(state, process_service(service))
     end)
   end
 
@@ -54,19 +47,14 @@ defmodule GrpcReflection.Service.Builder do
     payload = FileDescriptorProto.encode(unencoded_payload)
     response = %{file_descriptor_proto: [payload]}
 
-    state =
-      State.new()
-      |> State.add_symbols(
-        method_symbols
-        |> Enum.reduce(%{}, fn name, acc -> Map.put(acc, name, response) end)
-        |> Map.put(service_name, response)
-      )
-      |> State.add_files(%{(service_name <> ".proto") => response})
-      |> State.add_references(referenced_types)
-
-    {:ok, state}
-  rescue
-    _ -> {:error, "Couldn't process #{inspect(service)}"}
+    State.new()
+    |> State.add_symbols(
+      method_symbols
+      |> Enum.reduce(%{}, fn name, acc -> Map.put(acc, name, response) end)
+      |> Map.put(service_name, response)
+    )
+    |> State.add_files(%{(service_name <> ".proto") => response})
+    |> State.add_references(referenced_types)
   end
 
   defp process_reference(symbol) do

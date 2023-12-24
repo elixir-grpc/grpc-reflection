@@ -109,4 +109,10 @@ defmodule GrpcReflection.BuilderTest do
              ]
     end)
   end
+
+  test "handles a non-service module" do
+    assert_raise UndefinedFunctionError, fn ->
+      Builder.build_reflection_tree([Enum])
+    end
+  end
 end
