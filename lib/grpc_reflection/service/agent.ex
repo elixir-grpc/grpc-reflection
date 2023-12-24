@@ -6,7 +6,6 @@ defmodule GrpcReflection.Service.Agent do
   require Logger
 
   alias GrpcReflection.Service.Builder
-  alias GrpcReflection.Service.Lookup
   alias GrpcReflection.Service.State
 
   @type cfg_t :: {atom(), list(atom)}
@@ -28,32 +27,32 @@ defmodule GrpcReflection.Service.Agent do
   @spec list_services(cfg_t()) :: list(binary)
   def list_services(cfg) do
     name = start_agent_on_first_call(cfg)
-    Agent.get(name, &Lookup.lookup_services/1)
+    Agent.get(name, &State.lookup_services/1)
   end
 
   @spec get_by_symbol(cfg_t(), binary()) :: {:ok, State.descriptor_t()} | {:error, binary}
   def get_by_symbol(cfg, symbol) do
     name = start_agent_on_first_call(cfg)
-    Agent.get(name, &Lookup.lookup_symbol(symbol, &1))
+    Agent.get(name, &State.lookup_symbol(symbol, &1))
   end
 
   @spec get_by_filename(cfg_t(), binary()) :: {:ok, State.descriptor_t()} | {:error, binary}
   def get_by_filename(cfg, filename) do
     name = start_agent_on_first_call(cfg)
-    Agent.get(name, &Lookup.lookup_filename(filename, &1))
+    Agent.get(name, &State.lookup_filename(filename, &1))
   end
 
   @spec get_by_extension(cfg_t(), binary()) :: {:ok, State.descriptor_t()} | {:error, binary}
   def get_by_extension(cfg, containing_type) do
     name = start_agent_on_first_call(cfg)
-    Agent.get(name, &Lookup.lookup_extension(containing_type, &1))
+    Agent.get(name, &State.lookup_extension(containing_type, &1))
   end
 
   @spec get_extension_numbers_by_type(cfg_t(), binary()) ::
           {:ok, list(integer())} | {:error, binary}
   def get_extension_numbers_by_type(cfg, mod) do
     name = start_agent_on_first_call(cfg)
-    Agent.get(name, &Lookup.lookup_extension_numbers(mod, &1))
+    Agent.get(name, &State.lookup_extension_numbers(mod, &1))
   end
 
   @spec put_state(cfg_t(), State.t()) :: :ok
