@@ -2,7 +2,7 @@ defmodule GrpcReflection.Service.Builder do
   @moduledoc false
 
   alias Google.Protobuf.FileDescriptorProto
-  alias GrpcReflection.Service.Agent
+  alias GrpcReflection.Service.State
   alias GrpcReflection.Service.Builder.Util
 
   @type_message Map.fetch!(Google.Protobuf.FieldDescriptorProto.Type.mapping(), :TYPE_MESSAGE)
@@ -14,6 +14,7 @@ defmodule GrpcReflection.Service.Builder do
       |> List.flatten()
       |> Enum.uniq()
       |> process_references(data)
+      |> then(&{:ok, &1})
     end
   end
 
@@ -31,7 +32,7 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   defp get_services_and_references(services) do
-    Enum.reduce_while(services, {%Agent{services: services}, []}, fn service, {acc, refs} ->
+    Enum.reduce_while(services, {%State{services: services}, []}, fn service, {acc, refs} ->
       case process_service(service) do
         {:ok, %{files: files, symbols: symbols}, references} ->
           {:cont,
@@ -66,7 +67,7 @@ defmodule GrpcReflection.Service.Builder do
 
     root_files = %{(service_name <> ".proto") => response}
 
-    {:ok, %Agent{files: root_files, symbols: root_symbols}, referenced_types}
+    {:ok, %State{files: root_files, symbols: root_symbols}, referenced_types}
   rescue
     _ -> {:error, "Couldn't process #{inspect(service)}"}
   end
@@ -128,7 +129,7 @@ defmodule GrpcReflection.Service.Builder do
       {root_extensions, root_files} =
         process_extensions(mod, symbol, extension_file, descriptor, root_files)
 
-      {%Agent{extensions: root_extensions, files: root_files, symbols: root_symbols},
+      {%State{extensions: root_extensions, files: root_files, symbols: root_symbols},
        referenced_types}
     end)
   end

@@ -3,12 +3,12 @@ defmodule GrpcReflection.BuilderTest do
 
   use ExUnit.Case
 
-  alias GrpcReflection.Service.Agent
+  alias GrpcReflection.Service.State
   alias GrpcReflection.Service.Builder
 
   test "supports all reflection types in proto3" do
-    tree = Builder.build_reflection_tree([TestserviceV3.TestService.Service])
-    assert %Agent{services: [TestserviceV3.TestService.Service]} = tree
+    assert {:ok, tree} = Builder.build_reflection_tree([TestserviceV3.TestService.Service])
+    assert %State{services: [TestserviceV3.TestService.Service]} = tree
 
     assert Map.keys(tree.files) == [
              "google.protobuf.Any.proto",
@@ -46,8 +46,8 @@ defmodule GrpcReflection.BuilderTest do
   end
 
   test "supports all reflection types in proto2" do
-    tree = Builder.build_reflection_tree([TestserviceV2.TestService.Service])
-    assert %Agent{services: [TestserviceV2.TestService.Service]} = tree
+    assert {:ok, tree} = Builder.build_reflection_tree([TestserviceV2.TestService.Service])
+    assert %State{services: [TestserviceV2.TestService.Service]} = tree
 
     assert Map.keys(tree.files) == [
              "google.protobuf.Any.proto",
@@ -86,8 +86,8 @@ defmodule GrpcReflection.BuilderTest do
   end
 
   test "handles an empty service" do
-    tree = Builder.build_reflection_tree([TestserviceV2.EmptyService.Service])
-    assert %Agent{services: [TestserviceV2.EmptyService.Service]} = tree
+    assert {:ok, tree} = Builder.build_reflection_tree([TestserviceV2.EmptyService.Service])
+    assert %State{services: [TestserviceV2.EmptyService.Service]} = tree
 
     (Map.values(tree.files) ++ Map.values(tree.symbols))
     |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))

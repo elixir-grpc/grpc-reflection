@@ -7,29 +7,21 @@ defmodule GrpcReflection.Service.Agent do
 
   alias GrpcReflection.Service.Builder
   alias GrpcReflection.Service.Lookup
+  alias GrpcReflection.Service.State
 
-  defstruct services: [], files: %{}, symbols: %{}, extensions: %{}
-
-  @type descriptor_t :: GrpcReflection.Server.descriptor_t()
   @type cfg_t :: {atom(), list(atom)}
-  @type t :: %__MODULE__{
-          services: list(module()),
-          files: %{optional(binary()) => descriptor_t()},
-          symbols: %{optional(binary()) => descriptor_t()},
-          extensions: %{optional(binary()) => list(integer())}
-        }
 
   def start_link(_, opts) do
     name = Keyword.get(opts, :name)
     services = Keyword.get(opts, :services)
 
     case Builder.build_reflection_tree(services) do
-      %__MODULE__{} = state ->
+      {:ok, state} ->
         Agent.start_link(fn -> state end, name: name)
 
       err ->
         Logger.error("Failed to build reflection tree: #{inspect(err)}")
-        Agent.start_link(fn -> %__MODULE__{} end, name: name)
+        Agent.start_link(fn -> %State{} end, name: name)
     end
   end
 
@@ -39,19 +31,19 @@ defmodule GrpcReflection.Service.Agent do
     Agent.get(name, &Lookup.lookup_services/1)
   end
 
-  @spec get_by_symbol(cfg_t(), binary()) :: {:ok, descriptor_t()} | {:error, binary}
+  @spec get_by_symbol(cfg_t(), binary()) :: {:ok, State.descriptor_t()} | {:error, binary}
   def get_by_symbol(cfg, symbol) do
     name = start_agent_on_first_call(cfg)
     Agent.get(name, &Lookup.lookup_symbol(symbol, &1))
   end
 
-  @spec get_by_filename(cfg_t(), binary()) :: {:ok, descriptor_t()} | {:error, binary}
+  @spec get_by_filename(cfg_t(), binary()) :: {:ok, State.descriptor_t()} | {:error, binary}
   def get_by_filename(cfg, filename) do
     name = start_agent_on_first_call(cfg)
     Agent.get(name, &Lookup.lookup_filename(filename, &1))
   end
 
-  @spec get_by_extension(cfg_t(), binary()) :: {:ok, descriptor_t()} | {:error, binary}
+  @spec get_by_extension(cfg_t(), binary()) :: {:ok, State.descriptor_t()} | {:error, binary}
   def get_by_extension(cfg, containing_type) do
     name = start_agent_on_first_call(cfg)
     Agent.get(name, &Lookup.lookup_extension(containing_type, &1))
@@ -64,8 +56,8 @@ defmodule GrpcReflection.Service.Agent do
     Agent.get(name, &Lookup.lookup_extension_numbers(mod, &1))
   end
 
-  @spec put_state(cfg_t(), t()) :: :ok
-  def put_state(cfg, %__MODULE__{} = state) do
+  @spec put_state(cfg_t(), State.t()) :: :ok
+  def put_state(cfg, %State{} = state) do
     name = start_agent_on_first_call(cfg)
     Agent.update(name, fn _old_state -> state end)
   end

@@ -22,12 +22,14 @@ defmodule GrpcReflection.Server do
     quote do
       @cfg {__MODULE__, unquote(services)}
 
+      alias GrpcReflection.Service
+
       @doc """
       Get the current list of configured services
       """
       @spec list_services :: list(binary)
       def list_services do
-        GrpcReflection.Service.Agent.list_services(@cfg)
+        Service.list_services(@cfg)
       end
 
       @doc """
@@ -35,7 +37,7 @@ defmodule GrpcReflection.Server do
       """
       @spec get_by_symbol(binary()) :: {:ok, GrpcReflection.descriptor_t()} | {:error, binary}
       def get_by_symbol(symbol) do
-        GrpcReflection.Service.Agent.get_by_symbol(@cfg, symbol)
+        Service.get_by_symbol(@cfg, symbol)
       end
 
       @doc """
@@ -43,7 +45,7 @@ defmodule GrpcReflection.Server do
       """
       @spec get_by_filename(binary()) :: {:ok, GrpcReflection.descriptor_t()} | {:error, binary}
       def get_by_filename(filename) do
-        GrpcReflection.Service.Agent.get_by_filename(@cfg, filename)
+        Service.get_by_filename(@cfg, filename)
       end
 
       @doc """
@@ -51,7 +53,7 @@ defmodule GrpcReflection.Server do
       """
       @spec get_extension_numbers_by_type(module()) :: {:ok, list(integer())} | {:error, binary}
       def get_extension_numbers_by_type(mod) do
-        GrpcReflection.Service.Agent.get_extension_numbers_by_type(@cfg, mod)
+        Service.get_extension_numbers_by_type(@cfg, mod)
       end
 
       @doc """
@@ -59,7 +61,7 @@ defmodule GrpcReflection.Server do
       """
       @spec get_by_extension(binary()) :: {:ok, GrpcReflection.descriptor_t()} | {:error, binary}
       def get_by_extension(containing_type) do
-        GrpcReflection.Service.Agent.get_by_extension(@cfg, containing_type)
+        Service.get_by_extension(@cfg, containing_type)
       end
 
       @doc """
@@ -67,12 +69,9 @@ defmodule GrpcReflection.Server do
       """
       @spec put_services(list(module())) :: :ok | {:error, binary()}
       def put_services(services) do
-        case GrpcReflection.Service.Builder.build_reflection_tree(services) do
-          %GrpcReflection.Service.Agent{} = state ->
-            GrpcReflection.Service.Agent.put_state(@cfg, state)
-
-          err ->
-            err
+        case Service.build_reflection_tree(services) do
+          {:ok, state} -> Service.put_state(@cfg, state)
+          err -> err
         end
       end
 
