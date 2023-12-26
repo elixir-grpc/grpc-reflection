@@ -1,4 +1,4 @@
-defmodule GrpcReflection.UtilTest do
+defmodule GrpcReflection.Service.Builder.UtilTest do
   @moduledoc false
 
   use ExUnit.Case
