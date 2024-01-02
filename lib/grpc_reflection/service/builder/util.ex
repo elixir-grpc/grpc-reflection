@@ -7,13 +7,35 @@ defmodule GrpcReflection.Service.Builder.Util do
 
   @type_message Map.fetch!(Google.Protobuf.FieldDescriptorProto.Type.mapping(), :TYPE_MESSAGE)
 
-  def package_from_name(service_name) do
-    service_name
-    |> String.split(".")
-    |> Enum.reverse()
-    |> then(fn [_ | rest] -> rest end)
-    |> Enum.reverse()
-    |> Enum.join(".")
+  def get_package(module, symbol) do
+    if function_exported?(module, :descriptor, 0) do
+      parent_symbol = symbol |> String.split(".") |> Enum.slice(0..-2) |> Enum.join(".")
+
+      case module.descriptor() do
+        %Google.Protobuf.ServiceDescriptorProto{} -> parent_symbol
+        _ -> handle_parent_module(module, parent_symbol)
+      end
+    else
+      symbol
+    end
+  end
+
+  defp handle_parent_module(module, parent_symbol) do
+    case try_get_parent_module(module) do
+      nil -> parent_symbol
+      parent_mod -> get_package(parent_mod, parent_symbol)
+    end
+  end
+
+  defp try_get_parent_module(module) do
+    try do
+      module
+      |> Module.split()
+      |> Enum.slice(0..-2)
+      |> Module.safe_concat()
+    rescue
+      _ -> nil
+    end
   end
 
   def upcase_first(<<first::utf8, rest::binary>>), do: String.upcase(<<first::utf8>>) <> rest

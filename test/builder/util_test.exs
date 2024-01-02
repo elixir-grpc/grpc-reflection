@@ -10,8 +10,18 @@ defmodule GrpcReflection.Service.Builder.UtilTest do
   end
 
   describe "common utils" do
-    test "get package from module name" do
-      assert "a.b" == Util.package_from_name("a.b.CService")
+    test "get package from module" do
+      assert "testserviceV3" ==
+               Util.get_package(TestserviceV3.TestRequest, "testserviceV3.TestRequest")
+
+      assert "testserviceV3" ==
+               Util.get_package(
+                 TestserviceV3.TestRequest.Payload.Location,
+                 "testserviceV3.TestRequest.Payload.Location"
+               )
+
+      assert "testserviceV3" ==
+               Util.get_package(TestserviceV3.TestService.Service, "testserviceV3.TestService")
     end
 
     test "upcase_first" do
