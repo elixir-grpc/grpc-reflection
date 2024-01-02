@@ -1,4 +1,4 @@
-syntax = "proto2";
+syntax = "proto3";
 
 option java_multiple_files = true;
 option java_package = "io.grpc.examples.helloworld";
@@ -17,22 +17,11 @@ service Greeter {
 
 // The request message containing the user's name.
 message HelloRequest {
-  optional string name = 1;
-
-  message Payload {
-    optional string data = 1;
-  }
-
-  optional Payload payload = 2;
+  string name = 1;
 }
 
 // The response message containing the greetings
 message HelloReply {
-  optional string message = 1;
-  optional google.protobuf.Timestamp today = 2;
-  extensions 100 to 199;
-}
-
-extend HelloReply {
-  optional string language = 100;
+  string message = 1;
+  google.protobuf.Timestamp today = 2;
 }
