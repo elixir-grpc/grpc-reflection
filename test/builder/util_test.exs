@@ -12,16 +12,13 @@ defmodule GrpcReflection.Service.Builder.UtilTest do
   describe "common utils" do
     test "get package from module" do
       assert "testserviceV3" ==
-               Util.get_package(TestserviceV3.TestRequest, "testserviceV3.TestRequest")
+               Util.get_package("testserviceV3.TestRequest")
 
       assert "testserviceV3" ==
-               Util.get_package(
-                 TestserviceV3.TestRequest.Payload.Location,
-                 "testserviceV3.TestRequest.Payload.Location"
-               )
+               Util.get_package("testserviceV3.TestRequest.Payload.Location")
 
       assert "testserviceV3" ==
-               Util.get_package(TestserviceV3.TestService.Service, "testserviceV3.TestService")
+               Util.get_package("testserviceV3.TestService")
     end
 
     test "upcase_first" do
@@ -30,6 +27,17 @@ defmodule GrpcReflection.Service.Builder.UtilTest do
 
     test "downcase_first" do
       assert "hello" == Util.downcase_first("Hello")
+    end
+
+    test "convert symbol to module succeed" do
+      assert TestserviceV3.TestRequest ==
+               Util.convert_symbol_to_module("testserviceV3.TestRequest")
+    end
+
+    test "convert symbol to module fail" do
+      assert_raise ArgumentError, fn ->
+        Util.convert_symbol_to_module("testservice.TestRequest.Payload.Location")
+      end
     end
   end
 

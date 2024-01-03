@@ -7,34 +7,19 @@ defmodule GrpcReflection.Service.Builder.Util do
 
   @type_message Map.fetch!(Google.Protobuf.FieldDescriptorProto.Type.mapping(), :TYPE_MESSAGE)
 
-  def get_package(module, symbol) do
-    if function_exported?(module, :descriptor, 0) do
-      parent_symbol = symbol |> String.split(".") |> Enum.slice(0..-2) |> Enum.join(".")
+  def get_package(symbol) do
+    parent_symbol = symbol |> String.split(".") |> Enum.slice(0..-2) |> Enum.join(".")
 
-      case module.descriptor() do
-        %Google.Protobuf.ServiceDescriptorProto{} -> parent_symbol
-        _ -> handle_parent_module(module, parent_symbol)
-      end
-    else
-      symbol
-    end
-  end
-
-  defp handle_parent_module(module, parent_symbol) do
-    case try_get_parent_module(module) do
-      nil -> parent_symbol
-      parent_mod -> get_package(parent_mod, parent_symbol)
-    end
-  end
-
-  defp try_get_parent_module(module) do
     try do
-      module
-      |> Module.split()
-      |> Enum.slice(0..-2)
-      |> Module.safe_concat()
+      parent_module = convert_symbol_to_module(parent_symbol)
+
+      if function_exported?(parent_module, :descriptor, 0) do
+        get_package(parent_symbol)
+      else
+        parent_symbol
+      end
     rescue
-      _ -> nil
+      _ -> parent_symbol
     end
   end
 
@@ -117,14 +102,8 @@ defmodule GrpcReflection.Service.Builder.Util do
       name -> name
     end)
     |> String.split(".")
-    |> Enum.reverse()
-    |> then(fn
-      [m | segments] -> [m | Enum.map(segments, &upcase_first/1)]
-    end)
-    |> Enum.reverse()
-    |> Enum.join(".")
-    |> then(fn name -> "Elixir." <> name end)
-    |> String.to_existing_atom()
+    |> Enum.map(&upcase_first/1)
+    |> Module.safe_concat()
   end
 
   def is_message_descriptor?(%Google.Protobuf.FieldDescriptorProto{type: @type_message}),

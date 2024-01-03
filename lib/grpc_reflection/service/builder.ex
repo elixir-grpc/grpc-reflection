@@ -108,7 +108,7 @@ defmodule GrpcReflection.Service.Builder do
        when extension_range != [] do
     unencoded_extension_payload = %Google.Protobuf.FileDescriptorProto{
       name: extension_file,
-      package: Util.get_package(mod, symbol),
+      package: Util.get_package(symbol),
       dependency: [symbol <> ".proto"],
       syntax: Util.get_syntax(mod)
     }
@@ -144,7 +144,7 @@ defmodule GrpcReflection.Service.Builder do
   defp process_extensions(_, _, _, _), do: {:ignore, {nil, nil}}
 
   defp process_common(name, module, descriptor) do
-    package = Util.get_package(module, name)
+    package = Util.get_package(name)
 
     dependencies =
       descriptor
