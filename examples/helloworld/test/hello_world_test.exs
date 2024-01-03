@@ -11,7 +11,7 @@ defmodule HelloworldTest do
   end
 
   test "helloworld should be successful", %{channel: channel} do
-    req = Helloworld.HelloRequest.new(name: "grpc-elixir")
+    req = %Helloworld.HelloRequest{name: "grpc-elixir"}
     assert {:ok, %{message: msg, today: _}} = Helloworld.Greeter.Stub.say_hello(channel, req)
     assert msg == "Hello grpc-elixir"
   end

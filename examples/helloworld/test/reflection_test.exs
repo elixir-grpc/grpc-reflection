@@ -15,7 +15,7 @@ defmodule Helloworld.ReflectionTest do
     message = {:list_services, ""}
     assert {:ok, %{service: service_list}} = run_request(message, ctx)
     names = Enum.map(service_list, &Map.get(&1, :name))
-    assert names == ["helloworld.Greeter", "grpc.reflection.v1.ServerReflection"]
+    assert names == ["helloworld.Greeter"]
   end
 
   test "listing methods on our service", ctx do
@@ -36,7 +36,7 @@ defmodule Helloworld.ReflectionTest do
     assert_response(response)
   end
 
-  defp assert_response(%{service: [service]} = proto) do
+  defp assert_response(%{service: [service]} = _proto) do
     assert service.name == "Greeter"
     assert %{method: [method]} = service
     assert method.name == "SayHello"
