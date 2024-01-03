@@ -7,13 +7,20 @@ defmodule GrpcReflection.Service.Builder.Util do
 
   @type_message Map.fetch!(Google.Protobuf.FieldDescriptorProto.Type.mapping(), :TYPE_MESSAGE)
 
-  def package_from_name(service_name) do
-    service_name
-    |> String.split(".")
-    |> Enum.reverse()
-    |> then(fn [_ | rest] -> rest end)
-    |> Enum.reverse()
-    |> Enum.join(".")
+  def get_package(symbol) do
+    parent_symbol = symbol |> String.split(".") |> Enum.slice(0..-2) |> Enum.join(".")
+
+    try do
+      parent_module = convert_symbol_to_module(parent_symbol)
+
+      if function_exported?(parent_module, :descriptor, 0) do
+        get_package(parent_symbol)
+      else
+        parent_symbol
+      end
+    rescue
+      _ -> parent_symbol
+    end
   end
 
   def upcase_first(<<first::utf8, rest::binary>>), do: String.upcase(<<first::utf8>>) <> rest
@@ -95,14 +102,8 @@ defmodule GrpcReflection.Service.Builder.Util do
       name -> name
     end)
     |> String.split(".")
-    |> Enum.reverse()
-    |> then(fn
-      [m | segments] -> [m | Enum.map(segments, &upcase_first/1)]
-    end)
-    |> Enum.reverse()
-    |> Enum.join(".")
-    |> then(fn name -> "Elixir." <> name end)
-    |> String.to_existing_atom()
+    |> Enum.map(&upcase_first/1)
+    |> Module.safe_concat()
   end
 
   def is_message_descriptor?(%Google.Protobuf.FieldDescriptorProto{type: @type_message}),
