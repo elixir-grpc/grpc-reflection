@@ -63,8 +63,9 @@ defmodule GrpcReflection.Service.Agent do
 
   defp start_agent_on_first_call({name, services}) do
     # lazy start agent on call
-    if match?({:ok, _}, GrpcReflection.DynamicSupervisor.start_child(name, services)) do
-      Logger.info("Started reflection agent #{name}")
+    case GrpcReflection.DynamicSupervisor.start_child(name, services) do
+      {:ok, _} -> Logger.info("Started reflection agent #{name}")
+      {:error, {:already_started, _}} -> :ok
     end
 
     name
