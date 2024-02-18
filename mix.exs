@@ -1,14 +1,19 @@
 defmodule GrpcReflection.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+  @description "gRPC reflection server for Elixir"
+
   def project do
     [
       app: :grpc_reflection,
-      version: "0.1.0",
+      version: @version,
+      description: @description,
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      package: package(),
       aliases: aliases(),
       test_coverage: [
         ignore_modules: [
@@ -85,5 +90,14 @@ defmodule GrpcReflection.MixProject do
         )
       end
     )
+  end
+
+  defp package do
+    %{
+      name: "grpc_reflection",
+      files: ~w(.formatter.exs mix.exs lib),
+      links: %{"GitHub" => "https://github.com/elixir-grpc/grpc-reflection"},
+      licenses: ["Apache-2.0"]
+    }
   end
 end
