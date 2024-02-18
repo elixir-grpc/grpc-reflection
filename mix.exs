@@ -42,7 +42,7 @@ defmodule GrpcReflection.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:grpc, "~> 0.7"},
-      {:protobuf, "~> 0.11.1", organization: "tubitv"}
+      {:protobuf, "~> 0.11"}
     ]
   end
 
