@@ -20,7 +20,7 @@ defmodule Helloworld.Mixfile do
     [
       {:grpc, "~> 0.7"},
       {:grpc_reflection, path: "../.."},
-      {:protobuf, "~> 0.11"},
+      {:protobuf, "~> 0.11.1", organization: "tubitv"},
       {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false}
     ]
   end

@@ -6,6 +6,7 @@ option java_outer_classname = "HelloWorldProto";
 option objc_class_prefix = "HLW";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 
 package helloworld;
 
@@ -18,6 +19,13 @@ service Greeter {
 // The request message containing the user's name.
 message HelloRequest {
   string name = 1;
+
+  message TimeWindow {
+    google.protobuf.Timestamp start = 1;
+    google.protobuf.Timestamp end = 2;
+  }
+
+  TimeWindow updated_time_window = 2;
 }
 
 // The response message containing the greetings
