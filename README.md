@@ -74,6 +74,12 @@ message HelloReply {
   optional string message = 1;
   optional .google.protobuf.Timestamp today = 2;
 }
+
+$ grpcurl -plaintext -format text -d 'name: "faker"' localhost:50051 helloworld.Greeter.SayHello
+message: "Hello faker"
+today: <
+  seconds:1708412184 nanos:671267628 
+>
 ```
 
 ## Protobuf Version Support

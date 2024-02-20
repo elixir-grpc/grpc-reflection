@@ -42,7 +42,8 @@ defmodule GrpcReflection.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:grpc, "~> 0.7"},
-      {:protobuf, "~> 0.11"}
+      {:protobuf, "~> 0.11"},
+      {:google_protos, "~> 0.4.0"}
     ]
   end
 
