@@ -8,11 +8,6 @@ This example is mostly copied directly from `grpc-elixir`, with the exception th
 
 ## Usage
 
-1. Fetch Protobuf Dependencies
-```shell
-git submodule init
-```
-
 1. Install deps and compile
 ```shell
 $ mix do deps.get, compile
