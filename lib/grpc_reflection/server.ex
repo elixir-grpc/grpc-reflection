@@ -35,7 +35,7 @@ defmodule GrpcReflection.Server do
       @doc """
       Get the reflection reponse containing the given symbol, if it is exposed by a configured service
       """
-      @spec get_by_symbol(binary()) :: {:ok, GrpcReflection.descriptor_t()} | {:error, binary}
+      @spec get_by_symbol(binary()) :: {:ok, GrpcReflection.Server.descriptor_t()} | {:error, binary}
       def get_by_symbol(symbol) do
         Service.get_by_symbol(@cfg, symbol)
       end
@@ -43,7 +43,7 @@ defmodule GrpcReflection.Server do
       @doc """
       Get the reflection response for the named file, if it is exposed by a configured service
       """
-      @spec get_by_filename(binary()) :: {:ok, GrpcReflection.descriptor_t()} | {:error, binary}
+      @spec get_by_filename(binary()) :: {:ok, GrpcReflection.Server.descriptor_t()} | {:error, binary}
       def get_by_filename(filename) do
         Service.get_by_filename(@cfg, filename)
       end
@@ -51,7 +51,7 @@ defmodule GrpcReflection.Server do
       @doc """
       Get the extension numbers for the given type, if it is exposed by a configured service
       """
-      @spec get_extension_numbers_by_type(module()) :: {:ok, list(integer())} | {:error, binary}
+      @spec get_extension_numbers_by_type(binary()) :: {:ok, list(integer())} | {:error, binary}
       def get_extension_numbers_by_type(mod) do
         Service.get_extension_numbers_by_type(@cfg, mod)
       end
@@ -59,7 +59,7 @@ defmodule GrpcReflection.Server do
       @doc """
       Get the reflection response for the given extension, if it is exposed by a configured service
       """
-      @spec get_by_extension(binary()) :: {:ok, GrpcReflection.descriptor_t()} | {:error, binary}
+      @spec get_by_extension(binary()) :: {:ok, GrpcReflection.Server.descriptor_t()} | {:error, binary}
       def get_by_extension(containing_type) do
         Service.get_by_extension(@cfg, containing_type)
       end
