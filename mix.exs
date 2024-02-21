@@ -17,7 +17,6 @@ defmodule GrpcReflection.MixProject do
       aliases: aliases(),
       test_coverage: [
         ignore_modules: [
-          ~r/^Google\./,
           ~r/^Grpc\./,
           ~r/^Helloworld\./,
           ~r/^TestserviceV2\./,
