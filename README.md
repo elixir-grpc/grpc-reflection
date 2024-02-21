@@ -1,6 +1,11 @@
 # GrpcReflection
 
-GrpcReclection is a grpc server built using `grpc-elixir`.  This server adds grpc reflection support to a `grpc-elixir` based application.
+Server reflection allows servers to assist clients in runtime construction of requests without having stub information precompiled into the client.
+
+Accoring to the [GRPC Server Reflection Protocol
+](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md), the primary usecase for server reflection is to write (typically) command line debugging tools for talking to a grpc server. In particular, such a tool will take in a method and a payload (in human readable text format) send it to the server (typically in binary proto wire format), and then take the response and decode it to text to present to the user.
+
+GrpcReflection, implemented as a gRPC server using `grpc-elixir`, adds reflection support to a `grpc-elixir`  based application.
 
 ## Installation
 
@@ -21,7 +26,7 @@ be found at <https://hexdocs.pm/grpc_reflection>.
 
 # Reflection
 
-This is written and tested using grpcurl and postman.  It supports both v1alpha and v1 reflection by using one or both of the provided servers: `rpcReflection.V1.Server` or `rpcReflection.V1alpha.Server`
+This is written and tested using [grpcurl](https://github.com/fullstorydev/grpcurl) and postman.  It supports both v1alpha and v1 reflection by using one or both of the provided servers: `rpcReflection.V1.Server` or `rpcReflection.V1alpha.Server`
 
 ## Enable reflection on your application
 
@@ -74,6 +79,12 @@ message HelloReply {
   optional string message = 1;
   optional .google.protobuf.Timestamp today = 2;
 }
+
+$ grpcurl -plaintext -format text -d 'name: "faker"' localhost:50051 helloworld.Greeter.SayHello
+message: "Hello faker"
+today: <
+  seconds:1708412184 nanos:671267628 
+>
 ```
 
 ## Protobuf Version Support
