@@ -1,7 +1,7 @@
 defmodule GrpcReflection.MixProject do
   use Mix.Project
 
-  @version "0.2.0"
+  @version "0.1.1"
   @description "gRPC reflection server for Elixir"
 
   def project do
