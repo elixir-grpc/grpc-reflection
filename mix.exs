@@ -2,6 +2,7 @@ defmodule GrpcReflection.MixProject do
   use Mix.Project
 
   @version "0.1.1"
+  @source_url "https://github.com/elixir-grpc/grpc-reflection"
   @description "gRPC reflection server for Elixir"
 
   def project do
@@ -14,6 +15,7 @@ defmodule GrpcReflection.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: package(),
+      docs: docs(),
       aliases: aliases(),
       test_coverage: [
         ignore_modules: [
@@ -96,8 +98,20 @@ defmodule GrpcReflection.MixProject do
     %{
       name: "grpc_reflection",
       files: ~w(.formatter.exs mix.exs lib),
-      links: %{"GitHub" => "https://github.com/elixir-grpc/grpc-reflection"},
+      links: %{"GitHub" => @source_url},
       licenses: ["Apache-2.0"]
     }
+  end
+
+  defp docs do
+    [
+      extras: [
+        "README.md": [title: "Overview"]
+      ],
+      main: "readme",
+      source_url: @source_url,
+      source_ref: "#{@version}",
+      formatters: ["html"]
+    ]
   end
 end
