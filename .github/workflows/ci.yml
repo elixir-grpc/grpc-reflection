@@ -71,3 +71,9 @@ jobs:
       # dialyzer takes longer to run, let others fail faster.
       - name: Run dialyzer
         run: mix dialyzer --format github
+
+      - name: unlocked lib test
+        run: |
+          mix deps.unlock --all
+          mix deps.get
+          mix test
