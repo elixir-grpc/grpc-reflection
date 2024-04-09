@@ -8,7 +8,7 @@ defmodule GrpcReflection.Service.Builder.Util do
   @type_message Map.fetch!(Google.Protobuf.FieldDescriptorProto.Type.mapping(), :TYPE_MESSAGE)
 
   def get_package(symbol) do
-    parent_symbol = symbol |> String.split(".") |> Enum.slice(0..-2) |> Enum.join(".")
+    parent_symbol = symbol |> String.split(".") |> Enum.slice(0..-2//1) |> Enum.join(".")
 
     try do
       parent_module = convert_symbol_to_module(parent_symbol)
