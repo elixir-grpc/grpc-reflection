@@ -125,12 +125,15 @@ defmodule GrpcReflection.Service.Builder.Util do
         module.__rpc_calls__()
         |> Enum.find(fn
           {_, _, _} -> true
+          {_, _, _, _} -> true
           _ -> false
         end)
         |> then(fn
           nil -> "proto2"
           {_, {req, _}, _} -> get_syntax(req)
+          {_, {req, _}, _, _} -> get_syntax(req)
           {_, _, {req, _}} -> get_syntax(req)
+          {_, _, {req, _}, _} -> get_syntax(req)
         end)
 
       true ->
