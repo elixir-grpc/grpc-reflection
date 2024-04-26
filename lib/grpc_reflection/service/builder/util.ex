@@ -106,10 +106,10 @@ defmodule GrpcReflection.Service.Builder.Util do
     |> Module.safe_concat()
   end
 
-  def is_message_descriptor?(%Google.Protobuf.FieldDescriptorProto{type: @type_message}),
+  def message_descriptor?(%Google.Protobuf.FieldDescriptorProto{type: @type_message}),
     do: true
 
-  def is_message_descriptor?(_), do: false
+  def message_descriptor?(_), do: false
 
   def get_syntax(module) do
     cond do
