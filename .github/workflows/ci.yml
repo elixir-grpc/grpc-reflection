@@ -37,7 +37,7 @@ jobs:
       - name: Install Dependencies
         run: |
           mix deps.get
-          MIX_ENV=test mix deps.compile
+          mix deps.compile
 
       - name: Run test
         run: mix test
@@ -68,7 +68,7 @@ jobs:
       - name: Install Dependencies
         run: |
           mix deps.get
-          MIX_ENV=test mix deps.compile
+          mix deps.compile
 
       - name: Run test
         run: mix test
@@ -100,7 +100,7 @@ jobs:
       - name: Install Dependencies
         run: |
           mix deps.get
-          DIAGNOSTIC=1 mix deps.compile
+          mix deps.compile
 
       - name: Restore PLT cache
         id: plt_cache
@@ -165,7 +165,7 @@ jobs:
         run: |
           mix deps.unlock --all
           mix deps.get
-          MIX_ENV=test mix deps.compile
+          mix deps.compile
 
       - name: Run test
         run: mix test
