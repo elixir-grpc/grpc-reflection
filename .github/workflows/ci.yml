@@ -10,6 +10,9 @@ on:
   schedule:
     - cron: "0 6 * * 1"
 
+env:
+  MIX_ENV: test
+
 jobs:
   validate_1_13:
     name: Validate PR against 1.13
@@ -104,6 +107,7 @@ jobs:
         run: |
           mix deps.get
           mix deps.compile
+          MIX_ENV=dev mix deps.compile
 
       - name: Restore PLT cache
         id: plt_cache
@@ -115,7 +119,7 @@ jobs:
 
       - name: Create PLTs
         if: steps.plt_cache.outputs.cache-hit != 'true'
-        run: mix dialyzer --plt
+        run: MIX_ENV=dev mix dialyzer --plt
 
       # By default, the GitHub Cache action will only save the cache if all
       # steps in the job succeed, so we separate the cache restore and save
