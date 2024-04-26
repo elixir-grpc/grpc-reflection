@@ -14,7 +14,7 @@ jobs:
   validate_1_13:
     name: Validate PR against 1.13
     runs-on: ubuntu-latest
-    if: github.event.schedule != ‘0 6 * * 1’
+    if: github.event.schedule != "0 6 * * 1"
     steps:
       - uses: actions/checkout@v3
 
@@ -45,7 +45,7 @@ jobs:
   validate_1_14:
     name: Validate PR against 1.14
     runs-on: ubuntu-latest
-    if: github.event.schedule != ‘0 6 * * 1’
+    if: github.event.schedule != "0 6 * * 1"
     steps:
       - uses: actions/checkout@v3
 
@@ -77,7 +77,7 @@ jobs:
   validate_1_15:
     name: Validate PR against 1.15
     runs-on: ubuntu-latest
-    if: github.event.schedule != ‘0 6 * * 1’
+    if: github.event.schedule != "0 6 * * 1"
     steps:
       - uses: actions/checkout@v3
 
@@ -141,7 +141,7 @@ jobs:
   validate_unlocked:
     name: Validate Code With Unlocked Dependencies
     runs-on: ubuntu-latest
-    if: github.event.schedule == ‘0 6 * * 1’
+    if: github.event.schedule == "0 6 * * 1"
     steps:
       - uses: actions/checkout@v3
 
