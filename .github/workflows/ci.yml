@@ -100,7 +100,7 @@ jobs:
       - name: Install Dependencies
         run: |
           mix deps.get
-          mix deps.compile
+          DIAGNOSTIC=1 mix deps.compile
 
       - name: Restore PLT cache
         id: plt_cache
