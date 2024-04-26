@@ -7,11 +7,77 @@ on:
   push:
     branches:
       - main
+  schedule:
+    - cron: ‘0 6 * * 1’
 
 jobs:
-  validate:
-    name: Validate PR
+  validate_1_13:
+    name: Validate PR against 1.13
     runs-on: ubuntu-latest
+    if: github.event.schedule != ‘0 6 * * 1’
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: 25.1.x
+          elixir-version: 1.13.x
+
+      - name: Restore dependencies cache
+        id: mix_cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            deps
+            _build
+          key: mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-
+
+      - name: Install Dependencies
+        run: |
+          mix deps.get
+          mix deps.compile
+
+      - name: Run test
+        run: mix test
+
+  validate_1_14:
+    name: Validate PR against 1.14
+    runs-on: ubuntu-latest
+    if: github.event.schedule != ‘0 6 * * 1’
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: 25.1.x
+          elixir-version: 1.14.x
+
+      - name: Restore dependencies cache
+        id: mix_cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            deps
+            _build
+          key: mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-
+
+      - name: Install Dependencies
+        run: |
+          mix deps.get
+          mix deps.compile
+
+      - name: Run test
+        run: mix test
+
+  # run all steps on latest supported
+  validate_1_15:
+    name: Validate PR against 1.15
+    runs-on: ubuntu-latest
+    if: github.event.schedule != ‘0 6 * * 1’
     steps:
       - uses: actions/checkout@v3
 
@@ -72,8 +138,34 @@ jobs:
       - name: Run dialyzer
         run: mix dialyzer --format github
 
-      - name: unlocked lib test
+  validate_unlocked:
+    name: Validate Code With Unlocked Dependencies
+    runs-on: ubuntu-latest
+    if: github.event.schedule == ‘0 6 * * 1’
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: 25.1.x
+          elixir-version: 1.15.x
+
+      - name: Restore dependencies cache
+        id: mix_cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            deps
+            _build
+          key: mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-
+
+      - name: Install Dependencies
         run: |
           mix deps.unlock --all
           mix deps.get
-          mix test
+          mix deps.compile
+
+      - name: Run test
+        run: mix test
