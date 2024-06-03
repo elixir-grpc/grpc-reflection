@@ -38,12 +38,22 @@ defmodule GrpcReflection.Server do
       @spec get_by_symbol(binary()) ::
               {:ok, GrpcReflection.Server.descriptor_t()} | {:error, binary}
       def get_by_symbol(symbol) do
-        {:ok, %{file_descriptor_proto: [proto]} = resp} = Service.get_by_symbol(@cfg, symbol)
+        {:ok, %{file_descriptor_proto: [proto]}} = resp = Service.get_by_symbol(@cfg, symbol)
+
         IO.puts("~~~")
         IO.inspect(symbol)
-        IO.inspect(Google.Protobuf.FileDescriptorProto.decode(proto).package)
 
-        {:ok, resp}
+        if symbol == "example.helloworld.HelloSpec.Spec" do
+          proto = Google.Protobuf.FileDescriptorProto.decode(proto)
+          IO.inspect(proto.package)
+          # proto = %{proto | package: "example.helloWorld.HelloSpec"}
+          # proto = %{proto | package: "example.helloWorld.HelloSpec.Spec"}
+          # IO.inspect(proto.package)
+          proto = Google.Protobuf.FileDescriptorProto.encode(proto)
+          {:ok, %{file_descriptor_proto: [proto]}}
+        else
+          resp
+        end
       end
 
       @doc """

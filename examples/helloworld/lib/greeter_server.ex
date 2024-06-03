@@ -13,4 +13,16 @@ defmodule Helloworld.Greeter.Server do
       today: %Google.Protobuf.Timestamp{seconds: seconds, nanos: nanos}
     }
   end
+
+  def get_spec(_request, _stream) do
+    %Example.Helloworld.HelloSpec{
+      message: "this is a spec",
+      spec: %Example.Helloworld.HelloSpec.Spec{
+        major: 0,
+        minor: 5,
+        patch: 6,
+        notes: "version notes"
+      }
+    }
+  end
 end
