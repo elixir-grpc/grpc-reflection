@@ -46,9 +46,8 @@ defmodule GrpcReflection.Server do
         if symbol == "example.helloworld.HelloSpec.Spec" do
           proto = Google.Protobuf.FileDescriptorProto.decode(proto)
           IO.inspect(proto.package)
-          # proto = %{proto | package: "example.helloWorld.HelloSpec"}
-          # proto = %{proto | package: "example.helloWorld.HelloSpec.Spec"}
-          # IO.inspect(proto.package)
+          proto = %{proto | package: "example.helloworld.HelloSpec"}
+          IO.inspect(proto.package)
           proto = Google.Protobuf.FileDescriptorProto.encode(proto)
           {:ok, %{file_descriptor_proto: [proto]}}
         else
