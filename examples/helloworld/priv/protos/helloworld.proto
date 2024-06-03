@@ -6,13 +6,15 @@ option java_outer_classname = "HelloWorldProto";
 option objc_class_prefix = "HLW";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
-package helloworld;
+package example.helloworld;
 
 // The greeting service definition.
 service Greeter {
   // Sends a greeting
   rpc SayHello (HelloRequest) returns (HelloReply) {}
+  rpc GetSpec (google.protobuf.Empty) returns (HelloSpec) {}
 }
 
 // The request message containing the user's name.
@@ -24,4 +26,16 @@ message HelloRequest {
 message HelloReply {
   string message = 1;
   google.protobuf.Timestamp today = 2;
+}
+
+message HelloSpec {
+  string message = 1;
+  Spec spec = 2;
+
+  message Spec {
+    int32 major = 1;
+    int32 minor = 2;
+    int32 patch = 3;
+    string notes = 4;
+  }
 }
