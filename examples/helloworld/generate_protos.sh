@@ -8,5 +8,13 @@ PROTOS=("
 ")
 
 for file in $PROTOS; do
-  protoc --elixir_opt=include_docs=true --elixir_out=plugins=grpc,gen_descriptors=true:./lib/protos --proto_path=priv/protos/ $file
+  mix protobuf.generate \
+    --output-path=./lib/protos \
+    --include-docs=true \
+    --generate-descriptors=true \
+    --include-path=priv/protos/ \
+    --include-path=./priv/protos/googleapis \
+    --plugin=ProtobufGenerate.Plugins.GRPC \
+    --one-file-per-module \
+    $file
 done
