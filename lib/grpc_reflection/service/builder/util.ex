@@ -103,7 +103,7 @@ defmodule GrpcReflection.Service.Builder.Util do
       name -> name
     end)
     |> String.split(".")
-    |> Enum.map(&upcase_first/1)
+    |> Enum.map(&Macro.camelize/1)
     |> Module.safe_concat()
   end
 
