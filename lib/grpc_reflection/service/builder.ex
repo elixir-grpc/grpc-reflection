@@ -41,8 +41,8 @@ defmodule GrpcReflection.Service.Builder do
     # protobuf_generate populates services with file_descriptors
     case service.descriptor() do
       %FileDescriptorProto{service: [proto]} ->
-        # TODO we should read and use the file descriptor directly instead
-        # of dropping relevant data nd trying to discover it
+        # we should read and use the file descriptor directly instead
+        # of dropping relevant data and trying to discover it
         process_service_descriptor(name, proto, syntax)
 
       %ServiceDescriptorProto{} = proto ->
