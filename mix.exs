@@ -44,8 +44,7 @@ defmodule GrpcReflection.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:grpc, "~> 0.7"},
       {:protobuf, "~> 0.11"},
-      {:google_protos, "~> 0.4.0"},
-      {:protobuf_generate, "~> 0.1.0"}
+      {:google_protos, "~> 0.4.0"}
     ]
   end
 

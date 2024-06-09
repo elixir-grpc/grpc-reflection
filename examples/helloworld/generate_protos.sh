@@ -1,8 +1,5 @@
 #!/bin/bash
 
-rm -rf ./lib/protos
-mkdir ./lib/protos
-
 PROTOS=("
     priv/protos/helloworld.proto
 ")
