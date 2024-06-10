@@ -65,10 +65,16 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert {:error, _} = run_request(message, ctx)
     end
 
-    test "describing a type returns the type", ctx do
+    test "describing a root type returns the type", ctx do
       message = {:file_containing_symbol, "helloworld.HelloRequest"}
       assert {:ok, response} = run_request(message, ctx)
       assert_response(response)
+    end
+
+    test "describing a nested type returns the root type", ctx do
+      message = {:file_containing_symbol, "testserviceV3.TestRequest.Location"}
+      assert {:ok, response} = run_request(message, ctx)
+      assert response.name == "testserviceV3.TestRequest.proto"
     end
 
     test "type with leading period still resolves", ctx do
