@@ -24,8 +24,6 @@ defmodule GrpcReflection.Service.Builder.Util do
     end
   end
 
-  def upcase_first(<<first::utf8, rest::binary>>), do: String.upcase(<<first::utf8>>) <> rest
-
   def downcase_first(<<first::utf8, rest::binary>>),
     do: String.downcase(<<first::utf8>>) <> rest
 
