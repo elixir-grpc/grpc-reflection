@@ -36,6 +36,7 @@ defmodule GrpcReflection.Service.Builder.Util do
 
     try do
       maybe_parent_module = convert_symbol_to_module(maybe_parent_symbol)
+
       if Code.ensure_loaded?(maybe_parent_module) and
            function_exported?(maybe_parent_module, :descriptor, 0) do
         get_package_and_root_symbol(maybe_parent_symbol)

@@ -16,9 +16,6 @@ defmodule GrpcReflection.BuilderTest do
              "google.protobuf.Timestamp.proto",
              "testserviceV3.Enum.proto",
              "testserviceV3.TestReply.proto",
-             "testserviceV3.TestRequest.GEntry.proto",
-             "testserviceV3.TestRequest.Payload.Location.proto",
-             "testserviceV3.TestRequest.Payload.proto",
              "testserviceV3.TestRequest.proto",
              "testserviceV3.TestService.proto"
            ]
@@ -30,9 +27,6 @@ defmodule GrpcReflection.BuilderTest do
              "testserviceV3.Enum",
              "testserviceV3.TestReply",
              "testserviceV3.TestRequest",
-             "testserviceV3.TestRequest.GEntry",
-             "testserviceV3.TestRequest.Payload",
-             "testserviceV3.TestRequest.Payload.Location",
              "testserviceV3.TestService",
              "testserviceV3.TestService.CallFunction"
            ]
@@ -54,7 +48,6 @@ defmodule GrpcReflection.BuilderTest do
              "google.protobuf.Timestamp.proto",
              "testserviceV2.Enum.proto",
              "testserviceV2.TestReply.proto",
-             "testserviceV2.TestRequest.GEntry.proto",
              "testserviceV2.TestRequest.proto",
              "testserviceV2.TestRequestExtension.proto",
              "testserviceV2.TestService.proto"
@@ -66,7 +59,6 @@ defmodule GrpcReflection.BuilderTest do
              "testserviceV2.Enum",
              "testserviceV2.TestReply",
              "testserviceV2.TestRequest",
-             "testserviceV2.TestRequest.GEntry",
              "testserviceV2.TestService",
              "testserviceV2.TestService.CallFunction"
            ]

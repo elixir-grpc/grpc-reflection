@@ -173,7 +173,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
              ]
     end
 
-    test "ensure inclusion of nested types in file descriptor dependencies", ctx do
+    test "ensure exclusion of nested types in file descriptor dependencies", ctx do
       filename = "testserviceV3.TestRequest.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
@@ -182,11 +182,8 @@ defmodule GrpcReflection.V1alphaReflectionTest do
 
       assert response.dependency == [
                "testserviceV3.Enum.proto",
-               "testserviceV3.TestRequest.GEntry.proto",
                "google.protobuf.Any.proto",
-               "testserviceV3.TestRequest.Payload.proto",
                "google.protobuf.StringValue.proto",
-               "testserviceV3.TestRequest.Payload.Location.proto"
              ]
     end
   end
