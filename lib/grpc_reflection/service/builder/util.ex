@@ -36,7 +36,6 @@ defmodule GrpcReflection.Service.Builder.Util do
 
     try do
       maybe_parent_module = convert_symbol_to_module(maybe_parent_symbol)
-
       if Code.ensure_loaded?(maybe_parent_module) and
            function_exported?(maybe_parent_module, :descriptor, 0) do
         get_package_and_root_symbol(maybe_parent_symbol)
@@ -132,10 +131,10 @@ defmodule GrpcReflection.Service.Builder.Util do
     |> Module.safe_concat()
   end
 
-  def is_message_descriptor?(%Google.Protobuf.FieldDescriptorProto{type: @type_message}),
+  def message_descriptor?(%Google.Protobuf.FieldDescriptorProto{type: @type_message}),
     do: true
 
-  def is_message_descriptor?(_), do: false
+  def message_descriptor?(_), do: false
 
   def get_syntax(module) do
     cond do

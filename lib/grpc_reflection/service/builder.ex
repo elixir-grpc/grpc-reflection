@@ -134,7 +134,7 @@ defmodule GrpcReflection.Service.Builder do
       )
 
     message_list =
-      for ext <- extension_files, Util.is_message_descriptor?(ext) do
+      for ext <- extension_files, Util.message_descriptor?(ext) do
         ext.type_name
         |> Util.convert_symbol_to_module()
         |> then(& &1.descriptor())

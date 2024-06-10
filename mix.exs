@@ -1,7 +1,7 @@
 defmodule GrpcReflection.MixProject do
   use Mix.Project
 
-  @version "0.1.2"
+  @version "0.1.3"
   @source_url "https://github.com/elixir-grpc/grpc-reflection"
   @description "gRPC reflection server for Elixir"
 
@@ -10,7 +10,7 @@ defmodule GrpcReflection.MixProject do
       app: :grpc_reflection,
       version: @version,
       description: @description,
-      elixir: "~> 1.15",
+      elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
