@@ -64,7 +64,13 @@ defmodule GrpcReflection.Service.Builder do
       descriptor = mod.descriptor()
       name = symbol
 
-      referenced_types = Util.types_from_descriptor(descriptor)
+      nested_types = Util.get_nested_types(name, descriptor)
+
+      referenced_types =
+        Util.types_from_descriptor(descriptor)
+        |> Enum.uniq()
+        |> Kernel.--(nested_types)
+
       unencoded_payload = process_common(name, mod, descriptor)
       payload = FileDescriptorProto.encode(unencoded_payload)
       response = %{file_descriptor_proto: [payload]}
@@ -106,9 +112,11 @@ defmodule GrpcReflection.Service.Builder do
          %Google.Protobuf.DescriptorProto{extension_range: extension_range} = descriptor
        )
        when extension_range != [] do
+    {package, _} = Util.get_package_and_root_symbol(symbol)
+
     unencoded_extension_payload = %Google.Protobuf.FileDescriptorProto{
       name: extension_file,
-      package: Util.get_package(symbol),
+      package: package,
       dependency: [symbol <> ".proto"],
       syntax: Util.get_syntax(mod)
     }
@@ -144,15 +152,18 @@ defmodule GrpcReflection.Service.Builder do
   defp process_extensions(_, _, _, _), do: {:ignore, {nil, nil}}
 
   defp process_common(name, module, descriptor) do
-    package = Util.get_package(name)
+    {package, _} = Util.get_package_and_root_symbol(name)
+
+    nested_types = Util.get_nested_types(name, descriptor)
 
     dependencies =
       descriptor
       |> Util.types_from_descriptor()
+      |> Enum.uniq()
+      |> Kernel.--(nested_types)
       |> Enum.map(fn name ->
         name <> ".proto"
       end)
-      |> Enum.uniq()
 
     response_stub =
       %FileDescriptorProto{

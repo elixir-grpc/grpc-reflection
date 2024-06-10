@@ -7,19 +7,45 @@ defmodule GrpcReflection.Service.Builder.Util do
 
   @type_message Map.fetch!(Google.Protobuf.FieldDescriptorProto.Type.mapping(), :TYPE_MESSAGE)
 
-  def get_package(symbol) do
-    parent_symbol = symbol |> String.split(".") |> Enum.slice(0..-2//1) |> Enum.join(".")
+  def get_nested_types(symbol, descriptor), do: get_nested_types(symbol, descriptor, [])
+
+  def get_nested_types(_symbol, %Google.Protobuf.DescriptorProto{nested_type: []}, acc) do
+    acc
+  end
+
+  def get_nested_types(symbol, %Google.Protobuf.DescriptorProto{nested_type: nested_types}, acc) do
+    Enum.reduce(nested_types, acc, fn nested_type, acc ->
+      new_symbol = symbol <> "." <> nested_type.name
+      new_acc = [new_symbol | acc]
+      get_nested_types(new_symbol, nested_type, new_acc)
+    end)
+  end
+
+  def get_nested_types(_, _, acc), do: acc
+
+  def get_parent_symbol(symbol) do
+    if String.contains?(symbol, ".") do
+      symbol |> String.split(".") |> Enum.slice(0..-2//1) |> Enum.join(".")
+    else
+      symbol
+    end
+  end
+
+  def get_package_and_root_symbol(symbol) do
+    maybe_parent_symbol = get_parent_symbol(symbol)
 
     try do
-      parent_module = convert_symbol_to_module(parent_symbol)
+      maybe_parent_module = convert_symbol_to_module(maybe_parent_symbol)
 
-      if function_exported?(parent_module, :descriptor, 0) do
-        get_package(parent_symbol)
+      if Code.ensure_loaded?(maybe_parent_module) and
+           function_exported?(maybe_parent_module, :descriptor, 0) do
+        get_package_and_root_symbol(maybe_parent_symbol)
       else
-        parent_symbol
+        {maybe_parent_symbol, symbol}
       end
     rescue
-      _ -> parent_symbol
+      _ ->
+        {maybe_parent_symbol, symbol}
     end
   end
 

@@ -1,6 +1,8 @@
 defmodule GrpcReflection.Service.State do
   @moduledoc false
 
+  alias GrpcReflection.Service.Builder.Util
+
   defstruct services: [], files: %{}, symbols: %{}, extensions: %{}, references: MapSet.new()
 
   @type descriptor_t :: GrpcReflection.Server.descriptor_t()
@@ -56,8 +58,10 @@ defmodule GrpcReflection.Service.State do
   def lookup_symbol("." <> symbol, state), do: lookup_symbol(symbol, state)
 
   def lookup_symbol(symbol, %__MODULE__{symbols: symbols}) do
-    if Map.has_key?(symbols, symbol) do
-      {:ok, symbols[symbol]}
+    {_, root_symbol} = Util.get_package_and_root_symbol(symbol)
+
+    if Map.has_key?(symbols, root_symbol) do
+      {:ok, symbols[root_symbol]}
     else
       {:error, "symbol not found"}
     end
