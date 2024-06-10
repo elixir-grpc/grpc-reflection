@@ -180,6 +180,20 @@ defmodule TestserviceV3.TestRequest.Payload do
           json_name: "location",
           proto3_optional: nil,
           __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "token",
+          extendee: nil,
+          number: 3,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".testserviceV3.TestRequest.Token",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "token",
+          proto3_optional: nil,
+          __unknown_fields__: []
         }
       ],
       nested_type: [
@@ -239,6 +253,45 @@ defmodule TestserviceV3.TestRequest.Payload do
 
   field :data, 1, type: Google.Protobuf.StringValue
   field :location, 2, type: TestserviceV3.TestRequest.Payload.Location
+  field :token, 3, type: TestserviceV3.TestRequest.Token
+end
+
+defmodule TestserviceV3.TestRequest.Token do
+  use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
+
+  def descriptor do
+    # credo:disable-for-next-line
+    %Google.Protobuf.DescriptorProto{
+      name: "Token",
+      field: [
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "vaule",
+          extendee: nil,
+          number: 1,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_STRING,
+          type_name: nil,
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "vaule",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        }
+      ],
+      nested_type: [],
+      enum_type: [],
+      extension_range: [],
+      extension: [],
+      options: nil,
+      oneof_decl: [],
+      reserved_range: [],
+      reserved_name: [],
+      __unknown_fields__: []
+    }
+  end
+
+  field :vaule, 1, type: :string
 end
 
 defmodule TestserviceV3.TestRequest do
@@ -430,6 +483,20 @@ defmodule TestserviceV3.TestRequest do
               json_name: "location",
               proto3_optional: nil,
               __unknown_fields__: []
+            },
+            %Google.Protobuf.FieldDescriptorProto{
+              name: "token",
+              extendee: nil,
+              number: 3,
+              label: :LABEL_OPTIONAL,
+              type: :TYPE_MESSAGE,
+              type_name: ".testserviceV3.TestRequest.Token",
+              default_value: nil,
+              options: nil,
+              oneof_index: nil,
+              json_name: "token",
+              proto3_optional: nil,
+              __unknown_fields__: []
             }
           ],
           nested_type: [
@@ -476,6 +543,34 @@ defmodule TestserviceV3.TestRequest do
               __unknown_fields__: []
             }
           ],
+          enum_type: [],
+          extension_range: [],
+          extension: [],
+          options: nil,
+          oneof_decl: [],
+          reserved_range: [],
+          reserved_name: [],
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.DescriptorProto{
+          name: "Token",
+          field: [
+            %Google.Protobuf.FieldDescriptorProto{
+              name: "vaule",
+              extendee: nil,
+              number: 1,
+              label: :LABEL_OPTIONAL,
+              type: :TYPE_STRING,
+              type_name: nil,
+              default_value: nil,
+              options: nil,
+              oneof_index: nil,
+              json_name: "vaule",
+              proto3_optional: nil,
+              __unknown_fields__: []
+            }
+          ],
+          nested_type: [],
           enum_type: [],
           extension_range: [],
           extension: [],

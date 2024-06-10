@@ -72,7 +72,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
     end
 
     test "describing a nested type returns the root type", ctx do
-      message = {:file_containing_symbol, "testserviceV3.TestRequest.Location"}
+      message = {:file_containing_symbol, "testserviceV3.TestRequest.Payload"}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == "testserviceV3.TestRequest.proto"
     end
@@ -189,7 +189,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
       assert response.dependency == [
                "testserviceV3.Enum.proto",
                "google.protobuf.Any.proto",
-               "google.protobuf.StringValue.proto",
+               "google.protobuf.StringValue.proto"
              ]
     end
   end
