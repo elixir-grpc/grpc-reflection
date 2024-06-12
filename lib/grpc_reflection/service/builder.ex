@@ -92,10 +92,16 @@ defmodule GrpcReflection.Service.Builder do
       response = %{file_descriptor_proto: [payload]}
 
       root_symbols = %{symbol => response}
-      root_symbols = Enum.reduce(nested_types, root_symbols, fn name, acc -> Map.put(acc, name, response) end)
+
+      root_symbols =
+        Enum.reduce(nested_types, root_symbols, fn name, acc -> Map.put(acc, name, response) end)
 
       root_files = %{(symbol <> ".proto") => response}
-      root_files = Enum.reduce(nested_types, root_files, fn name, acc -> Map.put(acc, name <> ".proto", response) end)
+
+      root_files =
+        Enum.reduce(nested_types, root_files, fn name, acc ->
+          Map.put(acc, name <> ".proto", response)
+        end)
 
       extension_file = symbol <> "Extension.proto"
 
