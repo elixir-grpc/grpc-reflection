@@ -10,15 +10,15 @@ defmodule GrpcReflection.Service.Builder.UtilTest do
   end
 
   describe "common utils" do
-    test "get package and root symbol from module" do
-      assert {"testserviceV3", "testserviceV3.TestRequest"} ==
-               Util.get_package_and_root_symbol("testserviceV3.TestRequest")
+    test "get package from module" do
+      assert "testserviceV3" ==
+               Util.get_package("testserviceV3.TestRequest")
 
-      assert {"testserviceV3", "testserviceV3.TestRequest"} ==
-               Util.get_package_and_root_symbol("testserviceV3.TestRequest.Payload.Location")
+      assert "testserviceV3" ==
+               Util.get_package("testserviceV3.TestRequest.Payload.Location")
 
-      assert {"testserviceV3", "testserviceV3.TestService"} ==
-               Util.get_package_and_root_symbol("testserviceV3.TestService")
+      assert "testserviceV3" ==
+               Util.get_package("testserviceV3.TestService")
     end
 
     test "downcase_first" do

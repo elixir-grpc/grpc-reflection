@@ -87,12 +87,15 @@ defmodule GrpcReflection.Service.Builder do
         |> Enum.uniq()
         |> Kernel.--(nested_types)
 
-      unencoded_payload = process_common(name, descriptor, Util.get_syntax(mod))
+      unencoded_payload = process_common(name, descriptor, Util.get_syntax(mod), nested_types)
       payload = FileDescriptorProto.encode(unencoded_payload)
       response = %{file_descriptor_proto: [payload]}
 
       root_symbols = %{symbol => response}
+      root_symbols = Enum.reduce(nested_types, root_symbols, fn name, acc -> Map.put(acc, name, response) end)
+
       root_files = %{(symbol <> ".proto") => response}
+      root_files = Enum.reduce(nested_types, root_files, fn name, acc -> Map.put(acc, name <> ".proto", response) end)
 
       extension_file = symbol <> "Extension.proto"
 
@@ -128,11 +131,9 @@ defmodule GrpcReflection.Service.Builder do
          %Google.Protobuf.DescriptorProto{extension_range: extension_range} = descriptor
        )
        when extension_range != [] do
-    {package, _} = Util.get_package_and_root_symbol(symbol)
-
     unencoded_extension_payload = %Google.Protobuf.FileDescriptorProto{
       name: extension_file,
-      package: package,
+      package: Util.get_package(symbol),
       dependency: [symbol <> ".proto"],
       syntax: Util.get_syntax(mod)
     }
@@ -167,11 +168,7 @@ defmodule GrpcReflection.Service.Builder do
 
   defp process_extensions(_, _, _, _), do: {:ignore, {nil, nil}}
 
-  defp process_common(name, descriptor, syntax) do
-    {package, _} = Util.get_package_and_root_symbol(name)
-
-    nested_types = Util.get_nested_types(name, descriptor)
-
+  defp process_common(name, descriptor, syntax, nested_types \\ []) do
     dependencies =
       descriptor
       |> Util.types_from_descriptor()
@@ -184,7 +181,7 @@ defmodule GrpcReflection.Service.Builder do
     response_stub =
       %FileDescriptorProto{
         name: name <> ".proto",
-        package: package,
+        package: Util.get_package(name),
         dependency: dependencies,
         syntax: syntax
       }

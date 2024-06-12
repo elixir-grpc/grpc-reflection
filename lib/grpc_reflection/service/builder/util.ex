@@ -23,29 +23,20 @@ defmodule GrpcReflection.Service.Builder.Util do
 
   def get_nested_types(_, _, acc), do: acc
 
-  def get_parent_symbol(symbol) do
-    if String.contains?(symbol, ".") do
-      symbol |> String.split(".") |> Enum.slice(0..-2//1) |> Enum.join(".")
-    else
-      symbol
-    end
-  end
-
-  def get_package_and_root_symbol(symbol) do
-    maybe_parent_symbol = get_parent_symbol(symbol)
+  def get_package(symbol) do
+    parent_symbol = symbol |> String.split(".") |> Enum.slice(0..-2//1) |> Enum.join(".")
 
     try do
-      maybe_parent_module = convert_symbol_to_module(maybe_parent_symbol)
+      parent_module = convert_symbol_to_module(parent_symbol)
+      Code.ensure_loaded(parent_module)
 
-      if Code.ensure_loaded?(maybe_parent_module) and
-           function_exported?(maybe_parent_module, :descriptor, 0) do
-        get_package_and_root_symbol(maybe_parent_symbol)
+      if function_exported?(parent_module, :descriptor, 0) do
+        get_package(parent_symbol)
       else
-        {maybe_parent_symbol, symbol}
+        parent_symbol
       end
     rescue
-      _ ->
-        {maybe_parent_symbol, symbol}
+      _ -> parent_symbol
     end
   end
 
