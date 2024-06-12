@@ -35,6 +35,19 @@ defmodule GrpcReflection.Service.Builder.UtilTest do
         Util.convert_symbol_to_module("testservice.TestRequest.Payload.Location")
       end
     end
+
+    test "get all nested types" do
+      assert [
+               "testserviceV3.TestRequest.Token",
+               "testserviceV3.TestRequest.Payload.Location",
+               "testserviceV3.TestRequest.Payload",
+               "testserviceV3.TestRequest.GEntry"
+             ] ==
+               Util.get_nested_types(
+                 "testserviceV3.TestRequest",
+                 TestserviceV3.TestRequest.descriptor()
+               )
+    end
   end
 
   describe "utils for dealing with proto2 only" do
