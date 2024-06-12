@@ -2,6 +2,7 @@ defmodule GrpcReflection.Service.Builder do
   @moduledoc false
 
   alias Google.Protobuf.FileDescriptorProto
+  alias Google.Protobuf.ServiceDescriptorProto
   alias GrpcReflection.Service.State
   alias GrpcReflection.Service.Builder.Util
 
@@ -33,8 +34,23 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   defp process_service(service) do
-    descriptor = service.descriptor()
-    service_name = service.__meta__(:name)
+    name = service.__meta__(:name)
+    syntax = Util.get_syntax(service)
+
+    # protobuf_elixir populates service descriptors directly
+    # protobuf_generate populates services with file_descriptors
+    case service.descriptor() do
+      %FileDescriptorProto{service: [proto]} ->
+        # we should read and use the file descriptor directly instead
+        # of dropping relevant data and trying to discover it
+        process_service_descriptor(name, proto, syntax)
+
+      %ServiceDescriptorProto{} = proto ->
+        process_service_descriptor(name, proto, syntax)
+    end
+  end
+
+  defp process_service_descriptor(service_name, descriptor, syntax) do
     referenced_types = Util.types_from_descriptor(descriptor)
 
     method_symbols =
@@ -43,7 +59,7 @@ defmodule GrpcReflection.Service.Builder do
         fn method -> service_name <> "." <> method.name end
       )
 
-    unencoded_payload = process_common(service_name, service, descriptor)
+    unencoded_payload = process_common(service_name, descriptor, syntax)
     payload = FileDescriptorProto.encode(unencoded_payload)
     response = %{file_descriptor_proto: [payload]}
 
@@ -71,7 +87,7 @@ defmodule GrpcReflection.Service.Builder do
         |> Enum.uniq()
         |> Kernel.--(nested_types)
 
-      unencoded_payload = process_common(name, mod, descriptor)
+      unencoded_payload = process_common(name, descriptor, Util.get_syntax(mod))
       payload = FileDescriptorProto.encode(unencoded_payload)
       response = %{file_descriptor_proto: [payload]}
 
@@ -151,7 +167,7 @@ defmodule GrpcReflection.Service.Builder do
 
   defp process_extensions(_, _, _, _), do: {:ignore, {nil, nil}}
 
-  defp process_common(name, module, descriptor) do
+  defp process_common(name, descriptor, syntax) do
     {package, _} = Util.get_package_and_root_symbol(name)
 
     nested_types = Util.get_nested_types(name, descriptor)
@@ -170,7 +186,7 @@ defmodule GrpcReflection.Service.Builder do
         name: name <> ".proto",
         package: package,
         dependency: dependencies,
-        syntax: Util.get_syntax(module)
+        syntax: syntax
       }
 
     case descriptor do

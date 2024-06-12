@@ -1,7 +1,7 @@
 defmodule GrpcReflection.MixProject do
   use Mix.Project
 
-  @version "0.1.3"
+  @version "0.1.4"
   @source_url "https://github.com/elixir-grpc/grpc-reflection"
   @description "gRPC reflection server for Elixir"
 
@@ -42,9 +42,10 @@ defmodule GrpcReflection.MixProject do
     [
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
+      {:google_protos, "~> 0.4.0"},
       {:grpc, "~> 0.7"},
-      {:protobuf, "~> 0.11"},
-      {:google_protos, "~> 0.4.0"}
+      {:protobuf, "~> 0.11"}
     ]
   end
 

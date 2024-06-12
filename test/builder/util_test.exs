@@ -21,10 +21,6 @@ defmodule GrpcReflection.Service.Builder.UtilTest do
                Util.get_package_and_root_symbol("testserviceV3.TestService")
     end
 
-    test "upcase_first" do
-      assert "Hello" == Util.upcase_first("hello")
-    end
-
     test "downcase_first" do
       assert "hello" == Util.downcase_first("Hello")
     end
