@@ -1,7 +1,7 @@
 defmodule GrpcReflection.MixProject do
   use Mix.Project
 
-  @version "0.1.4"
+  @version "0.1.5"
   @source_url "https://github.com/elixir-grpc/grpc-reflection"
   @description "gRPC reflection server for Elixir"
 

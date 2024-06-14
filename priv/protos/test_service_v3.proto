@@ -29,6 +29,11 @@ message TestRequest {
     }
 
     Location location = 2;
+    Token token = 3;
+  }
+
+  message Token {
+    string vaule = 1;
   }
 
   Payload payload = 7;

@@ -80,13 +80,28 @@ defmodule GrpcReflection.Service.Builder do
       descriptor = mod.descriptor()
       name = symbol
 
-      referenced_types = Util.types_from_descriptor(descriptor)
-      unencoded_payload = process_common(name, descriptor, Util.get_syntax(mod))
+      nested_types = Util.get_nested_types(name, descriptor)
+
+      referenced_types =
+        Util.types_from_descriptor(descriptor)
+        |> Enum.uniq()
+        |> Kernel.--(nested_types)
+
+      unencoded_payload = process_common(name, descriptor, Util.get_syntax(mod), nested_types)
       payload = FileDescriptorProto.encode(unencoded_payload)
       response = %{file_descriptor_proto: [payload]}
 
       root_symbols = %{symbol => response}
+
+      root_symbols =
+        Enum.reduce(nested_types, root_symbols, fn name, acc -> Map.put(acc, name, response) end)
+
       root_files = %{(symbol <> ".proto") => response}
+
+      root_files =
+        Enum.reduce(nested_types, root_files, fn name, acc ->
+          Map.put(acc, name <> ".proto", response)
+        end)
 
       extension_file = symbol <> "Extension.proto"
 
@@ -159,21 +174,20 @@ defmodule GrpcReflection.Service.Builder do
 
   defp process_extensions(_, _, _, _), do: {:ignore, {nil, nil}}
 
-  defp process_common(name, descriptor, syntax) do
-    package = Util.get_package(name)
-
+  defp process_common(name, descriptor, syntax, nested_types \\ []) do
     dependencies =
       descriptor
       |> Util.types_from_descriptor()
+      |> Enum.uniq()
+      |> Kernel.--(nested_types)
       |> Enum.map(fn name ->
         name <> ".proto"
       end)
-      |> Enum.uniq()
 
     response_stub =
       %FileDescriptorProto{
         name: name <> ".proto",
-        package: package,
+        package: Util.get_package(name),
         dependency: dependencies,
         syntax: syntax
       }

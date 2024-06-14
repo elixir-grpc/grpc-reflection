@@ -65,10 +65,16 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert {:error, _} = run_request(message, ctx)
     end
 
-    test "describing a type returns the type", ctx do
+    test "describing a root type returns the type", ctx do
       message = {:file_containing_symbol, "helloworld.HelloRequest"}
       assert {:ok, response} = run_request(message, ctx)
       assert_response(response)
+    end
+
+    test "describing a nested type returns the root type", ctx do
+      message = {:file_containing_symbol, "testserviceV3.TestRequest.Payload"}
+      assert {:ok, response} = run_request(message, ctx)
+      assert response.name == "testserviceV3.TestRequest.proto"
     end
 
     test "type with leading period still resolves", ctx do
@@ -173,7 +179,7 @@ defmodule GrpcReflection.V1ReflectionTest do
              ]
     end
 
-    test "ensure inclusion of nested types in file descriptor dependencies", ctx do
+    test "ensure exclusion of nested types in file descriptor dependencies", ctx do
       filename = "testserviceV3.TestRequest.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
@@ -182,11 +188,8 @@ defmodule GrpcReflection.V1ReflectionTest do
 
       assert response.dependency == [
                "testserviceV3.Enum.proto",
-               "testserviceV3.TestRequest.GEntry.proto",
                "google.protobuf.Any.proto",
-               "testserviceV3.TestRequest.Payload.proto",
-               "google.protobuf.StringValue.proto",
-               "testserviceV3.TestRequest.Payload.Location.proto"
+               "google.protobuf.StringValue.proto"
              ]
     end
   end

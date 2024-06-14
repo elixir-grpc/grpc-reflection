@@ -7,6 +7,22 @@ defmodule GrpcReflection.Service.Builder.Util do
 
   @type_message Map.fetch!(Google.Protobuf.FieldDescriptorProto.Type.mapping(), :TYPE_MESSAGE)
 
+  def get_nested_types(symbol, descriptor), do: get_nested_types(symbol, descriptor, [])
+
+  def get_nested_types(_symbol, %Google.Protobuf.DescriptorProto{nested_type: []}, acc) do
+    acc
+  end
+
+  def get_nested_types(symbol, %Google.Protobuf.DescriptorProto{nested_type: nested_types}, acc) do
+    Enum.reduce(nested_types, acc, fn nested_type, acc ->
+      new_symbol = symbol <> "." <> nested_type.name
+      new_acc = [new_symbol | acc]
+      get_nested_types(new_symbol, nested_type, new_acc)
+    end)
+  end
+
+  def get_nested_types(_, _, acc), do: acc
+
   def get_package(symbol) do
     parent_symbol = symbol |> String.split(".") |> Enum.slice(0..-2//1) |> Enum.join(".")
 
