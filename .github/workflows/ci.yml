@@ -13,7 +13,7 @@ env:
 
 jobs:
   elixir_compatibility:
-    name: "Check library against a compatability matrix"
+    name: "Check elixir+otp versions"
     strategy:
       matrix:
         runtime: [
@@ -72,8 +72,8 @@ jobs:
         run: mix test
 
   # run extra steps on latest supported
-  extra_checks:
-    name: Lint and check on latest runtime
+  Linting:
+    name: Linting on latest runtime
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -99,7 +99,6 @@ jobs:
         run: |
           mix deps.get
           mix deps.compile
-          MIX_ENV=dev mix deps.compile
 
       - name: Restore PLT cache
         id: plt_cache
@@ -111,11 +110,10 @@ jobs:
 
       - name: Create PLTs
         if: steps.plt_cache.outputs.cache-hit != 'true'
-        run: MIX_ENV=dev mix dialyzer --plt
+        run: mix dialyzer --plt
 
       # By default, the GitHub Cache action will only save the cache if all
-      # steps in the job succeed, so we separate the cache restore and save
-      # steps in case running dialyzer fails.
+      # steps pass, so we manually save after PLT building to keep the cache
       - name: Save PLT cache
         id: plt_cache_save
         uses: actions/cache/save@v4
@@ -130,15 +128,12 @@ jobs:
       - name: Run credo
         run: mix credo
 
-      - name: Run test
-        run: mix test
-
       # dialyzer takes longer to run, let others fail faster.
       - name: Run dialyzer
-        run: MIX_ENV=dev mix dialyzer --format github
+        run: mix dialyzer --format github
 
   validate_unlocked:
-    name: Validate Code With Unlocked Dependencies
+    name: Run with deps-unlocked
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
