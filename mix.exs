@@ -26,7 +26,8 @@ defmodule GrpcReflection.MixProject do
           GrpcReflection.TestEndpoint,
           GrpcReflection.TestEndpoint.Endpoint
         ]
-      ]
+      ],
+      dialyzer: dialyzer()
     ]
   end
 
@@ -113,6 +114,13 @@ defmodule GrpcReflection.MixProject do
       source_url: @source_url,
       source_ref: "#{@version}",
       formatters: ["html"]
+    ]
+  end
+
+  defp dialyzer do
+    [
+      plt_file: {:no_warn, "priv/plts/project.plt"},
+      plt_core_path: "priv/plts/core.plt"
     ]
   end
 end
