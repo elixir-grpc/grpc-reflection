@@ -163,3 +163,22 @@ jobs:
 
       - name: Run test
         run: mix test
+
+  check_example:
+    name: Run example helloworld tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Elixir
+        id: beam
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: 27.2.x
+          elixir-version: 1.18.x
+
+      - name: Build and Test
+        working-directory: ./examples/helloworld
+        run: |
+          mix deps.get
+          mix test
