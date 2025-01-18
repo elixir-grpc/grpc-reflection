@@ -24,3 +24,6 @@ grpc_reflection-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Ignore dialyzer PLT files
+priv/plts
