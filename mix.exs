@@ -120,7 +120,9 @@ defmodule GrpcReflection.MixProject do
   defp dialyzer do
     [
       plt_local_path: "priv/plts/project",
-      plt_core_path: "priv/plts/core"
+      plt_core_path: "priv/plts/core",
+      plt_add_apps: [:ex_unit],
+      list_unused_filters: true
     ]
   end
 end
