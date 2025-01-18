@@ -10,8 +10,6 @@ on:
 
 env:
   MIX_ENV: test
-  LATEST_ELIXIR: 1.18.x
-  LATEST_OTP: 27.2.x
 
 jobs:
   elixir_compatibility:
@@ -84,8 +82,8 @@ jobs:
         id: beam
         uses: erlef/setup-beam@v1
         with:
-          otp-version: $LATEST_OTP
-          elixir-version: $LATEST_ELIXIR
+          otp-version: 27.2.x
+          elixir-version: 1.18.x
 
       - name: Restore dependencies cache
         id: mix_cache
@@ -149,8 +147,8 @@ jobs:
         id: beam
         uses: erlef/setup-beam@v1
         with:
-          otp-version: $LATEST_OTP
-          elixir-version: $LATEST_ELIXIR
+          otp-version: 27.2.x
+          elixir-version: 1.18.x
 
       - name: Restore dependencies cache
         id: mix_cache
