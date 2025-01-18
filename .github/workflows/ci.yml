@@ -54,8 +54,8 @@ jobs:
         id: beam
         uses: erlef/setup-beam@v1
         with:
-          otp-version: ${{ matrix.runtime.elixir }}
-          elixir-version: ${{ matrix.runtime.otp }}
+          otp-version: ${{ matrix.runtime.otp }}
+          elixir-version: ${{ matrix.runtime.elixir }}
 
       - name: Restore dependencies cache
         id: mix_cache
