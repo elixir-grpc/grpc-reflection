@@ -26,5 +26,4 @@ grpc_reflection-*.tar
 /tmp/
 
 # Ignore dialyzer PLT files
-priv/plts/*.plt
-priv/plts/*.plt.hash
+priv/plts
