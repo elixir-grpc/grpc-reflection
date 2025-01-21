@@ -21,8 +21,7 @@ defmodule Helloworld.Mixfile do
       {:grpc, "~> 0.9"},
       {:grpc_reflection, path: "../.."},
       {:protobuf, "~> 0.14"},
-      {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:protobuf_generate, "~> 0.1.0"}
+      {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false}
     ]
   end
 end
