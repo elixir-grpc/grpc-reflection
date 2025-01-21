@@ -18,11 +18,10 @@ defmodule Helloworld.Mixfile do
 
   defp deps do
     [
-      {:grpc, "~> 0.7"},
+      {:grpc, "~> 0.9"},
       {:grpc_reflection, path: "../.."},
-      {:protobuf, "~> 0.11"},
+      {:protobuf, "~> 0.14"},
       {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:google_protos, "~> 0.4.0"},
       {:protobuf_generate, "~> 0.1.0"}
     ]
   end
