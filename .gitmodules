@@ -1,3 +1,0 @@
-[submodule "googleapis"]
-    path = examples/helloworld/priv/protos/googleapis
-    url = https://github.com/googleapis/googleapis.git
