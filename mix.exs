@@ -45,7 +45,10 @@ defmodule GrpcReflection.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:grpc, "~> 0.9"},
-      {:protobuf, "~> 0.14"}
+      {:protobuf,
+       github: "elixir-protobuf/protobuf",
+       ref: "cbb4c919b925f509696c6e58ca2e181b767f7f1f",
+       override: true}
     ]
   end
 
