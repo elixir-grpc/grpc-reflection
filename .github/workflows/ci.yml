@@ -7,17 +7,42 @@ on:
   push:
     branches:
       - main
-  schedule:
-    - cron: "0 6 * * 1"
 
 env:
   MIX_ENV: test
 
 jobs:
-  validate_1_13:
-    name: Validate PR against 1.13
+  elixir_compatibility:
+    name: "Check elixir+otp versions"
+    strategy:
+      matrix:
+        runtime: [
+            # https://hexdocs.pm/elixir/compatibility-and-deprecations.html
+            # running latest ubuntu, OTP >= 24 only
+            # 1.13.x
+            { elixir: 1.13.x, otp: 24.3.x },
+            { elixir: 1.13.x, otp: 25.3.x },
+            # 1.14.x
+            { elixir: 1.14.x, otp: 24.3.x },
+            { elixir: 1.14.x, otp: 25.3.x },
+            # 1.15.x
+            { elixir: 1.15.x, otp: 24.3.x },
+            { elixir: 1.15.x, otp: 25.3.x },
+            { elixir: 1.15.x, otp: 26.2.x },
+            # 1.16.x
+            { elixir: 1.16.x, otp: 24.3.x },
+            { elixir: 1.16.x, otp: 25.3.x },
+            { elixir: 1.16.x, otp: 26.2.x },
+            # 1.17.x
+            { elixir: 1.17.x, otp: 25.3.x },
+            { elixir: 1.17.x, otp: 26.2.x },
+            { elixir: 1.17.x, otp: 27.2.x },
+            # 1.18.x
+            { elixir: 1.18.x, otp: 25.3.x },
+            { elixir: 1.18.x, otp: 26.2.x },
+            { elixir: 1.18.x, otp: 27.2.x },
+          ]
     runs-on: ubuntu-latest
-    if: github.event.schedule != '0 6 * * 1'
     steps:
       - uses: actions/checkout@v4
 
@@ -25,8 +50,8 @@ jobs:
         id: beam
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 25.1.x
-          elixir-version: 1.13.x
+          otp-version: ${{ matrix.runtime.otp }}
+          elixir-version: ${{ matrix.runtime.elixir }}
 
       - name: Restore dependencies cache
         id: mix_cache
@@ -46,10 +71,10 @@ jobs:
       - name: Run test
         run: mix test
 
-  validate_1_14:
-    name: Validate PR against 1.14
+  # run extra steps on latest supported
+  Linting:
+    name: Linting on latest runtime
     runs-on: ubuntu-latest
-    if: github.event.schedule != '0 6 * * 1'
     steps:
       - uses: actions/checkout@v4
 
@@ -57,8 +82,8 @@ jobs:
         id: beam
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 25.1.x
-          elixir-version: 1.14.x
+          otp-version: 27.2.x
+          elixir-version: 1.18.x
 
       - name: Restore dependencies cache
         id: mix_cache
@@ -74,40 +99,6 @@ jobs:
         run: |
           mix deps.get
           mix deps.compile
-
-      - name: Run test
-        run: mix test
-
-  # run all steps on latest supported
-  validate_1_15:
-    name: Validate PR against 1.15
-    runs-on: ubuntu-latest
-    if: github.event.schedule != '0 6 * * 1'
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Elixir
-        id: beam
-        uses: erlef/setup-beam@v1
-        with:
-          otp-version: 25.1.x
-          elixir-version: 1.15.x
-
-      - name: Restore dependencies cache
-        id: mix_cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            deps
-            _build
-          key: mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
-          restore-keys: mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-
-
-      - name: Install Dependencies
-        run: |
-          mix deps.get
-          mix deps.compile
-          MIX_ENV=dev mix deps.compile
 
       - name: Restore PLT cache
         id: plt_cache
@@ -119,11 +110,10 @@ jobs:
 
       - name: Create PLTs
         if: steps.plt_cache.outputs.cache-hit != 'true'
-        run: MIX_ENV=dev mix dialyzer --plt
+        run: mix dialyzer --plt
 
       # By default, the GitHub Cache action will only save the cache if all
-      # steps in the job succeed, so we separate the cache restore and save
-      # steps in case running dialyzer fails.
+      # steps pass, so we manually save after PLT building to keep the cache
       - name: Save PLT cache
         id: plt_cache_save
         uses: actions/cache/save@v4
@@ -138,17 +128,13 @@ jobs:
       - name: Run credo
         run: mix credo
 
-      - name: Run test
-        run: mix test
-
       # dialyzer takes longer to run, let others fail faster.
       - name: Run dialyzer
-        run: MIX_ENV=dev mix dialyzer --format github
+        run: mix dialyzer --format github
 
   validate_unlocked:
-    name: Validate Code With Unlocked Dependencies
+    name: Run with deps-unlocked
     runs-on: ubuntu-latest
-    if: github.event.schedule == '0 6 * * 1'
     steps:
       - uses: actions/checkout@v4
 
@@ -156,8 +142,8 @@ jobs:
         id: beam
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 25.1.x
-          elixir-version: 1.15.x
+          otp-version: 27.2.x
+          elixir-version: 1.18.x
 
       - name: Restore dependencies cache
         id: mix_cache
@@ -177,3 +163,22 @@ jobs:
 
       - name: Run test
         run: mix test
+
+  check_example:
+    name: Run example helloworld tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Elixir
+        id: beam
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: 27.2.x
+          elixir-version: 1.18.x
+
+      - name: Build and Test
+        working-directory: ./examples/helloworld
+        run: |
+          mix deps.get
+          mix test
