@@ -11,15 +11,15 @@ defmodule GrpcReflection do
   defmodule Helloworld.Reflection.Server do
     use GrpcReflection.Server,
       version: :v1,
-      services: [Helloworld.Greeter.Service]
+      services: [Helloworld.Greeter.Service] # alternatively, `{:all, HelloWorld.Endpoint}` can be used to include all services from the endpoint.
   end
   ```
 
   2. Add the reflection supervisor to your supervision tree
   ```elixir
   children = [
+    GrpcReflection,
     {GRPC.Server.Supervisor, endpoint: Helloworld.Endpoint, port: 50051, start_server: true},
-    GrpcReflection
   ]
   ```
 

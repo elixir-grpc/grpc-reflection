@@ -14,6 +14,12 @@ defmodule GrpcReflection.Service.Agent do
     name = Keyword.get(opts, :name)
     services = Keyword.get(opts, :services)
 
+    services =
+      case services do
+        {:all, endpoint} -> endpoint_services(endpoint)
+        list -> list
+      end
+
     case Builder.build_reflection_tree(services) do
       {:ok, state} ->
         Agent.start_link(fn -> state end, name: name)
@@ -22,6 +28,12 @@ defmodule GrpcReflection.Service.Agent do
         Logger.error("Failed to build reflection tree: #{inspect(err)}")
         Agent.start_link(fn -> %State{} end, name: name)
     end
+  end
+
+  defp endpoint_services(endpoint) do
+    :servers
+    |> endpoint.__meta__()
+    |> Enum.map(fn server -> server.__meta__(:service) end)
   end
 
   @spec list_services(cfg_t()) :: list(binary)

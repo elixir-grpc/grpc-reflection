@@ -68,4 +68,19 @@ defmodule GrpcReflection.Test do
                Service.get_by_filename("helloworld.HelloRequest.proto")
     end
   end
+
+  test "server reading services from endpoint" do
+    defmodule AutoServiceDiscoveryServer do
+      use GrpcReflection.Server,
+        version: :v1,
+        services: {:all, GrpcReflection.TestEndpoint.Endpoint}
+    end
+
+    assert AutoServiceDiscoveryServer.list_services() ==
+             [
+               "grpc.reflection.v1alpha.ServerReflection",
+               "grpc.reflection.v1.ServerReflection",
+               "helloworld.Greeter"
+             ]
+  end
 end

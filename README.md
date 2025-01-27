@@ -47,14 +47,15 @@ This is written and tested using [grpcurl](https://github.com/fullstorydev/grpcu
   end
   ```
   or both as desired.  `version` is the grpc reflection spec, which can be `v1` or `v1alpha`.  `services` is the services that will be exposed by that server by reflection.  You can expose a service through both services if desired.
-1. Add the reflection supervisor to your supervision tree to host the cached reflection state
+  Instead of using an explicit list of services, you may alternatively use `{:all, MyApp.GrpcEndpoint}`, to include all services from an endpoint. This is a more succint alternative if you want to expose reflection for all services in your endpoint. On the other hand, you lose the fine-grained control of the ehaustive list.
+3. Add the reflection supervisor to your supervision tree to host the cached reflection state
 ```elixir
 children = [
   ...other children,
   GrpcReflection
 ]
 ```
-1. Add your servers to your grpc endpoint
+4. Add your servers to your grpc endpoint
 
 ## interacting with your reflection server
 
@@ -82,7 +83,7 @@ message HelloReply {
 $ grpcurl -plaintext -format text -d 'name: "faker"' localhost:50051 helloworld.Greeter.SayHello
 message: "Hello faker"
 today: <
-  seconds:1708412184 nanos:671267628 
+  seconds:1708412184 nanos:671267628
 >
 ```
 
