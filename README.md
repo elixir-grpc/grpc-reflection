@@ -5,7 +5,7 @@ Server reflection allows servers to assist clients in runtime construction of re
 According to the [GRPC Server Reflection Protocol
 ](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md), the primary usecase for server reflection is to write (typically) command line debugging tools for talking to a grpc server. In particular, such a tool will take in a method and a payload (in human readable text format) send it to the server (typically in binary proto wire format), and then take the response and decode it to text to present to the user.
 
-GrpcReflection, implemented as a gRPC server using `grpc-elixir`, adds reflection support to a `grpc-elixir` based application.
+GrpcReflection adds reflection support to a `grpc-elixir` based application. It is a supervised application that can support implemented as a gRPC server using `grpc-elixir`, .
 
 ## Installation
 
