@@ -3,7 +3,7 @@ defmodule Helloworld.HelloRequest do
   The request message containing the user's name.
   """
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -45,7 +45,7 @@ defmodule Helloworld.HelloReply do
   The response message containing the greetings
   """
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -102,7 +102,7 @@ defmodule Helloworld.Greeter.Service do
   The greeting service definition.
   """
 
-  use GRPC.Service, name: "helloworld.Greeter", protoc_gen_elixir_version: "0.14.0"
+  use GRPC.Service, name: "helloworld.Greeter", protoc_gen_elixir_version: "0.14.1"
 
   def descriptor do
     # credo:disable-for-next-line

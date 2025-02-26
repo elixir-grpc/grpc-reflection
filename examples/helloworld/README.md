@@ -2,36 +2,40 @@
 
 This example is mostly copied directly from `grpc-elixir`, with the exception that this example has:
 
-1. Compiled protos with descriptors on.  This is required for the reflection service to run correctly
+1. Compiled protos with descriptors on. This is required for the reflection service to run correctly
 1. Is running the `GrpcReflection.Server.V1` server in its endpoint
 1. Configured the `GrpcReflection.Server.V1` to include `helloworld` in its services
 
 ## Usage
 
 1. Install deps and compile
+
 ```shell
 $ mix do deps.get, compile
 ```
 
 2. Compile protos
+
 ```shell
 $ ./generate_protos.sh
 ```
 
 3. Run the server
+
 ```shell
 $ mix run --no-halt
 ```
 
 4. Run the client script
+
 ```shell
 $ mix run priv/client.exs
 ```
 
 5. Explore the reflection services
+
 ```shell
 $ grpcurl -v -plaintext 127.0.0.1:50051 list
-grpc.reflection.v1.ServerReflection
 helloworld.Greeter
 
 $ grpcurl -v -plaintext 127.0.0.1:50051 list helloworld.Greeter
@@ -51,7 +55,7 @@ message HelloReply {
 $ grpcurl -plaintext -format text -d 'name: "faker"' localhost:50051 helloworld.Greeter.SayHello
 message: "Hello faker"
 today: <
-  seconds:1708412184 nanos:671267628 
+  seconds:1708412184 nanos:671267628
 >
 ```
 
@@ -60,10 +64,13 @@ today: <
 1. Modify the proto `priv/protos/helloworld.proto`
 2. Install `protoc` [here](https://developers.google.com/protocol-buffers/docs/downloads)
 3. Install `protoc-gen-elixir`
+
 ```
 mix escript.install hex protobuf
 ```
+
 4. Generate the code:
+
 ```shell
 $ ./generate_protos.sh
 ```
