@@ -11,92 +11,54 @@ defmodule GrpcReflection.Server.V1 do
     Enum.map(request_stream, fn request ->
       Logger.info("Received v1 reflection request: " <> inspect(request.message_request))
 
-      state_mod
-      |> reflection_request(request.message_request)
-      |> case do
-        {:ok, message_response} ->
-          %ServerReflectionResponse{
-            valid_host: request.host,
-            original_request: request,
-            message_response: message_response
-          }
+      response =
+        state_mod
+        |> GrpcReflection.Server.Process.reflect(request.message_request)
+        |> build_response()
 
-        {:error, reason} ->
-          %ServerReflectionResponse{
-            valid_host: request.host,
-            original_request: request,
-            message_response:
-              {:error_response,
-               %ErrorResponse{
-                 error_code: GRPC.Status.not_found(),
-                 error_message: reason
-               }}
-          }
+      message =
+        struct(ServerReflectionResponse,
+          valid_host: request.host,
+          original_request: request,
+          message_response: response
+        )
 
-        {:unexpected, message} ->
-          Logger.warning(message)
-
-          %ServerReflectionResponse{
-            valid_host: request.host,
-            original_request: request,
-            message_response:
-              {:error_response,
-               %ErrorResponse{
-                 error_code: GRPC.Status.unimplemented(),
-                 error_message: "Operation not supported"
-               }}
-          }
-      end
-      |> then(&Server.send_reply(server, &1))
+      Server.send_reply(server, message)
     end)
   end
 
-  def reflection_request(state_mod, message_request) do
-    case message_request do
-      {:list_services, _} ->
-        state_mod.list_services()
-        |> Enum.map(fn name -> %{name: name} end)
-        |> then(fn services ->
-          {:ok, {:list_services_response, %{service: services}}}
-        end)
+  defp build_response({:ok, {:file_descriptor_response, description}}) do
+    encoded = struct(Grpc.Reflection.V1.FileDescriptorResponse, description)
+    {:file_descriptor_response, encoded}
+  end
 
-      {:file_containing_symbol, symbol} ->
-        with {:ok, description} <- state_mod.get_by_symbol(symbol) do
-          {:ok,
-           {:file_descriptor_response,
-            struct(Grpc.Reflection.V1.FileDescriptorResponse, description)}}
-        end
+  defp build_response({:ok, {:all_extension_numbers_response, body}}) do
+    encoded =
+      struct(
+        Grpc.Reflection.V1.ExtensionNumberResponse,
+        body
+      )
 
-      {:file_by_filename, filename} ->
-        with {:ok, description} <- state_mod.get_by_filename(filename) do
-          {:ok,
-           {:file_descriptor_response,
-            struct(Grpc.Reflection.V1.FileDescriptorResponse, description)}}
-        end
+    {:all_extension_numbers_response, encoded}
+  end
 
-      {:file_containing_extension,
-       %Grpc.Reflection.V1.ExtensionRequest{
-         containing_type: containing_type,
-         extension_number: _extension_number
-       }} ->
-        with {:ok, description} <- state_mod.get_by_extension(containing_type) do
-          {:ok,
-           {:file_descriptor_response,
-            struct(Grpc.Reflection.V1.FileDescriptorResponse, description)}}
-        end
+  defp build_response({:ok, {:list_services_response, %{service: services}}}) do
+    {:list_services_response, %{service: services}}
+  end
 
-      {:all_extension_numbers_of_type, mod} ->
-        with {:ok, extension_numbers} <- state_mod.get_extension_numbers_by_type(mod) do
-          {:ok,
-           {:all_extension_numbers_response,
-            struct(
-              Grpc.Reflection.V1.ExtensionNumberResponse,
-              %{base_type_name: mod, extension_number: extension_numbers}
-            )}}
-        end
+  defp build_response({:error, :unimplemented}) do
+    {:error_response,
+     %ErrorResponse{
+       error_code: GRPC.Status.unimplemented(),
+       error_message: "Operation not supported"
+     }}
+  end
 
-      other ->
-        {:unexpected, "received inexpected reflection request: #{inspect(other)}"}
-    end
+  defp build_response({:error, reason}) do
+    {:error_response,
+     %ErrorResponse{
+       error_code: GRPC.Status.not_found(),
+       error_message: reason
+     }}
   end
 end
