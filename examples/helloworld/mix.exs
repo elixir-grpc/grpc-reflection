@@ -20,7 +20,7 @@ defmodule Helloworld.Mixfile do
     [
       {:grpc, "~> 0.9"},
       {:grpc_reflection, path: "../.."},
-      {:protobuf, github: "elixir-protobuf/protobuf", ref: "cbb4c919b925f509696c6e58ca2e181b767f7f1f", override: true},
+      {:protobuf, "~> 0.14"},
       {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false}
     ]
   end
