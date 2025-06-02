@@ -51,7 +51,6 @@ defmodule GrpcReflection.Service.Builder do
 
       %ServiceDescriptorProto{} = proto ->
         process_service_descriptor(name, proto, syntax)
-        |> IO.inspect()
     end
   end
 
@@ -80,7 +79,6 @@ defmodule GrpcReflection.Service.Builder do
 
   defp process_reference(symbol) do
     symbol
-    |> IO.inspect()
     |> Util.convert_symbol_to_module()
     |> then(fn mod ->
       descriptor = mod.descriptor()
