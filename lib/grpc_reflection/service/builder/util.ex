@@ -26,18 +26,20 @@ defmodule GrpcReflection.Service.Builder.Util do
   def get_package(symbol) do
     parent_symbol = symbol |> String.split(".") |> Enum.slice(0..-2//1) |> Enum.join(".")
 
-    try do
-      parent_module = convert_symbol_to_module(parent_symbol)
-      Code.ensure_loaded(parent_module)
+    # try do
+    parent_module = convert_symbol_to_module(parent_symbol)
+    Code.ensure_loaded(parent_module)
 
-      if function_exported?(parent_module, :descriptor, 0) do
-        get_package(parent_symbol)
-      else
-        parent_symbol
-      end
-    rescue
-      _ -> parent_symbol
+    if function_exported?(parent_module, :descriptor, 0) do
+      IO.puts("???")
+      get_package(parent_symbol)
+    else
+      parent_symbol
     end
+
+    # rescue
+    #   _ -> parent_symbol
+    # end
   end
 
   def downcase_first(<<first::utf8, rest::binary>>),

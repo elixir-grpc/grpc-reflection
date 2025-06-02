@@ -7,9 +7,12 @@ defmodule GrpcReflection.Service.Builder do
   alias GrpcReflection.Service.Builder.Util
 
   def build_reflection_tree(services) do
+    IO.inspect(services, label: "services")
+
     with :ok <- Util.validate_services(services) do
       services
       |> process_services()
+      |> IO.inspect(label: "state")
       |> process_references()
     end
   end
@@ -22,6 +25,7 @@ defmodule GrpcReflection.Service.Builder do
 
       missing_refs ->
         missing_refs
+        |> IO.inspect()
         |> Enum.reduce(state, &State.merge(&2, process_reference(&1)))
         |> process_references()
     end
@@ -47,6 +51,7 @@ defmodule GrpcReflection.Service.Builder do
 
       %ServiceDescriptorProto{} = proto ->
         process_service_descriptor(name, proto, syntax)
+        |> IO.inspect()
     end
   end
 
@@ -75,6 +80,7 @@ defmodule GrpcReflection.Service.Builder do
 
   defp process_reference(symbol) do
     symbol
+    |> IO.inspect()
     |> Util.convert_symbol_to_module()
     |> then(fn mod ->
       descriptor = mod.descriptor()
