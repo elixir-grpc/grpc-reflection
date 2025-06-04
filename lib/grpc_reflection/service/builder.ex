@@ -7,12 +7,9 @@ defmodule GrpcReflection.Service.Builder do
   alias GrpcReflection.Service.Builder.Util
 
   def build_reflection_tree(services) do
-    IO.inspect(services, label: "services")
-
     with :ok <- Util.validate_services(services) do
       services
       |> process_services()
-      |> IO.inspect(label: "state")
       |> process_references()
     end
   end
@@ -25,7 +22,6 @@ defmodule GrpcReflection.Service.Builder do
 
       missing_refs ->
         missing_refs
-        |> IO.inspect()
         |> Enum.reduce(state, &State.merge(&2, process_reference(&1)))
         |> process_references()
     end
@@ -38,8 +34,40 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   defp process_service(service) do
-    name = service.__meta__(:name)
+    # we need to discover all the symbol names for the various types
+    # this means finding their elixir module names to access their descriptors
+    # but it is all accessed through the service
+
+    # grab the service name as a symbol, but also to grab the package name
+    service_name = service.__meta__(:name)
     syntax = Util.get_syntax(service)
+    package = Util.get_package(service_name)
+
+    # Not all symbols align with their elixir names, seed the state with known modules
+    service_parts = service |> to_string() |> String.split(".")
+
+    ref_state =
+      service.__rpc_calls__()
+      # get referenced module names
+      |> Enum.flat_map(fn {_function, {request, _}, {response, _}, _} ->
+        [request, response]
+      end)
+      # descriptor names can exclude the package name, only take messages that
+      # have the same root as the service, and whole name doesn't have a package
+      |> Enum.filter(fn message ->
+        message_parts = message |> to_string() |> String.split(".")
+        # grab module namespace excluding final module
+        len = Enum.count(message_parts) - 1
+
+        Enum.take(message_parts, len) == Enum.take(service_parts, len) and
+          Regex.match?(~r/^[A-Z].+/, message.descriptor().name)
+      end)
+      |> Enum.reduce(State.new(), fn message, state ->
+        State.merge(
+          state,
+          process_reference(package <> "." <> message.descriptor().name, message)
+        )
+      end)
 
     # protobuf_elixir populates service descriptors directly
     # protobuf_generate populates services with file_descriptors
@@ -47,11 +75,12 @@ defmodule GrpcReflection.Service.Builder do
       %FileDescriptorProto{service: [proto]} ->
         # we should read and use the file descriptor directly instead
         # of dropping relevant data and trying to discover it
-        process_service_descriptor(name, proto, syntax)
+        process_service_descriptor(service_name, proto, syntax)
 
       %ServiceDescriptorProto{} = proto ->
-        process_service_descriptor(name, proto, syntax)
+        process_service_descriptor(service_name, proto, syntax)
     end
+    |> State.merge(ref_state)
   end
 
   defp process_service_descriptor(service_name, descriptor, syntax) do
@@ -77,47 +106,50 @@ defmodule GrpcReflection.Service.Builder do
     |> State.add_references(referenced_types)
   end
 
-  defp process_reference(symbol) do
-    symbol
-    |> Util.convert_symbol_to_module()
-    |> then(fn mod ->
-      descriptor = mod.descriptor()
-      name = symbol
+  defp process_reference(symbol, module \\ nil) do
+    mod =
+      if module == nil do
+        Util.convert_symbol_to_module!(symbol)
+      else
+        module
+      end
 
-      nested_types = Util.get_nested_types(name, descriptor)
+    descriptor = mod.descriptor()
+    name = symbol
 
-      referenced_types =
-        Util.types_from_descriptor(descriptor)
-        |> Enum.uniq()
-        |> Kernel.--(nested_types)
+    nested_types = Util.get_nested_types(name, descriptor)
 
-      unencoded_payload = process_common(name, descriptor, Util.get_syntax(mod), nested_types)
-      payload = FileDescriptorProto.encode(unencoded_payload)
-      response = %{file_descriptor_proto: [payload]}
+    referenced_types =
+      Util.types_from_descriptor(descriptor)
+      |> Enum.uniq()
+      |> Kernel.--(nested_types)
 
-      root_symbols = %{symbol => response}
+    unencoded_payload = process_common(name, descriptor, Util.get_syntax(mod), nested_types)
+    payload = FileDescriptorProto.encode(unencoded_payload)
+    response = %{file_descriptor_proto: [payload]}
 
-      root_symbols =
-        Enum.reduce(nested_types, root_symbols, fn name, acc -> Map.put(acc, name, response) end)
+    root_symbols = %{symbol => response}
 
-      root_files = %{(symbol <> ".proto") => response}
+    root_symbols =
+      Enum.reduce(nested_types, root_symbols, fn name, acc -> Map.put(acc, name, response) end)
 
-      root_files =
-        Enum.reduce(nested_types, root_files, fn name, acc ->
-          Map.put(acc, name <> ".proto", response)
-        end)
+    root_files = %{(symbol <> ".proto") => response}
 
-      extension_file = symbol <> "Extension.proto"
+    root_files =
+      Enum.reduce(nested_types, root_files, fn name, acc ->
+        Map.put(acc, name <> ".proto", response)
+      end)
 
-      {root_extensions, root_files} =
-        process_extensions(mod, symbol, extension_file, descriptor, root_files)
+    extension_file = symbol <> "Extension.proto"
 
-      State.new()
-      |> State.add_files(root_files)
-      |> State.add_symbols(root_symbols)
-      |> State.add_extensions(root_extensions)
-      |> State.add_references(referenced_types)
-    end)
+    {root_extensions, root_files} =
+      process_extensions(mod, symbol, extension_file, descriptor, root_files)
+
+    State.new()
+    |> State.add_files(root_files)
+    |> State.add_symbols(root_symbols)
+    |> State.add_extensions(root_extensions)
+    |> State.add_references(referenced_types)
   end
 
   # Processes extensions recursively for proto2, if any. Invoked only when extensions are present.
@@ -163,7 +195,7 @@ defmodule GrpcReflection.Service.Builder do
     message_list =
       for ext <- extension_files, Util.message_descriptor?(ext) do
         ext.type_name
-        |> Util.convert_symbol_to_module()
+        |> Util.convert_symbol_to_module!()
         |> then(& &1.descriptor())
       end
 

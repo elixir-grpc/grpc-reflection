@@ -69,6 +69,12 @@ jobs:
       - name: Run test
         run: mix test
 
+      - name: Run v2 example test
+        run: cd examples/helloworld_v2 && mix test
+
+      - name: Run v3 example test
+        run: cd examples/helloworld_v3 && mix test
+
   # run extra steps on latest supported
   Linting:
     name: Linting on latest runtime

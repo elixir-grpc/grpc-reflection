@@ -27,12 +27,12 @@ defmodule GrpcReflection.Service.Builder.UtilTest do
 
     test "convert symbol to module succeed" do
       assert TestserviceV3.TestRequest ==
-               Util.convert_symbol_to_module("testserviceV3.TestRequest")
+               Util.convert_symbol_to_module!("testserviceV3.TestRequest")
     end
 
     test "convert symbol to module fail" do
       assert_raise ArgumentError, fn ->
-        Util.convert_symbol_to_module("testservice.TestRequest.Payload.Location")
+        Util.convert_symbol_to_module!("testservice.TestRequest.Payload.Location")
       end
     end
 

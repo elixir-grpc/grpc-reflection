@@ -24,22 +24,26 @@ defmodule GrpcReflection.Service.Builder.Util do
   def get_nested_types(_, _, acc), do: acc
 
   def get_package(symbol) do
+    # try to get the package name from a symbol
+    # we do this by shrinking the symbol by 1 and searching
+    # if the symbol resolves to a module with a descriptor, it is a message or service
+    # once we no longer resolve to a module, or the module has no descriptor, we hold the
+    # path up to the name, which should be the package
+
     parent_symbol = symbol |> String.split(".") |> Enum.slice(0..-2//1) |> Enum.join(".")
 
-    # try do
-    parent_module = convert_symbol_to_module(parent_symbol)
-    Code.ensure_loaded(parent_module)
+    try do
+      parent_module = convert_symbol_to_module!(parent_symbol)
+      Code.ensure_loaded(parent_module)
 
-    if function_exported?(parent_module, :descriptor, 0) do
-      IO.puts("???")
-      get_package(parent_symbol)
-    else
-      parent_symbol
+      if function_exported?(parent_module, :descriptor, 0) do
+        get_package(parent_symbol)
+      else
+        parent_symbol
+      end
+    rescue
+      _ -> parent_symbol
     end
-
-    # rescue
-    #   _ -> parent_symbol
-    # end
   end
 
   def downcase_first(<<first::utf8, rest::binary>>),
@@ -112,7 +116,7 @@ defmodule GrpcReflection.Service.Builder.Util do
     end
   end
 
-  def convert_symbol_to_module(symbol) do
+  def convert_symbol_to_module!(symbol) do
     symbol
     |> then(fn
       "." <> name -> name
