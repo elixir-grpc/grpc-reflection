@@ -41,33 +41,6 @@ defmodule GrpcReflection.Service.Builder do
     # grab the service name as a symbol, but also to grab the package name
     service_name = service.__meta__(:name)
     syntax = Util.get_syntax(service)
-    package = Util.get_package(service_name)
-
-    # Not all symbols align with their elixir names, seed the state with known modules
-    service_parts = service |> to_string() |> String.split(".")
-
-    ref_state =
-      service.__rpc_calls__()
-      # get referenced module names
-      |> Enum.flat_map(fn {_function, {request, _}, {response, _}, _} ->
-        [request, response]
-      end)
-      # descriptor names can exclude the package name, only take messages that
-      # have the same root as the service, and whole name doesn't have a package
-      |> Enum.filter(fn message ->
-        message_parts = message |> to_string() |> String.split(".")
-        # grab module namespace excluding final module
-        len = Enum.count(message_parts) - 1
-
-        Enum.take(message_parts, len) == Enum.take(service_parts, len) and
-          Regex.match?(~r/^[A-Z].+/, message.descriptor().name)
-      end)
-      |> Enum.reduce(State.new(), fn message, state ->
-        State.merge(
-          state,
-          process_reference(package <> "." <> message.descriptor().name, message)
-        )
-      end)
 
     # protobuf_elixir populates service descriptors directly
     # protobuf_generate populates services with file_descriptors
@@ -80,7 +53,39 @@ defmodule GrpcReflection.Service.Builder do
       %ServiceDescriptorProto{} = proto ->
         process_service_descriptor(service_name, proto, syntax)
     end
-    |> State.merge(ref_state)
+    # Not all symbols align with their elixir names, seed the state with rpc_call modules
+    |> State.merge(process_rpc_calls(service))
+  end
+
+  defp process_rpc_calls(service) do
+    package = Util.get_package(service.__meta__(:name))
+    service_parts = service |> to_string() |> String.split(".")
+
+    service.__rpc_calls__()
+    # get referenced module names
+    |> Enum.flat_map(fn {_function, {request, _}, {response, _}, _} ->
+      [request, response]
+    end)
+    # message descriptors can exclude the package name, only take messages that
+    # have the same root as the service, and whose name doesn't have a package
+    # in grpc spec messages and services are capitalized, while package path is not
+    |> Enum.filter(fn message ->
+      if Regex.match?(~r/^[A-Z].+/, message.descriptor().name) do
+        message_parts = message |> to_string() |> String.split(".")
+        # grab module namespace excluding final module
+        len = Enum.count(message_parts) - 1
+
+        Enum.take(message_parts, len) == Enum.take(service_parts, len)
+      else
+        false
+      end
+    end)
+    |> Enum.reduce(State.new(), fn message, state ->
+      State.merge(
+        state,
+        process_reference(package <> "." <> message.descriptor().name, message)
+      )
+    end)
   end
 
   defp process_service_descriptor(service_name, descriptor, syntax) do
