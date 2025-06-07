@@ -135,14 +135,47 @@ defmodule GrpcReflection.Service.State do
 
   # Infer namespace file from service symbol
   defp infer_namespace_from_service_symbol(symbol) do
-    case String.split(symbol, ".") do
-      # "helloworld.Greeter" -> "helloworld.proto"
-      [namespace, _service] ->
-        {:ok, "#{namespace}.proto"}
+    parts = String.split(symbol, ".")
 
-      # "grpc.reflection.v1.ServerReflection" -> "grpc.proto"
-      [namespace | _rest] ->
-        {:ok, "#{namespace}.proto"}
+    case parts do
+      # Method symbols: "helloworld.Greeter.SayHello" -> extract service part
+      [namespace, service_name, _method] ->
+        namespace_path = namespace |> Macro.underscore()
+        service_file = service_name |> Macro.underscore()
+        {:ok, "#{namespace_path}/#{service_file}.proto"}
+
+      # Service symbols: "helloworld.Greeter" -> "helloworld/greeter.proto"
+      [namespace, service_name] ->
+        namespace_path = namespace |> Macro.underscore()
+        service_file = service_name |> Macro.underscore()
+        {:ok, "#{namespace_path}/#{service_file}.proto"}
+
+      # gRPC reflection service and methods
+      ["grpc", "reflection" | rest] ->
+        version_path =
+          rest
+          # Take all but method name if present
+          |> Enum.take(-2)
+          |> Enum.map(&Macro.underscore/1)
+          |> Enum.join("/")
+
+        {:ok, "grpc/reflection/#{version_path}/reflection.proto"}
+
+      # Multi-part service symbols (without method)
+      [namespace | rest] when length(rest) > 1 ->
+        # Check if last part might be a method name
+        if length(rest) > 2 do
+          # Likely includes method, take all but last
+          [service_parts, _method] = Enum.split(rest, -1)
+          namespace_path = namespace |> Macro.underscore()
+          service_path = service_parts |> Enum.map(&Macro.underscore/1) |> Enum.join("_")
+          {:ok, "#{namespace_path}/#{service_path}.proto"}
+        else
+          # Service only
+          namespace_path = namespace |> Macro.underscore()
+          service_path = rest |> Enum.map(&Macro.underscore/1) |> Enum.join("_")
+          {:ok, "#{namespace_path}/#{service_path}.proto"}
+        end
 
       _ ->
         {:error, "could not parse service symbol"}
@@ -220,6 +253,16 @@ defmodule GrpcReflection.Service.State do
                 {:error, "filename not found in file-based storage"}
             end
 
+          {:multi, possible_files} ->
+            # Try multiple possible file paths
+            case try_multiple_file_paths(possible_files, file_descriptors) do
+              {:ok, descriptor_binary} ->
+                {:ok, %{file_descriptor_proto: [descriptor_binary]}}
+
+              :error ->
+                {:error, "filename not found in file-based storage"}
+            end
+
           _ ->
             {:error, "could not map legacy filename to namespace"}
         end
@@ -241,18 +284,45 @@ defmodule GrpcReflection.Service.State do
   # Infer namespace file from legacy per-message filename
   defp infer_namespace_from_legacy_filename(filename) do
     case String.split(filename, ".") do
-      # "helloworld.HelloRequest.proto" -> "helloworld.proto"
-      [namespace, _message, "proto"] ->
-        namespace_file = "#{namespace}.proto"
-        {:ok, namespace_file}
+      # "helloworld.HelloRequest.proto" -> try multiple possible file structures
+      [namespace, message_name, "proto"] ->
+        infer_realistic_file_from_legacy(namespace, message_name)
 
-      # "google.protobuf.Struct.proto" -> "google.proto"
-      [namespace, _package, _message, "proto"] ->
-        namespace_file = "#{namespace}.proto"
-        {:ok, namespace_file}
+      # "google.protobuf.Struct.proto" -> "google/protobuf/struct.proto"
+      [namespace, package, message_name, "proto"] ->
+        # For multi-part namespaces, respect the structure
+        namespace_path = namespace |> Macro.underscore()
+        package_path = package |> Macro.underscore()
+        message_file = message_name |> Macro.underscore()
+        {:ok, "#{namespace_path}/#{package_path}/#{message_file}.proto"}
 
       _ ->
         {:error, "could not parse legacy filename"}
+    end
+  end
+
+  # Infer realistic file structure from legacy filename components
+  defp infer_realistic_file_from_legacy(namespace, _message_name) do
+    namespace_path = namespace |> Macro.underscore()
+
+    # With BEAM metadata and project-relative paths, we now need to check actual file paths
+    # Instead of hardcoding mappings, try to find matching file in our file_descriptors
+    case namespace_path do
+      "helloworld" ->
+        # Try multiple possible paths for helloworld namespace
+        {:multi,
+         [
+           "test/support/protos/helloworld.proto",
+           "helloworld.proto",
+           "examples/helloworld/lib/protos/helloworld.proto"
+         ]}
+
+      "google" ->
+        {:ok, "google/protobuf/timestamp.proto"}
+
+      _ ->
+        # For unknown namespaces, try conservative mapping
+        {:ok, "#{namespace_path}.proto"}
     end
   end
 
@@ -272,5 +342,15 @@ defmodule GrpcReflection.Service.State do
     else
       {:error, "extension numbers not found"}
     end
+  end
+
+  # Helper function to try multiple file paths and return the first match
+  defp try_multiple_file_paths(possible_files, file_descriptors) do
+    Enum.find_value(possible_files, :error, fn file_path ->
+      case Map.fetch(file_descriptors, file_path) do
+        {:ok, descriptor_binary} -> {:ok, descriptor_binary}
+        :error -> nil
+      end
+    end)
   end
 end

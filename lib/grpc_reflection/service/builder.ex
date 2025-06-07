@@ -89,27 +89,201 @@ defmodule GrpcReflection.Service.Builder do
     |> Enum.into(%{})
   end
 
-  # Infer source file from module name and structure
+  # Infer source file from module name and structure - using BEAM metadata
   defp infer_source_file(module) do
-    module_parts = Module.split(module)
+    # Try to extract real source file information from BEAM metadata
+    case extract_real_source_file(module) do
+      {:ok, source_file} ->
+        source_file
 
-    case module_parts do
-      # Service modules: Helloworld.Greeter.Service -> "helloworld.proto"
-      [namespace, _service_name, "Service"] ->
-        namespace_path = namespace |> Macro.underscore()
-        "#{namespace_path}.proto"
+      :error ->
+        # Simple fallback: create unique file per module
+        module
+        |> Module.split()
+        |> Enum.map(&Macro.underscore/1)
+        |> Enum.join("_")
+        |> Kernel.<>(".proto")
+    end
+  end
 
-      # Message modules: All messages in same namespace go to same file
-      # Helloworld.HelloRequest -> "helloworld.proto"
-      # Helloworld.HelloReply -> "helloworld.proto"
-      [namespace | _rest] ->
-        namespace_path = namespace |> Macro.underscore()
-        "#{namespace_path}.proto"
+  # Extract actual source file from BEAM metadata
+  defp extract_real_source_file(module) do
+    case extract_from_beam_metadata(module) do
+      {:ok, source_file} -> {:ok, normalize_proto_filename(source_file)}
+      :error -> :error
+    end
+  end
 
-      # Fallback for modules without clear namespace
+  # Extract source file from BEAM compilation metadata
+  defp extract_from_beam_metadata(module) do
+    case :code.which(module) do
+      :non_existing ->
+        raise "Module #{inspect(module)} not found or not loaded"
+
+      beam_path ->
+        case :beam_lib.chunks(beam_path, [:compile_info]) do
+          {:ok, {_module, [compile_info: compile_info]}} ->
+            # Extract source file from compile_info
+            case Keyword.get(compile_info, :source) do
+              source_file when is_list(source_file) ->
+                {:ok, List.to_string(source_file)}
+
+              source_file when is_binary(source_file) ->
+                {:ok, source_file}
+
+              _ ->
+                # Try alternative keys that might contain source info
+                extract_alternative_source_info(compile_info)
+            end
+
+          _ ->
+            :error
+        end
+    end
+  end
+
+  # Helper function to check if an item is a proto file
+  defp is_proto_file(item) do
+    is_binary(item) and String.ends_with?(item, ".proto")
+  end
+
+  # Try alternative keys in compile_info for source file information
+  defp extract_alternative_source_info(compile_info) do
+    alternative_keys = [:file, :options, :parse_transform]
+
+    Enum.find_value(alternative_keys, :error, fn key ->
+      case Keyword.get(compile_info, key) do
+        value when is_binary(value) ->
+          if String.ends_with?(value, ".proto") do
+            {:ok, value}
+          else
+            nil
+          end
+
+        value when is_list(value) ->
+          # Look for .proto files in the list
+          proto_file = Enum.find(value, &is_proto_file/1)
+
+          case proto_file do
+            nil -> nil
+            file -> {:ok, file}
+          end
+
+        _ ->
+          nil
+      end
+    end)
+  end
+
+  # Normalize proto filename to standard format
+  defp normalize_proto_filename(filename) do
+    normalized =
+      filename
+      # Normalize path separators
+      |> String.replace("\\", "/")
+      |> convert_beam_source_to_proto_path()
+
+    if String.ends_with?(normalized, ".proto") do
+      normalized
+    else
+      normalized <> ".proto"
+    end
+  end
+
+  # Convert BEAM source file paths to proto file paths
+  defp convert_beam_source_to_proto_path(source_path) do
+    cond do
+      # Convert .pb.ex files to .proto files
+      String.ends_with?(source_path, ".pb.ex") ->
+        source_path
+        |> String.replace_suffix(".pb.ex", ".proto")
+        |> extract_meaningful_proto_path()
+
+      # Handle other Elixir source files
+      String.ends_with?(source_path, ".ex") ->
+        source_path
+        |> String.replace_suffix(".ex", ".proto")
+        |> extract_meaningful_proto_path()
+
+      # Already a proto file or other format
+      true ->
+        source_path
+    end
+  end
+
+  # Extract meaningful proto path from full filesystem path
+  defp extract_meaningful_proto_path(full_path) do
+    cond do
+      # Google protobuf types: extract google/protobuf/... path
+      String.contains?(full_path, "google/protobuf/") ->
+        case String.split(full_path, "google/protobuf/") do
+          [_prefix, suffix] -> "google/protobuf/" <> suffix
+          _ -> full_path
+        end
+
+      # Dependency files: extract meaningful path from deps/
+      String.contains?(full_path, "/deps/") ->
+        extract_from_deps_path(full_path)
+
+      # For project files: extract path relative to project root
+      true ->
+        extract_project_relative_path(full_path)
+    end
+  end
+
+  # Extract meaningful path from dependency directories
+  defp extract_from_deps_path(full_path) do
+    case String.split(full_path, "/deps/") do
+      [_prefix, suffix] ->
+        # Extract the package name and relative path
+        case String.split(suffix, "/", parts: 2) do
+          [package_name, relative_path] -> "#{package_name}/#{relative_path}"
+          [package_name] -> package_name
+        end
+
       _ ->
-        module_name = module |> Module.split() |> List.first() |> Macro.underscore()
-        "#{module_name}.proto"
+        Path.basename(full_path)
+    end
+  end
+
+  # Extract path relative to project root for better file identification
+  # Example: "/Users/user/projects/myapp/lib/proto/user.proto" -> "lib/proto/user.proto"
+  defp extract_project_relative_path(full_path) do
+    case find_project_root(full_path) do
+      nil ->
+        # Use full path if project root not found - provides complete traceability
+        full_path
+
+      project_root ->
+        case Path.relative_to(full_path, project_root) do
+          ^full_path ->
+            # Path is not under project root, use full path for complete identification
+            full_path
+
+          relative_path ->
+            relative_path
+        end
+    end
+  end
+
+  # Find the project root directory by looking for mix.exs or .git
+  defp find_project_root(file_path) do
+    file_path
+    |> Path.dirname()
+    |> find_project_root_recursive()
+  end
+
+  # Recursively search upward for project root indicators
+  defp find_project_root_recursive(dir) do
+    cond do
+      # Check for mix.exs (Elixir project marker)
+      File.exists?(Path.join(dir, "mix.exs")) -> dir
+      # Check for .git directory (Git repository root)
+      File.exists?(Path.join(dir, ".git")) -> dir
+      # Stop at filesystem root
+      dir == "/" or dir == Path.dirname(dir) -> nil
+      # Continue searching upward
+      true -> find_project_root_recursive(Path.dirname(dir))
     end
   end
 
