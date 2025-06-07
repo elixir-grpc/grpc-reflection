@@ -11,7 +11,233 @@ defmodule GrpcReflection.Service.Builder do
       services
       |> process_services()
       |> process_references()
+      |> enhance_with_file_based_descriptors(services)
     end
+  end
+
+  # New: Enhance state with file-based descriptors
+  defp enhance_with_file_based_descriptors({:ok, state}, services) do
+    case build_file_based_descriptors(services, state) do
+      {:ok, file_descriptors, message_to_file} ->
+        enhanced_state =
+          state
+          |> State.add_file_descriptors(file_descriptors)
+          |> State.add_message_to_file_mappings(message_to_file)
+
+        {:ok, enhanced_state}
+
+      {:error, reason} ->
+        # Log error but continue with existing state for backward compatibility
+        require Logger
+        Logger.warning("Failed to build file-based descriptors: #{inspect(reason)}")
+        {:ok, state}
+    end
+  end
+
+  defp enhance_with_file_based_descriptors(error, _services), do: error
+
+  # New: Build file-based descriptors
+  defp build_file_based_descriptors(services, state) do
+    try do
+      # Extract all modules (messages and services) from the state
+      all_modules = extract_all_modules(services, state)
+
+      # Group modules by their likely source file
+      file_groups = group_modules_by_source_file(all_modules)
+
+      # Generate file descriptors for each group
+      file_descriptors = generate_file_descriptors_for_groups(file_groups)
+
+      # Create message-to-file mapping
+      message_to_file = create_message_to_file_mapping(file_groups, file_descriptors)
+
+      {:ok, file_descriptors, message_to_file}
+    rescue
+      error -> {:error, error}
+    end
+  end
+
+  # Extract all modules from services and referenced types
+  defp extract_all_modules(services, state) do
+    # Get all services
+    service_modules = services
+
+    # Get all referenced modules from symbols
+    referenced_modules =
+      state.symbols
+      |> Map.keys()
+      |> Enum.map(fn symbol ->
+        try do
+          Util.convert_symbol_to_module(symbol)
+        rescue
+          _ -> nil
+        end
+      end)
+      |> Enum.filter(fn module ->
+        module != nil and Code.ensure_loaded?(module)
+      end)
+
+    # Combine and deduplicate
+    (service_modules ++ referenced_modules)
+    |> Enum.uniq()
+  end
+
+  # Group modules by their likely source file based on module structure
+  defp group_modules_by_source_file(modules) do
+    modules
+    |> Enum.group_by(&infer_source_file/1)
+    |> Enum.into(%{})
+  end
+
+  # Infer source file from module name and structure
+  defp infer_source_file(module) do
+    module_parts = Module.split(module)
+
+    case module_parts do
+      # Service modules: Helloworld.Greeter.Service -> "helloworld.proto"
+      [namespace, _service_name, "Service"] ->
+        namespace_path = namespace |> Macro.underscore()
+        "#{namespace_path}.proto"
+
+      # Message modules: All messages in same namespace go to same file
+      # Helloworld.HelloRequest -> "helloworld.proto"
+      # Helloworld.HelloReply -> "helloworld.proto"
+      [namespace | _rest] ->
+        namespace_path = namespace |> Macro.underscore()
+        "#{namespace_path}.proto"
+
+      # Fallback for modules without clear namespace
+      _ ->
+        module_name = module |> Module.split() |> List.first() |> Macro.underscore()
+        "#{module_name}.proto"
+    end
+  end
+
+  # Generate file descriptors for each file group
+  defp generate_file_descriptors_for_groups(file_groups) do
+    file_groups
+    |> Enum.map(fn {source_file, modules} ->
+      {source_file, generate_file_descriptor_for_group(source_file, modules)}
+    end)
+    |> Enum.into(%{})
+  end
+
+  # Generate a single file descriptor for a group of modules
+  defp generate_file_descriptor_for_group(source_file, modules) do
+    # Separate services and messages
+    {services, messages} = partition_services_and_messages(modules)
+
+    # Extract package name from the first module
+    package =
+      case modules do
+        [first_module | _] -> extract_package_from_module(first_module)
+        [] -> ""
+      end
+
+    # Get syntax from the first module
+    syntax =
+      case modules do
+        [first_module | _] -> Util.get_syntax(first_module)
+        [] -> "proto3"
+      end
+
+    # Collect all dependencies
+    dependencies = collect_dependencies_for_modules(modules)
+
+    # Build service descriptors
+    service_descriptors =
+      Enum.map(services, fn service ->
+        service.descriptor()
+      end)
+
+    # Build message descriptors
+    message_descriptors =
+      Enum.map(messages, fn message ->
+        message.descriptor()
+      end)
+
+    # Create file descriptor
+    file_descriptor = %FileDescriptorProto{
+      name: source_file,
+      package: package,
+      dependency: dependencies,
+      message_type: message_descriptors,
+      service: service_descriptors,
+      syntax: syntax
+    }
+
+    # Encode to binary
+    FileDescriptorProto.encode(file_descriptor)
+  end
+
+  # Partition modules into services and messages
+  defp partition_services_and_messages(modules) do
+    Enum.split_with(modules, fn module ->
+      # Check if it's a service module
+      case Module.split(module) do
+        [_, _, "Service"] ->
+          true
+
+        _ ->
+          # Also check if it has service-related functions
+          Code.ensure_loaded?(module) and
+            function_exported?(module, :__rpc_calls__, 0)
+      end
+    end)
+  end
+
+  # Extract package name from module
+  defp extract_package_from_module(module) do
+    # Use the existing Util.get_package logic but adapt it
+    module_parts = Module.split(module)
+
+    case module_parts do
+      [namespace | _] -> namespace |> Macro.underscore()
+      [] -> ""
+    end
+  end
+
+  # Collect dependencies for a group of modules
+  defp collect_dependencies_for_modules(modules) do
+    modules
+    |> Enum.flat_map(fn module ->
+      case get_module_descriptor(module) do
+        nil -> []
+        descriptor -> Util.types_from_descriptor(descriptor)
+      end
+    end)
+    |> Enum.uniq()
+    |> Enum.reject(fn type ->
+      # Filter out types that are defined in the same file group
+      type_module = Util.convert_symbol_to_module(type)
+      Enum.member?(modules, type_module)
+    end)
+    |> Enum.map(&(&1 <> ".proto"))
+  end
+
+  # Get descriptor from module safely
+  defp get_module_descriptor(module) do
+    if Code.ensure_loaded?(module) and function_exported?(module, :descriptor, 0) do
+      module.descriptor()
+    else
+      nil
+    end
+  end
+
+  # Create message-to-file mapping
+  defp create_message_to_file_mapping(file_groups, file_descriptors) do
+    file_groups
+    |> Enum.flat_map(fn {source_file, modules} ->
+      file_descriptor_binary = Map.get(file_descriptors, source_file)
+
+      # Only include message modules, not service modules
+      {_services, messages} = partition_services_and_messages(modules)
+
+      Enum.map(messages, fn message_module ->
+        {message_module, file_descriptor_binary}
+      end)
+    end)
+    |> Enum.into(%{})
   end
 
   defp process_references(%State{} = state) do
