@@ -31,3 +31,4 @@ priv/plts
 # Ignore cursor and memory-bank
 .cursor/
 memory-bank/
+custom_modes/
