@@ -79,46 +79,48 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   defp trace_message_refs(state, parent_symbol, module) do
-    # nested types arent a "separate file", they return their parents' response
-    nested_types = Util.get_nested_types(parent_symbol, module.descriptor())
-
     case module.descriptor() do
       %{field: fields} ->
-        module.__message_props__().field_props
-        |> Map.values()
-        |> Enum.reduce(state, fn %{name: name, type: type}, state ->
-          mod =
-            case type do
-              {:enum, mod} -> mod
-              mod -> mod
-            end
-
-          Enum.find(fields, fn f -> f.name == name end).type_name
-          |> case do
-            nil ->
-              state
-
-            symbol ->
-              symbol = Util.trim_symbol(symbol)
-
-              response =
-                if symbol in nested_types do
-                  build_response(parent_symbol, module)
-                else
-                  build_response(symbol, mod)
-                end
-
-              state
-              |> Extensions.add_extensions(symbol, mod)
-              |> State.add_symbols(%{symbol => response})
-              |> State.add_files(%{(symbol <> ".proto") => response})
-              |> trace_message_refs(symbol, mod)
-          end
-        end)
+        trace_message_fields(state, parent_symbol, module, fields)
 
       _ ->
         state
     end
+  end
+
+  defp trace_message_fields(state, parent_symbol, module, fields) do
+    # nested types arent a "separate file", they return their parents' response
+    nested_types = Util.get_nested_types(parent_symbol, module.descriptor())
+
+    module.__message_props__().field_props
+    |> Map.values()
+    |> Enum.map(fn %{name: name, type: type} ->
+      %{
+        mod:
+          case type do
+            {_, mod} -> mod
+            mod -> mod
+          end,
+        symbol: Enum.find(fields, fn f -> f.name == name end).type_name
+      }
+    end)
+    |> Enum.reject(fn %{symbol: s} -> s == nil end)
+    |> Enum.reduce(state, fn %{mod: mod, symbol: symbol}, state ->
+      symbol = Util.trim_symbol(symbol)
+
+      response =
+        if symbol in nested_types do
+          build_response(parent_symbol, module)
+        else
+          build_response(symbol, mod)
+        end
+
+      state
+      |> Extensions.add_extensions(symbol, mod)
+      |> State.add_symbols(%{symbol => response})
+      |> State.add_files(%{(symbol <> ".proto") => response})
+      |> trace_message_refs(symbol, mod)
+    end)
   end
 
   defp build_response(symbol, module) do
