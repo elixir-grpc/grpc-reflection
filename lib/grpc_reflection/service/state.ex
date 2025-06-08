@@ -64,6 +64,17 @@ defmodule GrpcReflection.Service.State do
   end
 
   @doc """
+  Check if the given symbol is already tracked in the state
+  """
+  def has_symbol?(state, "." <> symbol) do
+    Map.has_key?(state.symbols, symbol)
+  end
+
+  def has_symbol?(state, symbol) do
+    Map.has_key?(state.symbols, symbol)
+  end
+
+  @doc """
   Get the list of refereneces that are not known symbols
   """
   def get_missing_references(%__MODULE__{} = state) do

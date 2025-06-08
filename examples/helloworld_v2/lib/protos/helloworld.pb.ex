@@ -23,6 +23,20 @@ defmodule HLW.HelloRequest do
           json_name: "name",
           proto3_optional: nil,
           __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "meta",
+          extendee: nil,
+          number: 2,
+          label: :LABEL_REQUIRED,
+          type: :TYPE_MESSAGE,
+          type_name: ".helloworld.MessageMetadata",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "meta",
+          proto3_optional: nil,
+          __unknown_fields__: []
         }
       ],
       nested_type: [],
@@ -38,6 +52,60 @@ defmodule HLW.HelloRequest do
   end
 
   field :name, 1, required: true, type: :string
+  field :meta, 2, required: true, type: HLW.MessageMetadata
+end
+
+defmodule HLW.MessageMetadata do
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto2
+
+  def descriptor do
+    # credo:disable-for-next-line
+    %Google.Protobuf.DescriptorProto{
+      name: "MessageMetadata",
+      field: [
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "user",
+          extendee: nil,
+          number: 1,
+          label: :LABEL_REQUIRED,
+          type: :TYPE_STRING,
+          type_name: nil,
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "user",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "today",
+          extendee: nil,
+          number: 2,
+          label: :LABEL_REQUIRED,
+          type: :TYPE_MESSAGE,
+          type_name: ".google.protobuf.Timestamp",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "today",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        }
+      ],
+      nested_type: [],
+      enum_type: [],
+      extension_range: [],
+      extension: [],
+      options: nil,
+      oneof_decl: [],
+      reserved_range: [],
+      reserved_name: [],
+      __unknown_fields__: []
+    }
+  end
+
+  field :user, 1, required: true, type: :string
+  field :today, 2, required: true, type: Google.Protobuf.Timestamp
 end
 
 defmodule HLW.HelloReply do

@@ -179,4 +179,7 @@ defmodule GrpcReflection.Service.Builder.Util do
   def types_from_descriptor(%Google.Protobuf.EnumDescriptorProto{}) do
     []
   end
+
+  def trim_symbol("." <> symbol), do: symbol
+  def trim_symbol(symbol), do: symbol
 end

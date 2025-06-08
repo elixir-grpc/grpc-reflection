@@ -21,6 +21,12 @@ service Greeter {
 // The request message containing the user's name.
 message HelloRequest {
   required string name = 1;
+  required MessageMetadata meta = 2;
+}
+
+message MessageMetadata {
+  required string user = 1;
+  required google.protobuf.Timestamp today = 2;
 }
 
 // The response message containing the greetings

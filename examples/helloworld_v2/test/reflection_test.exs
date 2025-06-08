@@ -45,7 +45,7 @@ defmodule Helloworld.ReflectionTest do
   end
 
   defp assert_response(%{message_type: [%{name: "HelloRequest"} = type]}) do
-    assert %{field: [field]} = type
+    assert %{field: [field | _]} = type
     assert field.name == "name"
     assert field.type == :TYPE_STRING
   end
