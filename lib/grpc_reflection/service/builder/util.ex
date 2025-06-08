@@ -24,26 +24,14 @@ defmodule GrpcReflection.Service.Builder.Util do
   def get_nested_types(_, _, acc), do: acc
 
   def get_package(symbol) do
-    # try to get the package name from a symbol
-    # we do this by shrinking the symbol by 1 and searching
-    # if the symbol resolves to a module with a descriptor, it is a message or service
-    # once we no longer resolve to a module, or the module has no descriptor, we hold the
-    # path up to the name, which should be the package
+    # assuming this symbol follows normal GRPC practices, Types are capilatized
+    #
+    # So if we split on "." and drop anything capitalized we arrive at the package name
 
-    parent_symbol = symbol |> String.split(".") |> Enum.slice(0..-2//1) |> Enum.join(".")
-
-    try do
-      parent_module = convert_symbol_to_module!(parent_symbol)
-      Code.ensure_loaded(parent_module)
-
-      if function_exported?(parent_module, :descriptor, 0) do
-        get_package(parent_symbol)
-      else
-        parent_symbol
-      end
-    rescue
-      _ -> parent_symbol
-    end
+    symbol
+    |> String.split(".")
+    |> Enum.reject(fn s -> Regex.match?(~r/^[A-Z].+/, s) end)
+    |> Enum.join(".")
   end
 
   def downcase_first(<<first::utf8, rest::binary>>),
@@ -114,17 +102,6 @@ defmodule GrpcReflection.Service.Builder.Util do
       [] -> :ok
       _ -> {:error, "non-service module provided"}
     end
-  end
-
-  def convert_symbol_to_module!(symbol) do
-    symbol
-    |> then(fn
-      "." <> name -> name
-      name -> name
-    end)
-    |> String.split(".")
-    |> Enum.map(&Macro.camelize/1)
-    |> Module.safe_concat()
   end
 
   def message_descriptor?(%Google.Protobuf.FieldDescriptorProto{type: @type_message}),
