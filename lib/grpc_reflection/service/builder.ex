@@ -38,7 +38,7 @@ defmodule GrpcReflection.Service.Builder do
         trace_service_refs(state, module)
 
       function_exported?(module, :__message_props__, 0) ->
-        trace_message_refs(state, module)
+        trace_message_refs(state, "", module)
     end
   end
 
@@ -73,12 +73,15 @@ defmodule GrpcReflection.Service.Builder do
       })
       |> Extensions.add_extensions(req_symbol, request)
       |> Extensions.add_extensions(resp_symbol, response)
-      |> trace_refs(request)
-      |> trace_refs(response)
+      |> trace_message_refs(req_symbol, request)
+      |> trace_message_refs(resp_symbol, response)
     end)
   end
 
-  defp trace_message_refs(state, module) do
+  defp trace_message_refs(state, parent_symbol, module) do
+    # nested types arent a "separate file", they return their parents' response
+    nested_types = Util.get_nested_types(parent_symbol, module.descriptor())
+
     case module.descriptor() do
       %{field: fields} ->
         module.__message_props__().field_props
@@ -97,13 +100,19 @@ defmodule GrpcReflection.Service.Builder do
 
             symbol ->
               symbol = Util.trim_symbol(symbol)
-              response = build_response(symbol, mod)
+
+              response =
+                if symbol in nested_types do
+                  build_response(parent_symbol, module)
+                else
+                  build_response(symbol, mod)
+                end
 
               state
               |> Extensions.add_extensions(symbol, mod)
               |> State.add_symbols(%{symbol => response})
               |> State.add_files(%{(symbol <> ".proto") => response})
-              |> trace_refs(mod)
+              |> trace_message_refs(symbol, mod)
           end
         end)
 
@@ -117,6 +126,7 @@ defmodule GrpcReflection.Service.Builder do
       module.descriptor()
       |> Util.types_from_descriptor()
       |> Enum.uniq()
+      |> Kernel.--(Util.get_nested_types(symbol, module.descriptor()))
       |> Enum.map(fn name ->
         Util.trim_symbol(name) <> ".proto"
       end)
