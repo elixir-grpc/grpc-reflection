@@ -2,7 +2,6 @@ defmodule GrpcReflection.Service.Builder do
   @moduledoc false
 
   alias Google.Protobuf.FileDescriptorProto
-  # alias Google.Protobuf.ServiceDescriptorProto
   alias GrpcReflection.Service.State
   alias GrpcReflection.Service.Builder.Util
   alias GrpcReflection.Service.Builder.Extensions
@@ -26,20 +25,7 @@ defmodule GrpcReflection.Service.Builder do
     State.new()
     |> State.add_symbols(%{service_name => service_response})
     |> State.add_files(%{(service_name <> ".proto") => service_response})
-    |> trace_refs(service)
-  end
-
-  @spec trace_refs(State.t(), atom()) :: State.t()
-  defp trace_refs(state, module) do
-    Code.ensure_loaded(module)
-
-    cond do
-      function_exported?(module, :__rpc_calls__, 0) ->
-        trace_service_refs(state, module)
-
-      function_exported?(module, :__message_props__, 0) ->
-        trace_message_refs(state, "", module)
-    end
+    |> trace_service_refs(service)
   end
 
   defp trace_service_refs(state, module) do
@@ -124,11 +110,18 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   defp build_response(symbol, module) do
+    # we build our own file responses, so unwrap any present
+    descriptor =
+      case module.descriptor() do
+        %FileDescriptorProto{service: [proto]} -> proto
+        proto -> proto
+      end
+
     dependencies =
-      module.descriptor()
+      descriptor
       |> Util.types_from_descriptor()
       |> Enum.uniq()
-      |> Kernel.--(Util.get_nested_types(symbol, module.descriptor()))
+      |> Kernel.--(Util.get_nested_types(symbol, descriptor))
       |> Enum.map(fn name ->
         Util.trim_symbol(name) <> ".proto"
       end)
@@ -144,7 +137,7 @@ defmodule GrpcReflection.Service.Builder do
       }
 
     unencoded_payload =
-      case descriptor = module.descriptor() do
+      case descriptor = descriptor do
         %Google.Protobuf.DescriptorProto{} -> %{response_stub | message_type: [descriptor]}
         %Google.Protobuf.ServiceDescriptorProto{} -> %{response_stub | service: [descriptor]}
         %Google.Protobuf.EnumDescriptorProto{} -> %{response_stub | enum_type: [descriptor]}
