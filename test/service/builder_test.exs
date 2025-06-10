@@ -115,6 +115,37 @@ defmodule GrpcReflection.Service.BuilderTest do
     end)
   end
 
+  test "handles a service with a custom prefix" do
+    assert {:ok, tree} = Builder.build_reflection_tree([HLW.TestService.Service])
+    assert %State{services: [HLW.TestService.Service]} = tree
+
+    names =
+      (Map.values(tree.files) ++ Map.values(tree.symbols))
+      |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))
+      |> Enum.map(&Google.Protobuf.FileDescriptorProto.decode/1)
+      |> Enum.map(& &1.name)
+
+    assert names ==
+             [
+               "google.protobuf.Any.proto",
+               "google.protobuf.Timestamp.proto",
+               "testserviceV2.Enum.proto",
+               "testserviceV2.TestReply.proto",
+               "testserviceV2.TestRequest.proto",
+               "testserviceV2.TestRequest.proto",
+               "testserviceV2.TestRequestExtension.proto",
+               "testserviceV2.TestService.proto",
+               "google.protobuf.Any.proto",
+               "google.protobuf.Timestamp.proto",
+               "testserviceV2.Enum.proto",
+               "testserviceV2.TestReply.proto",
+               "testserviceV2.TestRequest.proto",
+               "testserviceV2.TestRequest.proto",
+               "testserviceV2.TestService.proto",
+               "testserviceV2.TestService.proto"
+             ]
+  end
+
   test "handles a non-service module" do
     assert_raise UndefinedFunctionError, fn ->
       Builder.build_reflection_tree([Enum])
