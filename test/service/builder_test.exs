@@ -1,4 +1,4 @@
-defmodule GrpcReflection.BuilderTest do
+defmodule GrpcReflection.Service.BuilderTest do
   @moduledoc false
 
   use ExUnit.Case
@@ -91,8 +91,8 @@ defmodule GrpcReflection.BuilderTest do
   end
 
   test "handles an empty service" do
-    assert {:ok, tree} = Builder.build_reflection_tree([TestserviceV2.EmptyService.Service])
-    assert %State{services: [TestserviceV2.EmptyService.Service]} = tree
+    assert {:ok, tree} = Builder.build_reflection_tree([EmptyService.Service])
+    assert %State{services: [EmptyService.Service]} = tree
 
     (Map.values(tree.files) ++ Map.values(tree.symbols))
     |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))

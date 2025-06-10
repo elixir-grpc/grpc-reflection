@@ -64,12 +64,12 @@ defmodule GrpcReflection.MixProject do
       Enum.join(
         [
           "gen_descriptors=true",
-          "plugins=grpc",
-          "include_docs=true"
+          "plugins=grpc"
         ],
         ","
       )
 
+    # compile reflection protos
     Enum.each(
       [
         "priv/protos/grpc/reflection/v1alpha/reflection.proto",
@@ -82,17 +82,15 @@ defmodule GrpcReflection.MixProject do
       end
     )
 
-    Enum.each(
-      [
-        "priv/protos/test_service_v2.proto",
-        "priv/protos/test_service_v3.proto"
-      ],
-      fn reflection_proto ->
-        Mix.shell().cmd(
-          "protoc --elixir_out=#{options}:./test/support/protos --proto_path=priv/protos/ #{reflection_proto}"
-        )
-      end
-    )
+    # compile test protos
+    "./priv/protos"
+    |> File.ls!()
+    |> Enum.filter(&Regex.match?(~r/.*.proto$/, &1))
+    |> Enum.each(fn reflection_proto ->
+      Mix.shell().cmd(
+        "protoc --elixir_out=#{options}:./test/support/protos -I priv/protos/ -I deps/protobuf/src #{reflection_proto}"
+      )
+    end)
   end
 
   defp package do
