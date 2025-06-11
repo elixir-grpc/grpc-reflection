@@ -151,4 +151,20 @@ defmodule GrpcReflection.Service.BuilderTest do
       Builder.build_reflection_tree([Enum])
     end
   end
+
+  # protobuf_generate wraps service descriptors into FileDescriptors
+  # fake a service module here to test unwrapping logic
+  defmodule WrappedService do
+    def __meta__(:name), do: "WrappedService"
+    defdelegate __rpc_calls__, to: EmptyService.Service
+
+    def descriptor do
+      %Google.Protobuf.FileDescriptorProto{service: [EmptyService.Service.descriptor()]}
+    end
+  end
+
+  test "handles a protobuf_generate file descriptor" do
+    assert {:ok, tree} = Builder.build_reflection_tree([WrappedService])
+    assert %State{services: [WrappedService]} = tree
+  end
 end
