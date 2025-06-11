@@ -30,7 +30,7 @@ defmodule GrpcReflection.Service.Builder do
 
   defp trace_service_refs(state, module) do
     service_name = module.__meta__(:name)
-    methods = module.descriptor().method
+    methods = get_descriptor(module).method
 
     module.__rpc_calls__()
     |> Enum.reduce(state, fn call, state ->
@@ -111,11 +111,7 @@ defmodule GrpcReflection.Service.Builder do
 
   defp build_response(symbol, module) do
     # we build our own file responses, so unwrap any present
-    descriptor =
-      case module.descriptor() do
-        %FileDescriptorProto{service: [proto]} -> proto
-        proto -> proto
-      end
+    descriptor = get_descriptor(module)
 
     dependencies =
       descriptor
@@ -144,5 +140,15 @@ defmodule GrpcReflection.Service.Builder do
       end
 
     %{file_descriptor_proto: [FileDescriptorProto.encode(unencoded_payload)]}
+  end
+
+  # protoc with the elixir generator and protobuf.generate slightly differ for how they
+  # generate descriptors.  Use this to potentially unwrap the service proto when dealing
+  # with descriptors that could come from a service module.
+  defp get_descriptor(module) do
+    case module.descriptor() do
+      %FileDescriptorProto{service: [proto]} -> proto
+      proto -> proto
+    end
   end
 end
