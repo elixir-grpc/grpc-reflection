@@ -63,7 +63,6 @@ Here are some example `grpcurl` commands and responses excersizing the reflectio
 
 ```shell
 $ grpcurl -v -plaintext 127.0.0.1:50051 list
-grpc.reflection.v1.ServerReflection
 helloworld.Greeter
 
 $ grpcurl -v -plaintext 127.0.0.1:50051 list helloworld.Greeter
