@@ -1,4 +1,4 @@
-defmodule GrpcReflection.Test do
+defmodule GrpcReflection.ServerTest do
   @moduledoc false
 
   use GrpcCase

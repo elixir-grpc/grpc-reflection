@@ -1,5 +1,7 @@
 defmodule TestserviceV3.Enum do
-  use Protobuf, enum: true, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
+  @moduledoc false
+
+  use Protobuf, enum: true, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -31,7 +33,9 @@ defmodule TestserviceV3.Enum do
 end
 
 defmodule TestserviceV3.TestRequest.GEntry do
-  use Protobuf, map: true, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
+  @moduledoc false
+
+  use Protobuf, map: true, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -77,6 +81,7 @@ defmodule TestserviceV3.TestRequest.GEntry do
         deprecated: false,
         map_entry: true,
         deprecated_legacy_json_field_conflicts: nil,
+        features: nil,
         uninterpreted_option: [],
         __pb_extensions__: %{},
         __unknown_fields__: []
@@ -93,7 +98,9 @@ defmodule TestserviceV3.TestRequest.GEntry do
 end
 
 defmodule TestserviceV3.TestRequest.Payload.Location do
-  use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
+  @moduledoc false
+
+  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -146,7 +153,9 @@ defmodule TestserviceV3.TestRequest.Payload.Location do
 end
 
 defmodule TestserviceV3.TestRequest.Payload do
-  use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
+  @moduledoc false
+
+  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -257,7 +266,9 @@ defmodule TestserviceV3.TestRequest.Payload do
 end
 
 defmodule TestserviceV3.TestRequest.Token do
-  use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
+  @moduledoc false
+
+  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -295,7 +306,9 @@ defmodule TestserviceV3.TestRequest.Token do
 end
 
 defmodule TestserviceV3.TestRequest do
-  use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
+  @moduledoc false
+
+  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -444,6 +457,7 @@ defmodule TestserviceV3.TestRequest do
             deprecated: false,
             map_entry: true,
             deprecated_legacy_json_field_conflicts: nil,
+            features: nil,
             uninterpreted_option: [],
             __pb_extensions__: %{},
             __unknown_fields__: []
@@ -610,7 +624,9 @@ defmodule TestserviceV3.TestRequest do
 end
 
 defmodule TestserviceV3.TestReply do
-  use Protobuf, protoc_gen_elixir_version: "0.12.0", syntax: :proto3
+  @moduledoc false
+
+  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -678,7 +694,9 @@ defmodule TestserviceV3.TestReply do
 end
 
 defmodule TestserviceV3.TestService.Service do
-  use GRPC.Service, name: "testserviceV3.TestService", protoc_gen_elixir_version: "0.12.0"
+  @moduledoc false
+
+  use GRPC.Service, name: "testserviceV3.TestService", protoc_gen_elixir_version: "0.14.0"
 
   def descriptor do
     # credo:disable-for-next-line
@@ -692,6 +710,7 @@ defmodule TestserviceV3.TestService.Service do
           options: %Google.Protobuf.MethodOptions{
             deprecated: false,
             idempotency_level: :IDEMPOTENCY_UNKNOWN,
+            features: nil,
             uninterpreted_option: [],
             __pb_extensions__: %{},
             __unknown_fields__: []
@@ -710,5 +729,7 @@ defmodule TestserviceV3.TestService.Service do
 end
 
 defmodule TestserviceV3.TestService.Stub do
+  @moduledoc false
+
   use GRPC.Stub, service: TestserviceV3.TestService.Service
 end

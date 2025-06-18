@@ -5,6 +5,9 @@ import "google/protobuf/any.proto";
 
 package testserviceV2;
 
+import "elixirpb.proto";
+option (elixirpb.file).module_prefix = "HLW";
+
 service TestService {
   rpc CallFunction (TestRequest) returns (TestReply) {}
 }

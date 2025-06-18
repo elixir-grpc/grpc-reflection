@@ -2,200 +2,153 @@ defmodule GrpcReflection.Service.Builder do
   @moduledoc false
 
   alias Google.Protobuf.FileDescriptorProto
-  alias Google.Protobuf.ServiceDescriptorProto
   alias GrpcReflection.Service.State
   alias GrpcReflection.Service.Builder.Util
+  alias GrpcReflection.Service.Builder.Extensions
 
   def build_reflection_tree(services) do
     with :ok <- Util.validate_services(services) do
-      services
-      |> process_services()
-      |> process_references()
+      tree =
+        Enum.reduce(services, State.new(services), fn service, state ->
+          new_state = process_service(service)
+          State.merge(state, new_state)
+        end)
+
+      {:ok, tree}
     end
-  end
-
-  defp process_references(%State{} = state) do
-    # references is a growing set.  Processing references can add new references
-    case State.get_missing_references(state) do
-      [] ->
-        {:ok, state}
-
-      missing_refs ->
-        missing_refs
-        |> Enum.reduce(state, &State.merge(&2, process_reference(&1)))
-        |> process_references()
-    end
-  end
-
-  defp process_services(services) do
-    Enum.reduce(services, State.new(services), fn service, state ->
-      State.merge(state, process_service(service))
-    end)
   end
 
   defp process_service(service) do
-    name = service.__meta__(:name)
-    syntax = Util.get_syntax(service)
-
-    # protobuf_elixir populates service descriptors directly
-    # protobuf_generate populates services with file_descriptors
-    case service.descriptor() do
-      %FileDescriptorProto{service: [proto]} ->
-        # we should read and use the file descriptor directly instead
-        # of dropping relevant data and trying to discover it
-        process_service_descriptor(name, proto, syntax)
-
-      %ServiceDescriptorProto{} = proto ->
-        process_service_descriptor(name, proto, syntax)
-    end
-  end
-
-  defp process_service_descriptor(service_name, descriptor, syntax) do
-    referenced_types = Util.types_from_descriptor(descriptor)
-
-    method_symbols =
-      Enum.map(
-        descriptor.method,
-        fn method -> service_name <> "." <> method.name end
-      )
-
-    unencoded_payload = process_common(service_name, descriptor, syntax)
-    payload = FileDescriptorProto.encode(unencoded_payload)
-    response = %{file_descriptor_proto: [payload]}
+    service_name = service.__meta__(:name)
+    service_response = build_response(service_name, service)
 
     State.new()
-    |> State.add_symbols(
-      method_symbols
-      |> Enum.reduce(%{}, fn name, acc -> Map.put(acc, name, response) end)
-      |> Map.put(service_name, response)
-    )
-    |> State.add_files(%{(service_name <> ".proto") => response})
-    |> State.add_references(referenced_types)
+    |> State.add_symbols(%{service_name => service_response})
+    |> State.add_files(%{(service_name <> ".proto") => service_response})
+    |> trace_service_refs(service)
   end
 
-  defp process_reference(symbol) do
-    symbol
-    |> Util.convert_symbol_to_module()
-    |> then(fn mod ->
-      descriptor = mod.descriptor()
-      name = symbol
+  defp trace_service_refs(state, module) do
+    service_name = module.__meta__(:name)
+    methods = get_descriptor(module).method
 
-      nested_types = Util.get_nested_types(name, descriptor)
+    module.__rpc_calls__()
+    |> Enum.reduce(state, fn call, state ->
+      {function, {request, _}, {response, _}, _} = call
 
-      referenced_types =
-        Util.types_from_descriptor(descriptor)
-        |> Enum.uniq()
-        |> Kernel.--(nested_types)
+      %{input_type: req_symbol, output_type: resp_symbol} =
+        Enum.find(methods, fn method -> method.name == to_string(function) end)
 
-      unencoded_payload = process_common(name, descriptor, Util.get_syntax(mod), nested_types)
-      payload = FileDescriptorProto.encode(unencoded_payload)
-      response = %{file_descriptor_proto: [payload]}
+      call_symbol = service_name <> "." <> to_string(function)
+      call_response = build_response(service_name, module)
+      req_symbol = Util.trim_symbol(req_symbol)
+      req_response = build_response(req_symbol, request)
+      resp_symbol = Util.trim_symbol(resp_symbol)
+      resp_response = build_response(resp_symbol, response)
 
-      root_symbols = %{symbol => response}
-
-      root_symbols =
-        Enum.reduce(nested_types, root_symbols, fn name, acc -> Map.put(acc, name, response) end)
-
-      root_files = %{(symbol <> ".proto") => response}
-
-      root_files =
-        Enum.reduce(nested_types, root_files, fn name, acc ->
-          Map.put(acc, name <> ".proto", response)
-        end)
-
-      extension_file = symbol <> "Extension.proto"
-
-      {root_extensions, root_files} =
-        process_extensions(mod, symbol, extension_file, descriptor, root_files)
-
-      State.new()
-      |> State.add_files(root_files)
-      |> State.add_symbols(root_symbols)
-      |> State.add_extensions(root_extensions)
-      |> State.add_references(referenced_types)
+      state
+      |> Extensions.add_extensions(service_name, module)
+      |> State.add_symbols(%{
+        call_symbol => call_response,
+        req_symbol => req_response,
+        resp_symbol => resp_response
+      })
+      |> State.add_files(%{
+        (req_symbol <> ".proto") => req_response,
+        (resp_symbol <> ".proto") => resp_response
+      })
+      |> Extensions.add_extensions(req_symbol, request)
+      |> Extensions.add_extensions(resp_symbol, response)
+      |> trace_message_refs(req_symbol, request)
+      |> trace_message_refs(resp_symbol, response)
     end)
   end
 
-  # Processes extensions recursively for proto2, if any. Invoked only when extensions are present.
-  defp process_extensions(mod, symbol, extension_file, descriptor, root_files) do
-    case process_extensions(mod, symbol, extension_file, descriptor) do
-      {:ok, {extension_numbers, extension_payload}} ->
-        {
-          %{symbol => extension_numbers},
-          Map.put(root_files, extension_file, %{file_descriptor_proto: [extension_payload]})
-        }
+  defp trace_message_refs(state, parent_symbol, module) do
+    case module.descriptor() do
+      %{field: fields} ->
+        trace_message_fields(state, parent_symbol, module, fields)
 
-      {:ignore, _} ->
-        {%{}, root_files}
+      _ ->
+        state
     end
   end
 
-  defp process_extensions(
-         mod,
-         symbol,
-         extension_file,
-         %Google.Protobuf.DescriptorProto{extension_range: extension_range} = descriptor
-       )
-       when extension_range != [] do
-    unencoded_extension_payload = %Google.Protobuf.FileDescriptorProto{
-      name: extension_file,
-      package: Util.get_package(symbol),
-      dependency: [symbol <> ".proto"],
-      syntax: Util.get_syntax(mod)
-    }
+  defp trace_message_fields(state, parent_symbol, module, fields) do
+    # nested types arent a "separate file", they return their parents' response
+    nested_types = Util.get_nested_types(parent_symbol, module.descriptor())
 
-    {extension_numbers, extension_files} =
-      Enum.unzip(
-        for %Google.Protobuf.DescriptorProto.ExtensionRange{
-              start: start_index,
-              end: end_index
-            } <- descriptor.extension_range,
-            index <- start_index..end_index,
-            {_, ext} <- List.wrap(Protobuf.Extension.get_extension_props_by_tag(mod, index)) do
-          {index, Util.convert_to_field_descriptor(symbol, ext)}
+    module.__message_props__().field_props
+    |> Map.values()
+    |> Enum.map(fn %{name: name, type: type} ->
+      %{
+        mod:
+          case type do
+            {_, mod} -> mod
+            mod -> mod
+          end,
+        symbol: Enum.find(fields, fn f -> f.name == name end).type_name
+      }
+    end)
+    |> Enum.reject(fn %{symbol: s} -> s == nil end)
+    |> Enum.reduce(state, fn %{mod: mod, symbol: symbol}, state ->
+      symbol = Util.trim_symbol(symbol)
+
+      response =
+        if symbol in nested_types do
+          build_response(parent_symbol, module)
+        else
+          build_response(symbol, mod)
         end
-      )
 
-    message_list =
-      for ext <- extension_files, Util.message_descriptor?(ext) do
-        ext.type_name
-        |> Util.convert_symbol_to_module()
-        |> then(& &1.descriptor())
-      end
-
-    unencoded_extension_payload = %{
-      unencoded_extension_payload
-      | extension: extension_files,
-        message_type: message_list
-    }
-
-    {:ok, {extension_numbers, FileDescriptorProto.encode(unencoded_extension_payload)}}
+      state
+      |> Extensions.add_extensions(symbol, mod)
+      |> State.add_symbols(%{symbol => response})
+      |> State.add_files(%{(symbol <> ".proto") => response})
+      |> trace_message_refs(symbol, mod)
+    end)
   end
 
-  defp process_extensions(_, _, _, _), do: {:ignore, {nil, nil}}
+  defp build_response(symbol, module) do
+    # we build our own file responses, so unwrap any present
+    descriptor = get_descriptor(module)
 
-  defp process_common(name, descriptor, syntax, nested_types \\ []) do
     dependencies =
       descriptor
       |> Util.types_from_descriptor()
       |> Enum.uniq()
-      |> Kernel.--(nested_types)
+      |> Kernel.--(Util.get_nested_types(symbol, descriptor))
       |> Enum.map(fn name ->
-        name <> ".proto"
+        Util.trim_symbol(name) <> ".proto"
       end)
+
+    syntax = Util.get_syntax(module)
 
     response_stub =
       %FileDescriptorProto{
-        name: name <> ".proto",
-        package: Util.get_package(name),
+        name: symbol <> ".proto",
+        package: Util.get_package(symbol),
         dependency: dependencies,
         syntax: syntax
       }
 
-    case descriptor do
-      %Google.Protobuf.DescriptorProto{} -> %{response_stub | message_type: [descriptor]}
-      %Google.Protobuf.ServiceDescriptorProto{} -> %{response_stub | service: [descriptor]}
-      %Google.Protobuf.EnumDescriptorProto{} -> %{response_stub | enum_type: [descriptor]}
+    unencoded_payload =
+      case descriptor = descriptor do
+        %Google.Protobuf.DescriptorProto{} -> %{response_stub | message_type: [descriptor]}
+        %Google.Protobuf.ServiceDescriptorProto{} -> %{response_stub | service: [descriptor]}
+        %Google.Protobuf.EnumDescriptorProto{} -> %{response_stub | enum_type: [descriptor]}
+      end
+
+    %{file_descriptor_proto: [FileDescriptorProto.encode(unencoded_payload)]}
+  end
+
+  # protoc with the elixir generator and protobuf.generate slightly differ for how they
+  # generate descriptors.  Use this to potentially unwrap the service proto when dealing
+  # with descriptors that could come from a service module.
+  defp get_descriptor(module) do
+    case module.descriptor() do
+      %FileDescriptorProto{service: [proto]} -> proto
+      proto -> proto
     end
   end
 end
