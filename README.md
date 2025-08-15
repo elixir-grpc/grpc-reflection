@@ -63,9 +63,9 @@ This is written and tested using [grpcurl](https://github.com/fullstorydev/grpcu
      run(Helloworld.Reflection.Server)
    ```
 
-## interacting with your reflection server
+## Interacting with your reflection server
 
-Here are some example `grpcurl` commands and responses excersizing the reflection capabilities
+Here are some examples using [grpcurl](https://github.com/fullstorydev/grpcurl) to demonstrate the reflection capabilities:
 
 ```shell
 $ grpcurl -v -plaintext 127.0.0.1:50051 list
@@ -101,6 +101,7 @@ This module is more thoroughly tested with proto3, but it has some testing with 
 This is **not** an exhaustive list, contributions are appreciated.
 
 | Application | Reflection version required |
-| ----------- | --------------------------- |
-| grpcurl     | V1                          |
-| postman     | V1alpha                     |
+| --- | :---: |
+| [grpcurl](https://github.com/fullstorydev/grpcurl) | V1      |
+| [grpcui](https://github.com/fullstorydev/grpcui)   | V1      |
+| [postman](https://www.postman.com/)                | V1alpha |
