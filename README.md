@@ -1,5 +1,11 @@
 # GrpcReflection
 
+[![GitHub CI](https://github.com/elixir-grpc/grpc-reflection/actions/workflows/ci.yml/badge.svg)](https://github.com/elixir-grpc/grpc-reflection/actions/workflows/ci.yml)
+[![Hex.pm](https://img.shields.io/hexpm/v/grpc_reflection.svg)](https://hex.pm/packages/grpc_reflection)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/grpc_reflection/)
+[![License](https://img.shields.io/hexpm/l/grpc_reflection.svg)](https://github.com/elixir-grpc/grpc-reflection/blob/main/LICENSE)
+[![Total Downloads](https://img.shields.io/hexpm/dt/grpc_reflection.svg)](https://hex.pm/packages/grpc_reflection)
+
 Server reflection allows servers to assist clients in runtime construction of requests without having stub information precompiled into the client.
 
 According to the [GRPC Server Reflection Protocol
