@@ -43,10 +43,10 @@ This is written and tested using [grpcurl](https://github.com/fullstorydev/grpcu
    end
    ```
 
-   | Config Option | Description                                                            |
-   | ------------- | ---------------------------------------------------------------------- |
-   | version       | Either `:v1` or `:v2` depending on intended client support             |
-   | services      | This is a list of GRPC services that should be included for reflection |
+   | Config Option | Description |
+   | :---: | --- |
+   | `version`     | Either `:v1` or `:v1alpha`, depending on intended client support.       |
+   | `services`    | This is a list of GRPC services that should be included for reflection. |
 
 1. Add the reflection supervisor to your supervision tree to host the cached reflection state
 
