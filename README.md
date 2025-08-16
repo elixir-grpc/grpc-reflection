@@ -1,18 +1,24 @@
 # GrpcReflection
 
+[![GitHub CI](https://github.com/elixir-grpc/grpc-reflection/actions/workflows/ci.yml/badge.svg)](https://github.com/elixir-grpc/grpc-reflection/actions/workflows/ci.yml)
+[![Hex.pm](https://img.shields.io/hexpm/v/grpc_reflection.svg)](https://hex.pm/packages/grpc_reflection)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/grpc_reflection/)
+[![License](https://img.shields.io/hexpm/l/grpc_reflection.svg)](https://github.com/elixir-grpc/grpc-reflection/blob/main/LICENSE)
+[![Total Downloads](https://img.shields.io/hexpm/dt/grpc_reflection.svg)](https://hex.pm/packages/grpc_reflection)
+
 Server reflection allows servers to assist clients in runtime construction of requests without having stub information precompiled into the client.
 
 According to the [GRPC Server Reflection Protocol
 ](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md), the primary usecase for server reflection is to write (typically) command line debugging tools for talking to a grpc server. In particular, such a tool will take in a method and a payload (in human readable text format) send it to the server (typically in binary proto wire format), and then take the response and decode it to text to present to the user.
 
-GrpcReflection adds reflection support to a `grpc-elixir` based application. It is a supervised application that can support implemented as a gRPC server using `grpc-elixir`, .
+GrpcReflection adds reflection support to applications built with [grpc-elixir](https://hex.pm/packages/grpc). It is a supervised application that can be implemented as a gRPC server using [grpc-elixir](https://github.com/elixir-grpc/grpc).
 
 ## Installation
 
 The package can be installed by adding `grpc_reflection` to your list of dependencies in `mix.exs`:
 
 ```elixir
-{:grpc_reflection, "~> 0.1.5"}
+{:grpc_reflection, "~> 0.2"}
 ```
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
@@ -37,10 +43,10 @@ This is written and tested using [grpcurl](https://github.com/fullstorydev/grpcu
    end
    ```
 
-   | Config Option | Description                                                            |
-   | ------------- | ---------------------------------------------------------------------- |
-   | version       | Either `:v1` or `:v2` depending on intended client support             |
-   | services      | This is a list of GRPC services that should be included for reflection |
+   | Config Option | Description |
+   | :---: | --- |
+   | `version`     | Either `:v1` or `:v1alpha`, depending on intended client support.       |
+   | `services`    | This is a list of GRPC services that should be included for reflection. |
 
 1. Add the reflection supervisor to your supervision tree to host the cached reflection state
 
@@ -57,9 +63,9 @@ This is written and tested using [grpcurl](https://github.com/fullstorydev/grpcu
      run(Helloworld.Reflection.Server)
    ```
 
-## interacting with your reflection server
+## Interacting with your reflection server
 
-Here are some example `grpcurl` commands and responses excersizing the reflection capabilities
+Here are some examples using [grpcurl](https://github.com/fullstorydev/grpcurl) to demonstrate the reflection capabilities:
 
 ```shell
 $ grpcurl -v -plaintext 127.0.0.1:50051 list
@@ -95,6 +101,7 @@ This module is more thoroughly tested with proto3, but it has some testing with 
 This is **not** an exhaustive list, contributions are appreciated.
 
 | Application | Reflection version required |
-| ----------- | --------------------------- |
-| grpcurl     | V1                          |
-| postman     | V1alpha                     |
+| --- | :---: |
+| [grpcurl](https://github.com/fullstorydev/grpcurl) | V1      |
+| [grpcui](https://github.com/fullstorydev/grpcui)   | V1      |
+| [postman](https://www.postman.com/)                | V1alpha |
