@@ -90,7 +90,7 @@ defmodule GrpcReflection.Service.Builder do
         symbol: Enum.find(fields, fn f -> f.name == name end).type_name
       }
     end)
-    |> Enum.reject(fn %{symbol: s} -> s == nil end)
+    |> Enum.reject(fn %{symbol: s} -> is_nil(s) or State.has_symbol?(state, s) end)
     |> Enum.reduce(state, fn %{mod: mod, symbol: symbol}, state ->
       symbol = Util.trim_symbol(symbol)
 
