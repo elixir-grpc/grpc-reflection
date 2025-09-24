@@ -1,7 +1,7 @@
 defmodule TestserviceV3.Enum do
   @moduledoc false
 
-  use Protobuf, enum: true, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, enum: true, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -35,7 +35,7 @@ end
 defmodule TestserviceV3.TestRequest.GEntry do
   @moduledoc false
 
-  use Protobuf, map: true, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, map: true, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -100,7 +100,7 @@ end
 defmodule TestserviceV3.TestRequest.Payload.Location do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -155,7 +155,7 @@ end
 defmodule TestserviceV3.TestRequest.Payload do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -268,7 +268,7 @@ end
 defmodule TestserviceV3.TestRequest.Token do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -308,7 +308,7 @@ end
 defmodule TestserviceV3.TestRequest do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -626,7 +626,7 @@ end
 defmodule TestserviceV3.TestReply do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -696,7 +696,7 @@ end
 defmodule TestserviceV3.TestService.Service do
   @moduledoc false
 
-  use GRPC.Service, name: "testserviceV3.TestService", protoc_gen_elixir_version: "0.14.0"
+  use GRPC.Service, name: "testserviceV3.TestService", protoc_gen_elixir_version: "0.14.1"
 
   def descriptor do
     # credo:disable-for-next-line

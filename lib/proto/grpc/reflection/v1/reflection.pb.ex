@@ -1,7 +1,7 @@
 defmodule Grpc.Reflection.V1.ServerReflectionRequest do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -133,7 +133,7 @@ end
 defmodule Grpc.Reflection.V1.ExtensionRequest do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -188,7 +188,7 @@ end
 defmodule Grpc.Reflection.V1.ServerReflectionResponse do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -330,7 +330,7 @@ end
 defmodule Grpc.Reflection.V1.FileDescriptorResponse do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -370,7 +370,7 @@ end
 defmodule Grpc.Reflection.V1.ExtensionNumberResponse do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -425,7 +425,7 @@ end
 defmodule Grpc.Reflection.V1.ListServiceResponse do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -465,7 +465,7 @@ end
 defmodule Grpc.Reflection.V1.ServiceResponse do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -505,7 +505,7 @@ end
 defmodule Grpc.Reflection.V1.ErrorResponse do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -562,7 +562,7 @@ defmodule Grpc.Reflection.V1.ServerReflection.Service do
 
   use GRPC.Service,
     name: "grpc.reflection.v1.ServerReflection",
-    protoc_gen_elixir_version: "0.14.0"
+    protoc_gen_elixir_version: "0.14.1"
 
   def descriptor do
     # credo:disable-for-next-line

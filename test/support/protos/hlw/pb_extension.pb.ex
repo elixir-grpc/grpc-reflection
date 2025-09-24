@@ -1,7 +1,7 @@
 defmodule HLW.PbExtension do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.0"
+  use Protobuf, protoc_gen_elixir_version: "0.14.1"
 
   extend HLW.TestRequest, :data, 10, optional: true, type: :string
 
