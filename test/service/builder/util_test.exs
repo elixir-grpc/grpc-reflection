@@ -19,21 +19,13 @@ defmodule GrpcReflection.Service.Builder.UtilTest do
 
       assert "testserviceV3" ==
                Util.get_package("testserviceV3.TestService")
+
+      assert "grpc.reflection.v1alpha" ==
+               Util.get_package("grpc.reflection.v1alpha.FileDescriptorResponse")
     end
 
     test "downcase_first" do
       assert "hello" == Util.downcase_first("Hello")
-    end
-
-    test "convert symbol to module succeed" do
-      assert TestserviceV3.TestRequest ==
-               Util.convert_symbol_to_module("testserviceV3.TestRequest")
-    end
-
-    test "convert symbol to module fail" do
-      assert_raise ArgumentError, fn ->
-        Util.convert_symbol_to_module("testservice.TestRequest.Payload.Location")
-      end
     end
 
     test "get all nested types" do

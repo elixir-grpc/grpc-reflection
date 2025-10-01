@@ -1,4 +1,4 @@
-defmodule TestserviceV2.Enum do
+defmodule HLW.Enum do
   @moduledoc false
 
   use Protobuf, enum: true, protoc_gen_elixir_version: "0.14.1", syntax: :proto2
@@ -32,7 +32,7 @@ defmodule TestserviceV2.Enum do
   field :B, 1
 end
 
-defmodule TestserviceV2.TestRequest.GEntry do
+defmodule HLW.TestRequest.GEntry do
   @moduledoc false
 
   use Protobuf, map: true, protoc_gen_elixir_version: "0.14.1", syntax: :proto2
@@ -97,7 +97,7 @@ defmodule TestserviceV2.TestRequest.GEntry do
   field :value, 2, optional: true, type: :int32
 end
 
-defmodule TestserviceV2.TestRequest do
+defmodule HLW.TestRequest do
   @moduledoc false
 
   use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto2
@@ -273,16 +273,16 @@ defmodule TestserviceV2.TestRequest do
   oneof :test_oneof, 0
 
   field :name, 1, required: true, type: :string
-  field :enum, 2, optional: true, type: TestserviceV2.Enum, enum: true
+  field :enum, 2, optional: true, type: HLW.Enum, enum: true
   field :label, 3, optional: true, type: :string, oneof: 0
   field :value, 4, optional: true, type: :int32, oneof: 0
-  field :g, 5, repeated: true, type: TestserviceV2.TestRequest.GEntry, map: true
+  field :g, 5, repeated: true, type: HLW.TestRequest.GEntry, map: true
   field :instrument, 6, repeated: true, type: Google.Protobuf.Any
 
   extensions [{10, 21}]
 end
 
-defmodule TestserviceV2.Location do
+defmodule HLW.Location do
   @moduledoc false
 
   use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto2
@@ -337,7 +337,7 @@ defmodule TestserviceV2.Location do
   field :longitude, 2, optional: true, type: :double
 end
 
-defmodule TestserviceV2.TestReply do
+defmodule HLW.TestReply do
   @moduledoc false
 
   use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto2
@@ -377,7 +377,7 @@ defmodule TestserviceV2.TestReply do
   field :today, 2, required: true, type: Google.Protobuf.Timestamp
 end
 
-defmodule TestserviceV2.TestService.Service do
+defmodule HLW.TestService.Service do
   @moduledoc false
 
   use GRPC.Service, name: "testserviceV2.TestService", protoc_gen_elixir_version: "0.14.1"
@@ -409,11 +409,11 @@ defmodule TestserviceV2.TestService.Service do
     }
   end
 
-  rpc :CallFunction, TestserviceV2.TestRequest, TestserviceV2.TestReply
+  rpc :CallFunction, HLW.TestRequest, HLW.TestReply
 end
 
-defmodule TestserviceV2.TestService.Stub do
+defmodule HLW.TestService.Stub do
   @moduledoc false
 
-  use GRPC.Stub, service: TestserviceV2.TestService.Service
+  use GRPC.Stub, service: HLW.TestService.Service
 end

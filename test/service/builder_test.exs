@@ -1,4 +1,4 @@
-defmodule GrpcReflection.BuilderTest do
+defmodule GrpcReflection.Service.BuilderTest do
   @moduledoc false
 
   use ExUnit.Case
@@ -91,8 +91,8 @@ defmodule GrpcReflection.BuilderTest do
   end
 
   test "handles an empty service" do
-    assert {:ok, tree} = Builder.build_reflection_tree([TestserviceV2.EmptyService.Service])
-    assert %State{services: [TestserviceV2.EmptyService.Service]} = tree
+    assert {:ok, tree} = Builder.build_reflection_tree([EmptyService.Service])
+    assert %State{services: [EmptyService.Service]} = tree
 
     (Map.values(tree.files) ++ Map.values(tree.symbols))
     |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))
@@ -115,9 +115,56 @@ defmodule GrpcReflection.BuilderTest do
     end)
   end
 
+  test "handles a service with a custom prefix" do
+    assert {:ok, tree} = Builder.build_reflection_tree([HLW.TestService.Service])
+    assert %State{services: [HLW.TestService.Service]} = tree
+
+    names =
+      (Map.values(tree.files) ++ Map.values(tree.symbols))
+      |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))
+      |> Enum.map(&Google.Protobuf.FileDescriptorProto.decode/1)
+      |> Enum.map(& &1.name)
+
+    assert names ==
+             [
+               "google.protobuf.Any.proto",
+               "google.protobuf.Timestamp.proto",
+               "testserviceV2.Enum.proto",
+               "testserviceV2.TestReply.proto",
+               "testserviceV2.TestRequest.proto",
+               "testserviceV2.TestRequest.proto",
+               "testserviceV2.TestRequestExtension.proto",
+               "testserviceV2.TestService.proto",
+               "google.protobuf.Any.proto",
+               "google.protobuf.Timestamp.proto",
+               "testserviceV2.Enum.proto",
+               "testserviceV2.TestReply.proto",
+               "testserviceV2.TestRequest.proto",
+               "testserviceV2.TestRequest.proto",
+               "testserviceV2.TestService.proto",
+               "testserviceV2.TestService.proto"
+             ]
+  end
+
   test "handles a non-service module" do
     assert_raise UndefinedFunctionError, fn ->
       Builder.build_reflection_tree([Enum])
     end
+  end
+
+  # protobuf_generate wraps service descriptors into FileDescriptors
+  # fake a service module here to test unwrapping logic
+  defmodule WrappedService do
+    def __meta__(:name), do: "WrappedService"
+    defdelegate __rpc_calls__, to: EmptyService.Service
+
+    def descriptor do
+      %Google.Protobuf.FileDescriptorProto{service: [EmptyService.Service.descriptor()]}
+    end
+  end
+
+  test "handles a protobuf_generate file descriptor" do
+    assert {:ok, tree} = Builder.build_reflection_tree([WrappedService])
+    assert %State{services: [WrappedService]} = tree
   end
 end

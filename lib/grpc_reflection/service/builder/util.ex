@@ -24,20 +24,14 @@ defmodule GrpcReflection.Service.Builder.Util do
   def get_nested_types(_, _, acc), do: acc
 
   def get_package(symbol) do
-    parent_symbol = symbol |> String.split(".") |> Enum.slice(0..-2//1) |> Enum.join(".")
+    # assuming this symbol follows normal GRPC practices, Types are capilatized
+    #
+    # So if we split on "." and drop anything capitalized we arrive at the package name
 
-    try do
-      parent_module = convert_symbol_to_module(parent_symbol)
-      Code.ensure_loaded(parent_module)
-
-      if function_exported?(parent_module, :descriptor, 0) do
-        get_package(parent_symbol)
-      else
-        parent_symbol
-      end
-    rescue
-      _ -> parent_symbol
-    end
+    symbol
+    |> String.split(".")
+    |> Enum.reject(fn s -> Regex.match?(~r/^[A-Z].+/, s) end)
+    |> Enum.join(".")
   end
 
   def downcase_first(<<first::utf8, rest::binary>>),
@@ -110,17 +104,6 @@ defmodule GrpcReflection.Service.Builder.Util do
     end
   end
 
-  def convert_symbol_to_module(symbol) do
-    symbol
-    |> then(fn
-      "." <> name -> name
-      name -> name
-    end)
-    |> String.split(".")
-    |> Enum.map(&Macro.camelize/1)
-    |> Module.safe_concat()
-  end
-
   def message_descriptor?(%Google.Protobuf.FieldDescriptorProto{type: @type_message}),
     do: true
 
@@ -173,4 +156,7 @@ defmodule GrpcReflection.Service.Builder.Util do
   def types_from_descriptor(%Google.Protobuf.EnumDescriptorProto{}) do
     []
   end
+
+  def trim_symbol("." <> symbol), do: symbol
+  def trim_symbol(symbol), do: symbol
 end

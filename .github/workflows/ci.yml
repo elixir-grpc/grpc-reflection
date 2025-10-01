@@ -164,6 +164,9 @@ jobs:
 
   check_example:
     name: Run example helloworld tests
+    strategy:
+      matrix:
+        path: [./examples/helloworld_v2, ./examples/helloworld_v3]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -176,7 +179,7 @@ jobs:
           elixir-version: 1.18.x
 
       - name: Build and Test
-        working-directory: ./examples/helloworld
+        working-directory: ${{ matrix.path }}
         run: |
           mix deps.get
           mix test

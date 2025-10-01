@@ -1,7 +1,9 @@
-defmodule Helloworld.HelloRequest do
-  @moduledoc false
+defmodule HLW.HelloRequest do
+  @moduledoc """
+  The request message containing the user's name.
+  """
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto2
 
   def descriptor do
     # credo:disable-for-next-line
@@ -12,13 +14,27 @@ defmodule Helloworld.HelloRequest do
           name: "name",
           extendee: nil,
           number: 1,
-          label: :LABEL_OPTIONAL,
+          label: :LABEL_REQUIRED,
           type: :TYPE_STRING,
           type_name: nil,
           default_value: nil,
           options: nil,
           oneof_index: nil,
           json_name: "name",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "meta",
+          extendee: nil,
+          number: 2,
+          label: :LABEL_REQUIRED,
+          type: :TYPE_MESSAGE,
+          type_name: ".helloworld.MessageMetadata",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "meta",
           proto3_optional: nil,
           __unknown_fields__: []
         }
@@ -35,30 +51,29 @@ defmodule Helloworld.HelloRequest do
     }
   end
 
-  field :name, 1, type: :string
+  field :name, 1, required: true, type: :string
+  field :meta, 2, required: true, type: HLW.MessageMetadata
 end
 
-defmodule Helloworld.HelloReply do
-  @moduledoc false
-
-  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
+defmodule HLW.MessageMetadata do
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto2
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.DescriptorProto{
-      name: "HelloReply",
+      name: "MessageMetadata",
       field: [
         %Google.Protobuf.FieldDescriptorProto{
-          name: "message",
+          name: "user",
           extendee: nil,
           number: 1,
-          label: :LABEL_OPTIONAL,
+          label: :LABEL_REQUIRED,
           type: :TYPE_STRING,
           type_name: nil,
           default_value: nil,
           options: nil,
           oneof_index: nil,
-          json_name: "message",
+          json_name: "user",
           proto3_optional: nil,
           __unknown_fields__: []
         },
@@ -66,7 +81,7 @@ defmodule Helloworld.HelloReply do
           name: "today",
           extendee: nil,
           number: 2,
-          label: :LABEL_OPTIONAL,
+          label: :LABEL_REQUIRED,
           type: :TYPE_MESSAGE,
           type_name: ".google.protobuf.Timestamp",
           default_value: nil,
@@ -89,12 +104,71 @@ defmodule Helloworld.HelloReply do
     }
   end
 
-  field :message, 1, type: :string
-  field :today, 2, type: Google.Protobuf.Timestamp
+  field :user, 1, required: true, type: :string
+  field :today, 2, required: true, type: Google.Protobuf.Timestamp
 end
 
-defmodule Helloworld.Greeter.Service do
-  @moduledoc false
+defmodule HLW.HelloReply do
+  @moduledoc """
+  The response message containing the greetings
+  """
+
+  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto2
+
+  def descriptor do
+    # credo:disable-for-next-line
+    %Google.Protobuf.DescriptorProto{
+      name: "HelloReply",
+      field: [
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "message",
+          extendee: nil,
+          number: 1,
+          label: :LABEL_REQUIRED,
+          type: :TYPE_STRING,
+          type_name: nil,
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "message",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "today",
+          extendee: nil,
+          number: 2,
+          label: :LABEL_REQUIRED,
+          type: :TYPE_MESSAGE,
+          type_name: ".google.protobuf.Timestamp",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "today",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        }
+      ],
+      nested_type: [],
+      enum_type: [],
+      extension_range: [],
+      extension: [],
+      options: nil,
+      oneof_decl: [],
+      reserved_range: [],
+      reserved_name: [],
+      __unknown_fields__: []
+    }
+  end
+
+  field :message, 1, required: true, type: :string
+  field :today, 2, required: true, type: Google.Protobuf.Timestamp
+end
+
+defmodule HLW.Greeter.Service do
+  @moduledoc """
+  The greeting service definition.
+  """
 
   use GRPC.Service, name: "helloworld.Greeter", protoc_gen_elixir_version: "0.14.1"
 
@@ -125,11 +199,9 @@ defmodule Helloworld.Greeter.Service do
     }
   end
 
-  rpc :SayHello, Helloworld.HelloRequest, Helloworld.HelloReply
+  rpc :SayHello, HLW.HelloRequest, HLW.HelloReply
 end
 
-defmodule Helloworld.Greeter.Stub do
-  @moduledoc false
-
-  use GRPC.Stub, service: Helloworld.Greeter.Service
+defmodule HLW.Greeter.Stub do
+  use GRPC.Stub, service: HLW.Greeter.Service
 end
