@@ -159,4 +159,54 @@ defmodule GrpcReflection.Service.Builder.Util do
 
   def trim_symbol("." <> symbol), do: symbol
   def trim_symbol(symbol), do: symbol
+
+  def proto_filename(module) do
+    module.__info__(:compile)
+    |> Keyword.get(:source)
+    |> case do
+      nil ->
+        module
+        |> Atom.to_string()
+        |> String.trim_leading("Elixir.")
+        |> then(&(&1 <> ".proto"))
+
+      source ->
+        source
+        |> List.to_string()
+        |> String.trim()
+        |> build_proto_name()
+    end
+  end
+
+  defp build_proto_name(path) do
+    base =
+      cond do
+        String.ends_with?(path, ".pb.ex") -> String.replace_suffix(path, ".pb.ex", "")
+        String.ends_with?(path, ".ex") -> String.replace_suffix(path, ".ex", "")
+        true -> path
+      end
+
+    cond do
+      String.contains?(base, "/priv/protos/") ->
+        [_prefix, rest] = String.split(base, "/priv/protos/", parts: 2)
+        normalize_proto_path(rest) <> ".proto"
+
+      String.contains?(base, "/test/support/protos/") ->
+        [_prefix, rest] = String.split(base, "/test/support/protos/", parts: 2)
+        Path.basename(rest) <> ".proto"
+
+      String.contains?(base, "/lib/") ->
+        [_prefix, rest] = String.split(base, "/lib/", parts: 2)
+        normalize_proto_path(rest) <> ".proto"
+
+      true ->
+        Path.basename(base) <> ".proto"
+    end
+  end
+
+  defp normalize_proto_path(path) do
+    path
+    |> String.split(["/", "\\"], trim: true)
+    |> Enum.join("/")
+  end
 end

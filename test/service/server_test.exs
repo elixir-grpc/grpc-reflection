@@ -13,7 +13,7 @@ defmodule GrpcReflection.ServerTest do
     assert Service.get_by_symbol("helloworld.Greeter") ==
              {:error, "symbol not found"}
 
-    assert Service.get_by_filename("helloworld.Greeter.proto") ==
+    assert Service.get_by_filename("helloworld.proto") ==
              {:error, "filename not found"}
 
     assert :ok == Service.put_services([Helloworld.Greeter.Service])
@@ -24,7 +24,7 @@ defmodule GrpcReflection.ServerTest do
              Service.get_by_symbol("helloworld.Greeter")
 
     assert {:ok, %{file_descriptor_proto: ^proto}} =
-             Service.get_by_filename("helloworld.Greeter.proto")
+             Service.get_by_filename("helloworld.proto")
   end
 
   describe "reflection state testing" do
@@ -57,7 +57,7 @@ defmodule GrpcReflection.ServerTest do
                Service.get_by_symbol("helloworld.HelloRequest")
 
       assert {:ok, %{file_descriptor_proto: ^proto}} =
-               Service.get_by_filename("helloworld.HelloRequest.proto")
+               Service.get_by_filename("helloworld.proto")
     end
 
     test "type with leading period still resolves" do
@@ -65,7 +65,7 @@ defmodule GrpcReflection.ServerTest do
                Service.get_by_symbol(".helloworld.HelloRequest")
 
       assert {:ok, %{file_descriptor_proto: ^proto}} =
-               Service.get_by_filename("helloworld.HelloRequest.proto")
+               Service.get_by_filename("helloworld.proto")
     end
   end
 end

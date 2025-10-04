@@ -2,6 +2,7 @@ defmodule GrpcReflection.V1ReflectionTest do
   @moduledoc false
 
   use GrpcCase
+  alias GrpcReflection.Service.Builder.Util
 
   @moduletag capture_log: true
 
@@ -74,7 +75,7 @@ defmodule GrpcReflection.V1ReflectionTest do
     test "describing a nested type returns the root type", ctx do
       message = {:file_containing_symbol, "testserviceV3.TestRequest.Payload"}
       assert {:ok, response} = run_request(message, ctx)
-      assert response.name == "testserviceV3.TestRequest.proto"
+      assert response.name == "test_service_v3.proto"
     end
 
     test "type with leading period still resolves", ctx do
@@ -90,11 +91,8 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert {:ok, response} = run_request(message, ctx)
       assert_response(response)
 
-      # we pretend all modules are in different files, dependencies are listed
-      assert response.dependency == [
-               "helloworld.HelloRequest.proto",
-               "helloworld.HelloReply.proto"
-             ]
+      assert [%{name: "Greeter", method: methods}] = response.service
+      assert Enum.map(methods, & &1.name) == ["SayHello"]
     end
 
     test "reject filename that doesn't match a reflection module", ctx do
@@ -104,12 +102,12 @@ defmodule GrpcReflection.V1ReflectionTest do
     end
 
     test "get replytype by filename", ctx do
-      filename = "helloworld.HelloReply.proto"
+      filename = "helloworld.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
       assert response.package == "helloworld"
-      assert response.dependency == ["google.protobuf.Timestamp.proto"]
+      assert response.dependency == ["google/protobuf/timestamp.proto"]
 
       assert [
                %Google.Protobuf.DescriptorProto{
@@ -136,7 +134,7 @@ defmodule GrpcReflection.V1ReflectionTest do
     end
 
     test "get external by filename", ctx do
-      filename = "google.protobuf.Timestamp.proto"
+      filename = "google/protobuf/timestamp.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
@@ -167,30 +165,33 @@ defmodule GrpcReflection.V1ReflectionTest do
     end
 
     test "ensures file descriptor dependencies are unique", ctx do
-      filename = "testserviceV3.TestReply.proto"
+      filename = "test_service_v3.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
       assert response.package == "testserviceV3"
 
-      assert response.dependency == [
-               "google.protobuf.Timestamp.proto",
-               "google.protobuf.StringValue.proto"
-             ]
+      assert Enum.sort(response.dependency) ==
+               Enum.sort([
+                 "google/protobuf/timestamp.proto",
+                 "google/protobuf/wrappers.proto",
+                 "google/protobuf/any.proto"
+               ])
     end
 
     test "ensure exclusion of nested types in file descriptor dependencies", ctx do
-      filename = "testserviceV3.TestRequest.proto"
+      filename = "test_service_v3.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
       assert response.package == "testserviceV3"
 
-      assert response.dependency == [
-               "testserviceV3.Enum.proto",
-               "google.protobuf.Any.proto",
-               "google.protobuf.StringValue.proto"
-             ]
+      assert Enum.sort(response.dependency) ==
+               Enum.sort([
+                 "google/protobuf/any.proto",
+                 "google/protobuf/timestamp.proto",
+                 "google/protobuf/wrappers.proto"
+               ])
     end
   end
 
@@ -213,7 +214,7 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == extendee <> "Extension.proto"
       assert response.package == "testserviceV2"
-      assert response.dependency == [extendee <> ".proto"]
+      assert response.dependency == [Util.proto_filename(TestserviceV2.TestRequest)]
 
       assert response.extension == [
                %Google.Protobuf.FieldDescriptorProto{
