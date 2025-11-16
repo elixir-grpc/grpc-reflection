@@ -5,17 +5,17 @@ defmodule GrpcReflection.V1ReflectionTest do
 
   @moduletag capture_log: true
 
+  @endpoint GrpcReflection.TestEndpoint.Endpoint
   setup_all do
     Protobuf.load_extensions()
-    endpoint = GrpcReflection.TestEndpoint.Endpoint
-    {:ok, _pid, port} = GRPC.Server.start_endpoint(endpoint, 0)
+
+    {:ok, _pid, port} = GRPC.Server.start_endpoint(@endpoint, 0)
+    on_exit(fn -> :ok = GRPC.Server.stop_endpoint(@endpoint, []) end)
+    start_supervised({GRPC.Client.Supervisor, []})
+
     host = "localhost:#{port}"
     {:ok, channel} = GRPC.Stub.connect(host)
     req = %Grpc.Reflection.V1.ServerReflectionRequest{host: host}
-
-    on_exit(fn ->
-      :ok = GRPC.Server.stop_endpoint(endpoint, [])
-    end)
 
     %{channel: channel, req: req, stub: GrpcReflection.TestEndpoint.V1Server.Stub}
   end
