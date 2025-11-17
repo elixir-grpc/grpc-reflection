@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package recursive_message;
+
+service Service {
+  rpc call (Request) returns (Reply) {}
+}
+
+message Request {
+  Reply reply = 1;
+}
+
+message Reply {
+  Request request = 1;
+}
