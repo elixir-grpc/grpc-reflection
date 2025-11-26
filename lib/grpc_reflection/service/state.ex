@@ -20,10 +20,20 @@ defmodule GrpcReflection.Service.State do
   def merge(%__MODULE__{} = state1, %__MODULE__{} = state2) do
     %__MODULE__{
       services: Enum.uniq(state1.services ++ state2.services),
-      files: Map.merge(state1.files, state2.files),
-      symbols: Map.merge(state1.symbols, state2.symbols),
-      extensions: Map.merge(state1.extensions, state2.extensions)
+      files: merge_map!("Files", state1.files, state2.files),
+      symbols: merge_map!("Symbols", state1.symbols, state2.symbols),
+      extensions: merge_map!("Extensions", state1.extensions, state2.extensions)
     }
+  end
+
+  defp merge_map!(type, current_map, incoming_map) do
+    Map.merge(current_map, incoming_map, fn
+      _key, value, value ->
+        value
+
+      key, _left, _right ->
+        raise "#{type} Conflict detected: key #{key} present with multiple values"
+    end)
   end
 
   @spec add_files(t(), entry_t()) :: t()
