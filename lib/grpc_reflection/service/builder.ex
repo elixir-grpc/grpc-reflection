@@ -132,14 +132,11 @@ defmodule GrpcReflection.Service.Builder do
         syntax: syntax
       }
 
-    unencoded_payload =
-      case descriptor = descriptor do
-        %Google.Protobuf.DescriptorProto{} -> %{response_stub | message_type: [descriptor]}
-        %Google.Protobuf.ServiceDescriptorProto{} -> %{response_stub | service: [descriptor]}
-        %Google.Protobuf.EnumDescriptorProto{} -> %{response_stub | enum_type: [descriptor]}
-      end
-
-    %{file_descriptor_proto: [FileDescriptorProto.encode(unencoded_payload)]}
+    case descriptor = descriptor do
+      %Google.Protobuf.DescriptorProto{} -> %{response_stub | message_type: [descriptor]}
+      %Google.Protobuf.ServiceDescriptorProto{} -> %{response_stub | service: [descriptor]}
+      %Google.Protobuf.EnumDescriptorProto{} -> %{response_stub | enum_type: [descriptor]}
+    end
   end
 
   # protoc with the elixir generator and protobuf.generate slightly differ for how they

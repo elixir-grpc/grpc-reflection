@@ -20,10 +20,10 @@ defmodule GrpcReflection.ServerTest do
 
     assert Service.list_services() == ["helloworld.Greeter"]
 
-    assert {:ok, %{file_descriptor_proto: proto}} =
+    assert {:ok, descriptor} =
              Service.get_by_symbol("helloworld.Greeter")
 
-    assert {:ok, %{file_descriptor_proto: ^proto}} =
+    assert {:ok, ^descriptor} =
              Service.get_by_filename("helloworld.Greeter.proto")
   end
 
@@ -45,26 +45,26 @@ defmodule GrpcReflection.ServerTest do
     end
 
     test "method files return service descriptors" do
-      assert {:ok, %{file_descriptor_proto: proto}} =
+      assert {:ok, descriptor} =
                Service.get_by_symbol("helloworld.Greeter")
 
-      assert {:ok, %{file_descriptor_proto: ^proto}} =
+      assert {:ok, ^descriptor} =
                Service.get_by_symbol("helloworld.Greeter.SayHello")
     end
 
     test "describing a type returns the type" do
-      assert {:ok, %{file_descriptor_proto: proto}} =
+      assert {:ok, descriptor} =
                Service.get_by_symbol("helloworld.HelloRequest")
 
-      assert {:ok, %{file_descriptor_proto: ^proto}} =
+      assert {:ok, ^descriptor} =
                Service.get_by_filename("helloworld.HelloRequest.proto")
     end
 
     test "type with leading period still resolves" do
-      assert {:ok, %{file_descriptor_proto: proto}} =
+      assert {:ok, descriptor} =
                Service.get_by_symbol(".helloworld.HelloRequest")
 
-      assert {:ok, %{file_descriptor_proto: ^proto}} =
+      assert {:ok, ^descriptor} =
                Service.get_by_filename("helloworld.HelloRequest.proto")
     end
   end

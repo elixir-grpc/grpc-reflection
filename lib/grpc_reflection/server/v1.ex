@@ -27,9 +27,11 @@ defmodule GrpcReflection.Server.V1 do
     end)
   end
 
-  defp build_response({:ok, {:file_descriptor_response, description}}) do
-    encoded = struct(Grpc.Reflection.V1.FileDescriptorResponse, description)
-    {:file_descriptor_response, encoded}
+  defp build_response({:ok, {:file_descriptor_response, file_descriptor}}) do
+    {:file_descriptor_response,
+     %Grpc.Reflection.V1.FileDescriptorResponse{
+       file_descriptor_proto: [Google.Protobuf.FileDescriptorProto.encode(file_descriptor)]
+     }}
   end
 
   defp build_response({:ok, {:all_extension_numbers_response, body}}) do

@@ -39,10 +39,7 @@ defmodule GrpcReflection.Service.BuilderTest do
              "testserviceV3.TestService.CallFunction"
            ]
 
-    (Map.values(tree.files) ++ Map.values(tree.symbols))
-    |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))
-    |> Enum.map(&Google.Protobuf.FileDescriptorProto.decode/1)
-    |> Enum.each(fn payload ->
+    Enum.each(Map.values(tree.files) ++ Map.values(tree.symbols), fn payload ->
       assert payload.syntax == "proto3"
     end)
   end
@@ -80,13 +77,9 @@ defmodule GrpcReflection.Service.BuilderTest do
     # this is a bitstring that may contain whitespace characters
     assert extensions |> to_string() |> String.trim() == ""
 
-    (Map.values(tree.files) ++ Map.values(tree.symbols))
-    |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))
-    |> Enum.map(&Google.Protobuf.FileDescriptorProto.decode/1)
-    |> Enum.each(fn
-      # the google types are proto3
-      %{name: "google" <> _} = payload -> assert payload.syntax == "proto3"
-      payload -> assert payload.syntax == "proto2"
+    Enum.each(Map.values(tree.files) ++ Map.values(tree.symbols), fn
+      %{name: "google" <> _, syntax: syntax} -> assert syntax == "proto3"
+      %{name: _, syntax: syntax} -> assert syntax == "proto2"
     end)
   end
 
@@ -95,8 +88,6 @@ defmodule GrpcReflection.Service.BuilderTest do
     assert %State{services: [EmptyService.Service]} = tree
 
     (Map.values(tree.files) ++ Map.values(tree.symbols))
-    |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))
-    |> Enum.map(&Google.Protobuf.FileDescriptorProto.decode/1)
     |> Enum.each(fn payload ->
       # empty services default to proto2
       assert payload.syntax == "proto2"
@@ -121,8 +112,6 @@ defmodule GrpcReflection.Service.BuilderTest do
 
     names =
       (Map.values(tree.files) ++ Map.values(tree.symbols))
-      |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))
-      |> Enum.map(&Google.Protobuf.FileDescriptorProto.decode/1)
       |> Enum.map(& &1.name)
 
     assert names ==

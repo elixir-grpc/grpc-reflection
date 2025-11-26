@@ -1,7 +1,6 @@
 defmodule GrpcReflection.Service.Builder.Extensions do
   @moduledoc false
 
-  alias Google.Protobuf.FileDescriptorProto
   alias GrpcReflection.Service.Builder.Util
   alias GrpcReflection.Service.State
 
@@ -11,7 +10,7 @@ defmodule GrpcReflection.Service.Builder.Extensions do
     case process_extensions(module, symbol, extension_file, module.descriptor()) do
       {:ok, {extension_numbers, extension_payload}} ->
         state
-        |> State.add_files(%{extension_file => %{file_descriptor_proto: [extension_payload]}})
+        |> State.add_files(%{extension_file => extension_payload})
         |> State.add_extensions(%{symbol => extension_numbers})
 
       :ignore ->
@@ -50,9 +49,7 @@ defmodule GrpcReflection.Service.Builder.Extensions do
       message_type: message_list
     }
 
-    {:ok,
-     {Enum.map(extensions, fn {idx, _, _} -> idx end),
-      FileDescriptorProto.encode(unencoded_extension_payload)}}
+    {:ok, {Enum.map(extensions, fn {idx, _, _} -> idx end), unencoded_extension_payload}}
   end
 
   defp process_extensions(_, _, _, _), do: :ignore
