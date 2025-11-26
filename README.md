@@ -48,6 +48,9 @@ This is written and tested using [grpcurl](https://github.com/fullstorydev/grpcu
    |   `version`   | Either `:v1` or `:v1alpha`, depending on intended client support.       |
    |  `services`   | This is a list of GRPC services that should be included for reflection. |
 
+   > [!NOTE]
+   > Multiple services are combined into a single reflection state. If fully-qualified symbol names collide for different payloads in those different services, one of the symbols could be overwritten by the other. The Builder tries to detect this and raise on collision
+
 1. Add the reflection supervisor to your supervision tree to host the cached reflection state
 
    ```elixir
