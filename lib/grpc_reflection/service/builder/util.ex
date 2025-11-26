@@ -153,7 +153,13 @@ defmodule GrpcReflection.Service.Builder.Util do
     |> Enum.map(&String.trim_leading(&1, "."))
   end
 
-  def types_from_descriptor(%Google.Protobuf.EnumDescriptorProto{}) do
+  # Additional types we don't expect references in
+  # Google.Protobuf.EnumDescriptorProto
+  # Google.Protobuf.EnumValueDescriptorProto
+  # Google.Protobuf.FieldDescriptorProto
+  # Google.Protobuf.MethodDescriptorProto
+  # Google.Protobuf.OneofDescriptorProto
+  def types_from_descriptor(_) do
     []
   end
 
