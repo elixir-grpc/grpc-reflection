@@ -27,19 +27,19 @@ defmodule GrpcReflection.Server.V1alpha do
     end)
   end
 
-  defp build_response({:ok, {:file_descriptor_response, description}}) do
-    encoded = struct(Grpc.Reflection.V1alpha.FileDescriptorResponse, description)
-    {:file_descriptor_response, encoded}
+  defp build_response({:ok, {:file_descriptor_response, file_descriptor}}) do
+    {:file_descriptor_response,
+     %Grpc.Reflection.V1alpha.FileDescriptorResponse{
+       file_descriptor_proto: [Google.Protobuf.FileDescriptorProto.encode(file_descriptor)]
+     }}
   end
 
   defp build_response({:ok, {:all_extension_numbers_response, body}}) do
-    encoded =
-      struct(
-        Grpc.Reflection.V1alpha.ExtensionNumberResponse,
-        body
-      )
-
-    {:all_extension_numbers_response, encoded}
+    {:all_extension_numbers_response,
+     struct(
+       Grpc.Reflection.V1alpha.ExtensionNumberResponse,
+       body
+     )}
   end
 
   defp build_response({:ok, {:list_services_response, %{service: services}}}) do
