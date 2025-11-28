@@ -3,13 +3,14 @@ defmodule GrpcReflection.Service.State do
 
   defstruct services: [], files: %{}, symbols: %{}, extensions: %{}
 
-  @type descriptor_t :: GrpcReflection.Server.descriptor_t()
+  @type descriptor_t :: Google.Protobuf.FileDescriptorProto.t()
+  @type symbol_t :: %{optional(binary()) => binary()}
   @type entry_t :: %{optional(binary()) => descriptor_t()}
 
   @type t :: %__MODULE__{
           services: list(module()),
           files: entry_t(),
-          symbols: entry_t(),
+          symbols: symbol_t(),
           extensions: %{optional(binary()) => list(integer())}
         }
 
@@ -26,6 +27,7 @@ defmodule GrpcReflection.Service.State do
     }
   end
 
+  # merge two maps, but raise if we have duplicate keys with different values
   defp merge_map!(type, current_map, incoming_map) do
     Map.merge(current_map, incoming_map, fn
       _key, value, value ->
@@ -36,14 +38,27 @@ defmodule GrpcReflection.Service.State do
     end)
   end
 
-  @spec add_files(t(), entry_t()) :: t()
-  def add_files(%__MODULE__{} = state, files) do
-    %{state | files: Map.merge(files, state.files)}
+  # add an item to a map, but raise if the key exists with a different value
+  defp put_map!(type, current_map, key, value) do
+    case current_map[key] do
+      nil -> Map.put(current_map, key, value)
+      ^value -> current_map
+      _ -> raise "#{type} Conflict detected: key #{key} present with multiple values"
+    end
   end
 
-  @spec add_symbols(t(), entry_t()) :: t()
-  def add_symbols(%__MODULE__{} = state, symbols) do
-    %{state | symbols: Map.merge(symbols, state.symbols)}
+  @spec add_file(t(), descriptor_t()) :: t()
+  def add_file(%__MODULE__{} = state, descriptor) do
+    %{state | files: put_map!("Files", state.files, descriptor.name, descriptor)}
+  end
+
+  @spec add_symbol(t(), String.t(), String.t()) :: t()
+  def add_symbol(%__MODULE__{files: files} = state, symbol, filename) do
+    if files[filename] == nil do
+      raise "Symbol #{symbol} added for file that doesn't exist: #{filename}"
+    end
+
+    %{state | symbols: put_map!("Symbols", state.symbols, symbol, filename)}
   end
 
   def add_extensions(%__MODULE__{} = state, extensions) do
@@ -99,5 +114,11 @@ defmodule GrpcReflection.Service.State do
     else
       {:error, "extension numbers not found"}
     end
+  end
+
+  def group_symbols_by_namespace(%__MODULE__{} = state) do
+    # group symbols by namespace and combine
+    # IO.inspect(state)
+    state
   end
 end
