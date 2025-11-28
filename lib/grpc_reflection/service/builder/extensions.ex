@@ -10,7 +10,7 @@ defmodule GrpcReflection.Service.Builder.Extensions do
     case process_extensions(module, symbol, extension_file, module.descriptor()) do
       {:ok, {extension_numbers, extension_payload}} ->
         state
-        |> State.add_files(%{extension_file => extension_payload})
+        |> State.add_file(extension_payload)
         |> State.add_extensions(%{symbol => extension_numbers})
 
       :ignore ->
