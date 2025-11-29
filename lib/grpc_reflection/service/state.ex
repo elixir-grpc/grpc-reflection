@@ -141,11 +141,11 @@ defmodule GrpcReflection.Service.State do
             %{
               acc
               | syntax: descriptor.syntax,
-                message_type: acc.message_type ++ descriptor.message_type,
-                service: acc.service ++ descriptor.service,
-                enum_type: acc.enum_type ++ descriptor.enum_type,
-                dependency: acc.dependency ++ descriptor.dependency,
-                extension: acc.extension ++ descriptor.extension
+                message_type: Enum.uniq(acc.message_type ++ descriptor.message_type),
+                service: Enum.uniq(acc.service ++ descriptor.service),
+                enum_type: Enum.uniq(acc.enum_type ++ descriptor.enum_type),
+                dependency: Enum.uniq(acc.dependency ++ descriptor.dependency),
+                extension: Enum.uniq(acc.extension ++ descriptor.extension)
             }
           end
         )

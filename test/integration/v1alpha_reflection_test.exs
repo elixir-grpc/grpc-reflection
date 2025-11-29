@@ -74,7 +74,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
     test "describing a nested type returns the root type", ctx do
       message = {:file_containing_symbol, "testserviceV3.TestRequest.Payload"}
       assert {:ok, response} = run_request(message, ctx)
-      assert response.name == "testserviceV3.TestRequest.proto"
+      assert response.name == "testserviceV3.proto"
     end
 
     test "type with leading period still resolves", ctx do
@@ -167,7 +167,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
     end
 
     test "ensures file descriptor dependencies are unique", ctx do
-      filename = "testserviceV3.TestReply.proto"
+      filename = "testserviceV3.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
@@ -175,21 +175,22 @@ defmodule GrpcReflection.V1alphaReflectionTest do
 
       assert response.dependency == [
                "google.protobuf.Timestamp.proto",
-               "google.protobuf.StringValue.proto"
+               "google.protobuf.StringValue.proto",
+               "google.protobuf.Any.proto"
              ]
     end
 
     test "ensure exclusion of nested types in file descriptor dependencies", ctx do
-      filename = "testserviceV3.TestRequest.proto"
+      filename = "testserviceV3.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
       assert response.package == "testserviceV3"
 
       assert response.dependency == [
-               "testserviceV3.Enum.proto",
-               "google.protobuf.Any.proto",
-               "google.protobuf.StringValue.proto"
+               "google.protobuf.Timestamp.proto",
+               "google.protobuf.StringValue.proto",
+               "google.protobuf.Any.proto"
              ]
     end
   end
