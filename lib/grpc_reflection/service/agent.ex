@@ -30,8 +30,9 @@ defmodule GrpcReflection.Service.Agent do
     Agent.get(name, &State.lookup_services/1)
   end
 
-  @spec get_by_symbol(cfg_t(), binary()) :: {:ok, State.descriptor_t()} | {:error, binary}
-  def get_by_symbol(cfg, symbol) do
+  @spec get_filename_by_symbol(cfg_t(), binary()) ::
+          {:ok, State.descriptor_t()} | {:error, binary}
+  def get_filename_by_symbol(cfg, symbol) do
     name = start_agent_on_first_call(cfg)
     Agent.get(name, &State.lookup_symbol(symbol, &1))
   end

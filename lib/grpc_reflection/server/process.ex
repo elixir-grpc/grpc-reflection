@@ -11,8 +11,9 @@ defmodule GrpcReflection.Server.Process do
   end
 
   def reflect(state_mod, {:file_containing_symbol, symbol}) do
-    with {:ok, description} <- state_mod.get_by_symbol(symbol) do
-      {:ok, {:file_descriptor_response, description}}
+    with {:ok, filename} <- state_mod.get_filename_by_symbol(symbol),
+         {:ok, descriptor} <- state_mod.get_by_filename(filename) do
+      {:ok, {:file_descriptor_response, descriptor}}
     end
   end
 
