@@ -163,6 +163,9 @@ defmodule GrpcReflection.Service.Builder.Util do
     []
   end
 
+  # in gRPC, the leading "." signifies it is a FQDN
+  # we trim it and assume everything is a FQDN
+  # it works so far, but there may be corner cases
   def trim_symbol("." <> symbol), do: symbol
   def trim_symbol(symbol), do: symbol
 end
