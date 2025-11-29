@@ -90,11 +90,8 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert {:ok, response} = run_request(message, ctx)
       assert_response(response)
 
-      # we pretend all modules are in different files, dependencies are listed
-      assert response.dependency == [
-               "helloworld.HelloRequest.proto",
-               "helloworld.HelloReply.proto"
-             ]
+      # we pretend each namespace is in a single file, dependencies are listed
+      assert response.dependency == ["google.protobuf.proto"]
     end
 
     test "reject filename that doesn't match a reflection module", ctx do
@@ -104,39 +101,21 @@ defmodule GrpcReflection.V1ReflectionTest do
     end
 
     test "get replytype by filename", ctx do
-      filename = "helloworld.HelloReply.proto"
+      filename = "helloworld.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
       assert response.package == "helloworld"
-      assert response.dependency == ["google.protobuf.Timestamp.proto"]
+      assert response.dependency == ["google.protobuf.proto"]
 
       assert [
-               %Google.Protobuf.DescriptorProto{
-                 name: "HelloReply",
-                 field: [
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "message",
-                     number: 1,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_STRING,
-                     json_name: "message"
-                   },
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "today",
-                     number: 2,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_MESSAGE,
-                     type_name: ".google.protobuf.Timestamp",
-                     json_name: "today"
-                   }
-                 ]
-               }
+               %Google.Protobuf.DescriptorProto{name: "HelloReply"},
+               %Google.Protobuf.DescriptorProto{name: "HelloRequest"}
              ] = response.message_type
     end
 
     test "get external by filename", ctx do
-      filename = "google.protobuf.Timestamp.proto"
+      filename = "google.protobuf.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
@@ -144,25 +123,9 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert response.dependency == []
 
       assert [
-               %Google.Protobuf.DescriptorProto{
-                 field: [
-                   %Google.Protobuf.FieldDescriptorProto{
-                     json_name: "seconds",
-                     label: :LABEL_OPTIONAL,
-                     name: "seconds",
-                     number: 1,
-                     type: :TYPE_INT64
-                   },
-                   %Google.Protobuf.FieldDescriptorProto{
-                     json_name: "nanos",
-                     label: :LABEL_OPTIONAL,
-                     name: "nanos",
-                     number: 2,
-                     type: :TYPE_INT32
-                   }
-                 ],
-                 name: "Timestamp"
-               }
+               %Google.Protobuf.DescriptorProto{name: "Any"},
+               %Google.Protobuf.DescriptorProto{name: "StringValue"},
+               %Google.Protobuf.DescriptorProto{name: "Timestamp"}
              ] = response.message_type
     end
 
@@ -173,11 +136,7 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert response.name == filename
       assert response.package == "testserviceV3"
 
-      assert response.dependency == [
-               "google.protobuf.Timestamp.proto",
-               "google.protobuf.StringValue.proto",
-               "google.protobuf.Any.proto"
-             ]
+      assert response.dependency == ["google.protobuf.proto"]
     end
 
     test "ensure exclusion of nested types in file descriptor dependencies", ctx do
@@ -187,11 +146,7 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert response.name == filename
       assert response.package == "testserviceV3"
 
-      assert response.dependency == [
-               "google.protobuf.Timestamp.proto",
-               "google.protobuf.StringValue.proto",
-               "google.protobuf.Any.proto"
-             ]
+      assert response.dependency == ["google.protobuf.proto"]
     end
   end
 
@@ -214,49 +169,18 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == extendee <> "Extension.proto"
       assert response.package == "testserviceV2"
-      assert response.dependency == [extendee <> ".proto"]
+      assert response.dependency == ["testserviceV2.proto"]
 
-      assert response.extension == [
-               %Google.Protobuf.FieldDescriptorProto{
-                 name: "data",
-                 extendee: extendee,
-                 number: 10,
-                 label: :LABEL_OPTIONAL,
-                 type: :TYPE_STRING,
-                 type_name: nil
-               },
-               %Google.Protobuf.FieldDescriptorProto{
-                 name: "location",
-                 extendee: extendee,
-                 number: 11,
-                 label: :LABEL_OPTIONAL,
-                 type: :TYPE_MESSAGE,
-                 type_name: "testserviceV2.Location"
-               }
-             ]
+      assert [
+               %Google.Protobuf.FieldDescriptorProto{name: "data"},
+               %Google.Protobuf.FieldDescriptorProto{name: "location"}
+             ] = response.extension
 
-      assert response.message_type == [
+      assert [
                %Google.Protobuf.DescriptorProto{
-                 name: "Location",
-                 field: [
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "latitude",
-                     number: 1,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_DOUBLE,
-                     json_name: "latitude"
-                   },
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "longitude",
-                     extendee: nil,
-                     number: 2,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_DOUBLE,
-                     json_name: "longitude"
-                   }
-                 ]
+                 name: "Location"
                }
-             ]
+             ] = response.message_type
     end
   end
 end

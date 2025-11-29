@@ -126,8 +126,8 @@ defmodule GrpcReflection.Service.State do
       # reference this new file
 
       # Step 1: Collect descriptors to be combined
-      symbol_files = Enum.map(symbols, &state.symbols[&1])
-      files_to_combine = state.files |> Map.take(symbol_files) |> Map.values()
+      symbol_files = Enum.map(symbols, &state_acc.symbols[&1])
+      files_to_combine = state_acc.files |> Map.take(symbol_files) |> Map.values()
 
       # Step 2: Combine the descriptors
       combined_file =
@@ -162,11 +162,11 @@ defmodule GrpcReflection.Service.State do
       %{
         state_acc
         | symbols:
-            state.symbols
+            state_acc.symbols
             |> Map.drop(symbols)
             |> Map.merge(Map.new(symbols, &{&1, cleaned_file.name})),
           files:
-            state.files
+            state_acc.files
             |> Map.drop(symbol_files)
             |> Map.new(fn {filename, descriptor} ->
               if Enum.any?(descriptor.dependency, &Enum.member?(symbol_files, &1)) do

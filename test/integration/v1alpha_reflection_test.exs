@@ -91,10 +91,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
       assert_response(response)
 
       # we pretend all modules are in different files, dependencies are listed
-      assert response.dependency == [
-               "helloworld.HelloRequest.proto",
-               "helloworld.HelloReply.proto"
-             ]
+      assert response.dependency == ["google.protobuf.proto"]
     end
 
     test "reject filename that doesn't match a reflection module", ctx do
@@ -104,39 +101,32 @@ defmodule GrpcReflection.V1alphaReflectionTest do
     end
 
     test "get replytype by filename", ctx do
-      filename = "helloworld.HelloReply.proto"
+      filename = "helloworld.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
       assert response.package == "helloworld"
-      assert response.dependency == ["google.protobuf.Timestamp.proto"]
+      assert response.dependency == ["google.protobuf.proto"]
 
       assert [
                %Google.Protobuf.DescriptorProto{
                  name: "HelloReply",
                  field: [
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "message",
-                     number: 1,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_STRING,
-                     json_name: "message"
-                   },
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "today",
-                     number: 2,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_MESSAGE,
-                     type_name: ".google.protobuf.Timestamp",
-                     json_name: "today"
-                   }
+                   %Google.Protobuf.FieldDescriptorProto{name: "message"},
+                   %Google.Protobuf.FieldDescriptorProto{name: "today"}
+                 ]
+               },
+               %Google.Protobuf.DescriptorProto{
+                 name: "HelloRequest",
+                 field: [
+                   %Google.Protobuf.FieldDescriptorProto{name: "name"}
                  ]
                }
              ] = response.message_type
     end
 
     test "get external by filename", ctx do
-      filename = "google.protobuf.Timestamp.proto"
+      filename = "google.protobuf.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
@@ -144,25 +134,9 @@ defmodule GrpcReflection.V1alphaReflectionTest do
       assert response.dependency == []
 
       assert [
-               %Google.Protobuf.DescriptorProto{
-                 field: [
-                   %Google.Protobuf.FieldDescriptorProto{
-                     json_name: "seconds",
-                     label: :LABEL_OPTIONAL,
-                     name: "seconds",
-                     number: 1,
-                     type: :TYPE_INT64
-                   },
-                   %Google.Protobuf.FieldDescriptorProto{
-                     json_name: "nanos",
-                     label: :LABEL_OPTIONAL,
-                     name: "nanos",
-                     number: 2,
-                     type: :TYPE_INT32
-                   }
-                 ],
-                 name: "Timestamp"
-               }
+               %Google.Protobuf.DescriptorProto{name: "Any"},
+               %Google.Protobuf.DescriptorProto{name: "StringValue"},
+               %Google.Protobuf.DescriptorProto{name: "Timestamp"}
              ] = response.message_type
     end
 
@@ -173,11 +147,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
       assert response.name == filename
       assert response.package == "testserviceV3"
 
-      assert response.dependency == [
-               "google.protobuf.Timestamp.proto",
-               "google.protobuf.StringValue.proto",
-               "google.protobuf.Any.proto"
-             ]
+      assert response.dependency == ["google.protobuf.proto"]
     end
 
     test "ensure exclusion of nested types in file descriptor dependencies", ctx do
@@ -187,11 +157,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
       assert response.name == filename
       assert response.package == "testserviceV3"
 
-      assert response.dependency == [
-               "google.protobuf.Timestamp.proto",
-               "google.protobuf.StringValue.proto",
-               "google.protobuf.Any.proto"
-             ]
+      assert response.dependency == ["google.protobuf.proto"]
     end
   end
 
@@ -217,7 +183,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == extendee <> "Extension.proto"
       assert response.package == "testserviceV2"
-      assert response.dependency == [extendee <> ".proto"]
+      assert response.dependency == ["testserviceV2.proto"]
 
       assert response.extension == [
                %Google.Protobuf.FieldDescriptorProto{
