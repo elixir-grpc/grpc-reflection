@@ -11,15 +11,8 @@ defmodule GrpcReflection.Service.BuilderTest do
     assert %State{services: [TestserviceV3.TestService.Service]} = tree
 
     assert Map.keys(tree.files) == [
-             "google.protobuf.Any.proto",
-             "google.protobuf.StringValue.proto",
-             "google.protobuf.Timestamp.proto",
-             "testserviceV3.Enum.proto",
-             "testserviceV3.TestReply.proto",
-             "testserviceV3.TestRequest.Payload.proto",
-             "testserviceV3.TestRequest.Token.proto",
-             "testserviceV3.TestRequest.proto",
-             "testserviceV3.TestService.proto"
+             "google.protobuf.proto",
+             "testserviceV3.proto"
            ]
 
     assert Map.keys(tree.symbols) == [
@@ -47,13 +40,9 @@ defmodule GrpcReflection.Service.BuilderTest do
     assert %State{services: [TestserviceV2.TestService.Service]} = tree
 
     assert Map.keys(tree.files) == [
-             "google.protobuf.Any.proto",
-             "google.protobuf.Timestamp.proto",
-             "testserviceV2.Enum.proto",
-             "testserviceV2.TestReply.proto",
-             "testserviceV2.TestRequest.proto",
+             "google.protobuf.proto",
              "testserviceV2.TestRequestExtension.proto",
-             "testserviceV2.TestService.proto"
+             "testserviceV2.proto"
            ]
 
     assert Map.keys(tree.symbols) == [
@@ -109,13 +98,9 @@ defmodule GrpcReflection.Service.BuilderTest do
     names = Enum.map(Map.values(tree.files), & &1.name)
 
     assert names == [
-             "google.protobuf.Any.proto",
-             "google.protobuf.Timestamp.proto",
-             "testserviceV2.Enum.proto",
-             "testserviceV2.TestReply.proto",
-             "testserviceV2.TestRequest.proto",
+             "google.protobuf.proto",
              "testserviceV2.TestRequestExtension.proto",
-             "testserviceV2.TestService.proto"
+             "testserviceV2.proto"
            ]
   end
 
