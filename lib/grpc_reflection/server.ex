@@ -33,12 +33,12 @@ defmodule GrpcReflection.Server do
       end
 
       @doc """
-      Get the reflection reponse containing the given symbol, if it is exposed by a configured service
+      Get the reflection filename for the given symbol, if it is known
       """
-      @spec get_by_symbol(binary()) ::
-              {:ok, GrpcReflection.Server.descriptor_t()} | {:error, binary}
-      def get_by_symbol(symbol) do
-        Service.get_by_symbol(@cfg, symbol)
+      @spec get_filename_by_symbol(binary()) ::
+              {:ok, String.t()} | {:error, binary}
+      def get_filename_by_symbol(symbol) do
+        Service.get_filename_by_symbol(@cfg, symbol)
       end
 
       @doc """
