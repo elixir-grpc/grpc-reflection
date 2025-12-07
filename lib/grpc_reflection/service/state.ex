@@ -121,67 +121,65 @@ defmodule GrpcReflection.Service.State do
     |> Map.keys()
     |> Enum.group_by(&GrpcReflection.Service.Builder.Util.get_package(&1))
     |> Enum.reduce(state, fn {package, symbols}, state_acc ->
-      # each symbol in symbols is in the same package
-      # we will combine their files into a single file, and update them to
-      # reference this new file
-
-      # Step 1: Collect descriptors to be combined
       symbol_files = Enum.map(symbols, &state_acc.symbols[&1])
       files_to_combine = state_acc.files |> Map.take(symbol_files) |> Map.values()
+      combined_file = combine_file_descriptors(package, files_to_combine)
+      update_state_with_combined_file(state_acc, combined_file, symbol_files)
+    end)
+  end
 
-      # Step 2: Combine the descriptors
-      combined_file =
-        Enum.reduce(
-          files_to_combine,
-          %Google.Protobuf.FileDescriptorProto{
-            package: package,
-            name: package <> ".proto"
-          },
-          fn descriptor, acc ->
+  defp update_state_with_combined_file(state, combined_file, combined_filenames) do
+    # Update files: remove old entries, add new one with updated dependencies
+    new_files =
+      state.files
+      |> Map.drop(combined_filenames)
+      |> Map.new(fn {filename, descriptor} ->
+        if Enum.any?(descriptor.dependency, &Enum.member?(combined_filenames, &1)) do
+          {
+            filename,
             %{
-              acc
-              | syntax: descriptor.syntax,
-                message_type: Enum.uniq(acc.message_type ++ descriptor.message_type),
-                service: Enum.uniq(acc.service ++ descriptor.service),
-                enum_type: Enum.uniq(acc.enum_type ++ descriptor.enum_type),
-                dependency: Enum.uniq(acc.dependency ++ descriptor.dependency),
-                extension: Enum.uniq(acc.extension ++ descriptor.extension)
+              descriptor
+              | dependency: (descriptor.dependency -- combined_filenames) ++ [combined_file.name]
             }
-          end
-        )
+          }
+        else
+          {filename, descriptor}
+        end
+      end)
+      |> Map.put(combined_file.name, combined_file)
 
-      # Step 3: remove internal dependency refs
-      cleaned_file =
-        %{combined_file | dependency: combined_file.dependency -- symbol_files}
+    # Update symbols: map old symbols to point to the new combined file
+    new_symbols =
+      Map.new(state.symbols, fn {symbol, filename} ->
+        if filename in combined_filenames do
+          {symbol, combined_file.name}
+        else
+          {symbol, filename}
+        end
+      end)
 
-      # Step 4: rework state around combined descriptor
-      # removing and re-adding symbols pointing to combined file
-      # removing combined file descriptors
-      # editing existing descriptors for relevant dependency entries
-      # add combined file descriptor
+    %{state | files: new_files, symbols: new_symbols}
+  end
+
+  defp combine_file_descriptors(name, file_descriptors) do
+    acc = %Google.Protobuf.FileDescriptorProto{
+      package: name,
+      name: name <> ".proto"
+    }
+
+    combined_names = Enum.map(file_descriptors, & &1.name)
+
+    Enum.reduce(file_descriptors, acc, fn descriptor, acc ->
       %{
-        state_acc
-        | symbols:
-            state_acc.symbols
-            |> Map.drop(symbols)
-            |> Map.merge(Map.new(symbols, &{&1, cleaned_file.name})),
-          files:
-            state_acc.files
-            |> Map.drop(symbol_files)
-            |> Map.new(fn {filename, descriptor} ->
-              if Enum.any?(descriptor.dependency, &Enum.member?(symbol_files, &1)) do
-                {
-                  filename,
-                  %{
-                    descriptor
-                    | dependency: (descriptor.dependency -- symbol_files) ++ [cleaned_file.name]
-                  }
-                }
-              else
-                {filename, descriptor}
-              end
-            end)
-            |> Map.put(cleaned_file.name, cleaned_file)
+        acc
+        | syntax: acc.syntax || descriptor.syntax,
+          package: acc.package || descriptor.package,
+          name: acc.name || descriptor.name,
+          message_type: Enum.uniq(acc.message_type ++ descriptor.message_type),
+          service: Enum.uniq(acc.service ++ descriptor.service),
+          enum_type: Enum.uniq(acc.enum_type ++ descriptor.enum_type),
+          dependency: Enum.uniq(acc.dependency ++ (descriptor.dependency -- combined_names)),
+          extension: Enum.uniq(acc.extension ++ descriptor.extension)
       }
     end)
   end
