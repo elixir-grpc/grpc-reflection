@@ -90,7 +90,7 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert {:ok, response} = run_request(message, ctx)
       assert_response(response)
 
-      # we pretend each namespace is in a single file, dependencies are listed
+      # we pretend all modules are in different files, dependencies are listed
       assert response.dependency == [
                "helloworld.HelloRequest.proto",
                "helloworld.HelloReply.proto"
@@ -117,7 +117,7 @@ defmodule GrpcReflection.V1ReflectionTest do
     end
 
     test "get external by filename", ctx do
-      filename = "google.protobuf.Any.proto"
+      filename = "google.protobuf.Timestamp.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
@@ -125,20 +125,19 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert response.dependency == []
 
       assert [
-               %Google.Protobuf.DescriptorProto{name: "Any"}
+               %Google.Protobuf.DescriptorProto{name: "Timestamp"}
              ] = response.message_type
     end
 
     test "ensures file descriptor dependencies are unique", ctx do
-      filename = "testserviceV3.TestRequest.proto"
+      filename = "testserviceV3.TestReply.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
       assert response.package == "testserviceV3"
 
       assert response.dependency == [
-               "testserviceV3.Enum.proto",
-               "google.protobuf.Any.proto",
+               "google.protobuf.Timestamp.proto",
                "google.protobuf.StringValue.proto"
              ]
     end
