@@ -116,15 +116,15 @@ defmodule GrpcReflection.Service.State do
     end
   end
 
-  def group_symbols_by_namespace(%__MODULE__{} = state) do
-    state.symbols
-    |> Map.keys()
-    |> Enum.group_by(&GrpcReflection.Service.Builder.Util.get_package(&1))
-    |> Enum.reduce(state, fn {package, symbols}, state_acc ->
-      symbol_files = Enum.map(symbols, &state_acc.symbols[&1])
-      files_to_combine = state_acc.files |> Map.take(symbol_files) |> Map.values()
-      combined_file = combine_file_descriptors(package, files_to_combine)
-      update_state_with_combined_file(state_acc, combined_file, symbol_files)
+  # reduce state size and complexity by combining files into fewer, larger responses
+  def shrink_cycles(%__MODULE__{} = state) do
+    state
+    |> GrpcReflection.Service.Cycle.get_cycles()
+    |> Enum.reduce(state, fn
+      filenames, state_acc ->
+        files = Enum.map(filenames, &state.files[&1])
+        combined_file = combine_file_descriptors(files)
+        update_state_with_combined_file(state_acc, combined_file, filenames)
     end)
   end
 
@@ -161,15 +161,10 @@ defmodule GrpcReflection.Service.State do
     %{state | files: new_files, symbols: new_symbols}
   end
 
-  defp combine_file_descriptors(name, file_descriptors) do
-    acc = %Google.Protobuf.FileDescriptorProto{
-      package: name,
-      name: name <> ".proto"
-    }
-
+  defp combine_file_descriptors(file_descriptors) do
     combined_names = Enum.map(file_descriptors, & &1.name)
 
-    Enum.reduce(file_descriptors, acc, fn descriptor, acc ->
+    Enum.reduce(file_descriptors, %Google.Protobuf.FileDescriptorProto{}, fn descriptor, acc ->
       %{
         acc
         | syntax: acc.syntax || descriptor.syntax,

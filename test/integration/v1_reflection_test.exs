@@ -74,7 +74,7 @@ defmodule GrpcReflection.V1ReflectionTest do
     test "describing a nested type returns the root type", ctx do
       message = {:file_containing_symbol, "testserviceV3.TestRequest.Payload"}
       assert {:ok, response} = run_request(message, ctx)
-      assert response.name == "testserviceV3.proto"
+      assert response.name == "testserviceV3.TestRequest.proto"
     end
 
     test "type with leading period still resolves", ctx do
@@ -91,7 +91,10 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert_response(response)
 
       # we pretend each namespace is in a single file, dependencies are listed
-      assert response.dependency == ["google.protobuf.proto"]
+      assert response.dependency == [
+               "helloworld.HelloRequest.proto",
+               "helloworld.HelloReply.proto"
+             ]
     end
 
     test "reject filename that doesn't match a reflection module", ctx do
@@ -101,21 +104,20 @@ defmodule GrpcReflection.V1ReflectionTest do
     end
 
     test "get replytype by filename", ctx do
-      filename = "helloworld.proto"
+      filename = "helloworld.HelloReply.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
       assert response.package == "helloworld"
-      assert response.dependency == ["google.protobuf.proto"]
+      assert response.dependency == ["google.protobuf.Timestamp.proto"]
 
       assert [
-               %Google.Protobuf.DescriptorProto{name: "HelloReply"},
-               %Google.Protobuf.DescriptorProto{name: "HelloRequest"}
+               %Google.Protobuf.DescriptorProto{name: "HelloReply"}
              ] = response.message_type
     end
 
     test "get external by filename", ctx do
-      filename = "google.protobuf.proto"
+      filename = "google.protobuf.Any.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
@@ -123,30 +125,36 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert response.dependency == []
 
       assert [
-               %Google.Protobuf.DescriptorProto{name: "Any"},
-               %Google.Protobuf.DescriptorProto{name: "StringValue"},
-               %Google.Protobuf.DescriptorProto{name: "Timestamp"}
+               %Google.Protobuf.DescriptorProto{name: "Any"}
              ] = response.message_type
     end
 
     test "ensures file descriptor dependencies are unique", ctx do
-      filename = "testserviceV3.proto"
+      filename = "testserviceV3.TestRequest.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
       assert response.package == "testserviceV3"
 
-      assert response.dependency == ["google.protobuf.proto"]
+      assert response.dependency == [
+               "testserviceV3.Enum.proto",
+               "google.protobuf.Any.proto",
+               "google.protobuf.StringValue.proto"
+             ]
     end
 
     test "ensure exclusion of nested types in file descriptor dependencies", ctx do
-      filename = "testserviceV3.proto"
+      filename = "testserviceV3.TestRequest.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == filename
       assert response.package == "testserviceV3"
 
-      assert response.dependency == ["google.protobuf.proto"]
+      assert response.dependency == [
+               "testserviceV3.Enum.proto",
+               "google.protobuf.Any.proto",
+               "google.protobuf.StringValue.proto"
+             ]
     end
   end
 
@@ -169,7 +177,7 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == extendee <> "Extension.proto"
       assert response.package == "testserviceV2"
-      assert response.dependency == ["testserviceV2.proto"]
+      assert response.dependency == ["testserviceV2.TestRequest.proto"]
 
       assert [
                %Google.Protobuf.FieldDescriptorProto{name: "data"},

@@ -56,7 +56,7 @@ defmodule GrpcReflection.Service.StateTest do
     end
   end
 
-  describe "group_symbols_by_namespace" do
+  describe "shrink_cycles" do
     setup do
       state_with_recursion = %State{
         services: ["Service1", "Service2"],
@@ -93,7 +93,7 @@ defmodule GrpcReflection.Service.StateTest do
       }
 
       %{
-        state: State.group_symbols_by_namespace(state_with_recursion)
+        state: State.shrink_cycles(state_with_recursion)
       }
     end
 
@@ -105,14 +105,14 @@ defmodule GrpcReflection.Service.StateTest do
       assert [combined_file, other_file] = Map.values(state.files)
       # combined file is present as we expect
       assert combined_file.dependency == []
-      assert combined_file.name == "common.path.proto"
+      assert combined_file.name == "file1.proto"
       # referencing file is updated as we expect
-      assert other_file.dependency == ["common.path.proto"]
+      assert other_file.dependency == ["file1.proto"]
       assert other_file.name == "file3.proto"
     end
 
     test "should combine descriptors", %{state: state} do
-      file = state.files["common.path.proto"]
+      file = state.files["file1.proto"]
       symbols = Enum.map(file.message_type, & &1.name)
       assert symbols == ["Symbol_a", "Symbol_b"]
       assert file.service == ["A", "B"]
