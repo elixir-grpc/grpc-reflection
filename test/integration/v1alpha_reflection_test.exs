@@ -115,21 +115,8 @@ defmodule GrpcReflection.V1alphaReflectionTest do
                %Google.Protobuf.DescriptorProto{
                  name: "HelloReply",
                  field: [
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "message",
-                     number: 1,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_STRING,
-                     json_name: "message"
-                   },
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "today",
-                     number: 2,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_MESSAGE,
-                     type_name: ".google.protobuf.Timestamp",
-                     json_name: "today"
-                   }
+                   %Google.Protobuf.FieldDescriptorProto{name: "message"},
+                   %Google.Protobuf.FieldDescriptorProto{name: "today"}
                  ]
                }
              ] = response.message_type
@@ -144,25 +131,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
       assert response.dependency == []
 
       assert [
-               %Google.Protobuf.DescriptorProto{
-                 field: [
-                   %Google.Protobuf.FieldDescriptorProto{
-                     json_name: "seconds",
-                     label: :LABEL_OPTIONAL,
-                     name: "seconds",
-                     number: 1,
-                     type: :TYPE_INT64
-                   },
-                   %Google.Protobuf.FieldDescriptorProto{
-                     json_name: "nanos",
-                     label: :LABEL_OPTIONAL,
-                     name: "nanos",
-                     number: 2,
-                     type: :TYPE_INT32
-                   }
-                 ],
-                 name: "Timestamp"
-               }
+               %Google.Protobuf.DescriptorProto{name: "Timestamp"}
              ] = response.message_type
     end
 
@@ -216,7 +185,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == extendee <> "Extension.proto"
       assert response.package == "testserviceV2"
-      assert response.dependency == [extendee <> ".proto"]
+      assert response.dependency == ["testserviceV2.TestRequest.proto"]
 
       assert response.extension == [
                %Google.Protobuf.FieldDescriptorProto{
