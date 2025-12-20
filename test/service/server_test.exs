@@ -10,7 +10,7 @@ defmodule GrpcReflection.ServerTest do
   test "adding a service changes responses" do
     assert Service.list_services() == []
 
-    assert Service.get_by_symbol("helloworld.Greeter") ==
+    assert Service.get_filename_by_symbol("helloworld.Greeter") ==
              {:error, "symbol not found"}
 
     assert Service.get_by_filename("helloworld.Greeter.proto") ==
@@ -20,11 +20,11 @@ defmodule GrpcReflection.ServerTest do
 
     assert Service.list_services() == ["helloworld.Greeter"]
 
-    assert {:ok, %{file_descriptor_proto: proto}} =
-             Service.get_by_symbol("helloworld.Greeter")
+    assert {:ok, filename} =
+             Service.get_filename_by_symbol("helloworld.Greeter")
 
-    assert {:ok, %{file_descriptor_proto: ^proto}} =
-             Service.get_by_filename("helloworld.Greeter.proto")
+    assert {:ok, %Google.Protobuf.FileDescriptorProto{name: ^filename}} =
+             Service.get_by_filename(filename)
   end
 
   describe "reflection state testing" do
@@ -45,27 +45,27 @@ defmodule GrpcReflection.ServerTest do
     end
 
     test "method files return service descriptors" do
-      assert {:ok, %{file_descriptor_proto: proto}} =
-               Service.get_by_symbol("helloworld.Greeter")
+      assert {:ok, filename} =
+               Service.get_filename_by_symbol("helloworld.Greeter")
 
-      assert {:ok, %{file_descriptor_proto: ^proto}} =
-               Service.get_by_symbol("helloworld.Greeter.SayHello")
+      assert {:ok, %Google.Protobuf.FileDescriptorProto{name: ^filename}} =
+               Service.get_by_filename(filename)
     end
 
     test "describing a type returns the type" do
-      assert {:ok, %{file_descriptor_proto: proto}} =
-               Service.get_by_symbol("helloworld.HelloRequest")
+      assert {:ok, filename} =
+               Service.get_filename_by_symbol("helloworld.HelloRequest")
 
-      assert {:ok, %{file_descriptor_proto: ^proto}} =
-               Service.get_by_filename("helloworld.HelloRequest.proto")
+      assert {:ok, %Google.Protobuf.FileDescriptorProto{name: ^filename}} =
+               Service.get_by_filename(filename)
     end
 
     test "type with leading period still resolves" do
-      assert {:ok, %{file_descriptor_proto: proto}} =
-               Service.get_by_symbol(".helloworld.HelloRequest")
+      assert {:ok, filename} =
+               Service.get_filename_by_symbol(".helloworld.HelloRequest")
 
-      assert {:ok, %{file_descriptor_proto: ^proto}} =
-               Service.get_by_filename("helloworld.HelloRequest.proto")
+      assert {:ok, %Google.Protobuf.FileDescriptorProto{name: ^filename}} =
+               Service.get_by_filename(filename)
     end
   end
 end

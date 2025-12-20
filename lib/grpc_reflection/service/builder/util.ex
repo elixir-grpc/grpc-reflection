@@ -153,10 +153,19 @@ defmodule GrpcReflection.Service.Builder.Util do
     |> Enum.map(&String.trim_leading(&1, "."))
   end
 
-  def types_from_descriptor(%Google.Protobuf.EnumDescriptorProto{}) do
+  # Additional types we don't expect references in
+  # Google.Protobuf.EnumDescriptorProto
+  # Google.Protobuf.EnumValueDescriptorProto
+  # Google.Protobuf.FieldDescriptorProto
+  # Google.Protobuf.MethodDescriptorProto
+  # Google.Protobuf.OneofDescriptorProto
+  def types_from_descriptor(_) do
     []
   end
 
+  # in gRPC, the leading "." signifies it is a FQDN
+  # we trim it and assume everything is a FQDN
+  # it works so far, but there may be corner cases
   def trim_symbol("." <> symbol), do: symbol
   def trim_symbol(symbol), do: symbol
 end

@@ -9,10 +9,12 @@ defmodule GrpcReflection.Service.Builder do
   def build_reflection_tree(services) do
     with :ok <- Util.validate_services(services) do
       tree =
-        Enum.reduce(services, State.new(services), fn service, state ->
+        services
+        |> Enum.reduce(State.new(), fn service, state ->
           new_state = process_service(service)
           State.merge(state, new_state)
         end)
+        |> State.shrink_cycles()
 
       {:ok, tree}
     end
@@ -22,13 +24,14 @@ defmodule GrpcReflection.Service.Builder do
     service_name = service.__meta__(:name)
     service_response = build_response(service_name, service)
 
-    State.new()
-    |> State.add_symbols(%{service_name => service_response})
-    |> State.add_files(%{(service_name <> ".proto") => service_response})
-    |> trace_service_refs(service)
+    [service]
+    |> State.new()
+    |> State.add_file(service_response)
+    |> State.add_symbol(service_name, service_response.name)
+    |> trace_service_refs(service, service_response.name)
   end
 
-  defp trace_service_refs(state, module) do
+  defp trace_service_refs(state, module, module_filename) do
     service_name = module.__meta__(:name)
     methods = get_descriptor(module).method
 
@@ -40,23 +43,21 @@ defmodule GrpcReflection.Service.Builder do
         Enum.find(methods, fn method -> method.name == to_string(function) end)
 
       call_symbol = service_name <> "." <> to_string(function)
-      call_response = build_response(service_name, module)
+
       req_symbol = Util.trim_symbol(req_symbol)
       req_response = build_response(req_symbol, request)
+      req_filename = req_symbol <> ".proto"
       resp_symbol = Util.trim_symbol(resp_symbol)
       resp_response = build_response(resp_symbol, response)
+      resp_filename = resp_symbol <> ".proto"
 
       state
       |> Extensions.add_extensions(service_name, module)
-      |> State.add_symbols(%{
-        call_symbol => call_response,
-        req_symbol => req_response,
-        resp_symbol => resp_response
-      })
-      |> State.add_files(%{
-        (req_symbol <> ".proto") => req_response,
-        (resp_symbol <> ".proto") => resp_response
-      })
+      |> State.add_file(req_response)
+      |> State.add_file(resp_response)
+      |> State.add_symbol(call_symbol, module_filename)
+      |> State.add_symbol(req_symbol, req_filename)
+      |> State.add_symbol(resp_symbol, resp_filename)
       |> Extensions.add_extensions(req_symbol, request)
       |> Extensions.add_extensions(resp_symbol, response)
       |> trace_message_refs(req_symbol, request)
@@ -103,8 +104,8 @@ defmodule GrpcReflection.Service.Builder do
 
       state
       |> Extensions.add_extensions(symbol, mod)
-      |> State.add_symbols(%{symbol => response})
-      |> State.add_files(%{(symbol <> ".proto") => response})
+      |> State.add_file(response)
+      |> State.add_symbol(symbol, response.name)
       |> trace_message_refs(symbol, mod)
     end)
   end
@@ -132,14 +133,11 @@ defmodule GrpcReflection.Service.Builder do
         syntax: syntax
       }
 
-    unencoded_payload =
-      case descriptor = descriptor do
-        %Google.Protobuf.DescriptorProto{} -> %{response_stub | message_type: [descriptor]}
-        %Google.Protobuf.ServiceDescriptorProto{} -> %{response_stub | service: [descriptor]}
-        %Google.Protobuf.EnumDescriptorProto{} -> %{response_stub | enum_type: [descriptor]}
-      end
-
-    %{file_descriptor_proto: [FileDescriptorProto.encode(unencoded_payload)]}
+    case descriptor = descriptor do
+      %Google.Protobuf.DescriptorProto{} -> %{response_stub | message_type: [descriptor]}
+      %Google.Protobuf.ServiceDescriptorProto{} -> %{response_stub | service: [descriptor]}
+      %Google.Protobuf.EnumDescriptorProto{} -> %{response_stub | enum_type: [descriptor]}
+    end
   end
 
   # protoc with the elixir generator and protobuf.generate slightly differ for how they

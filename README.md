@@ -43,10 +43,13 @@ This is written and tested using [grpcurl](https://github.com/fullstorydev/grpcu
    end
    ```
 
-   | Config Option | Description |
-   | :---: | --- |
-   | `version`     | Either `:v1` or `:v1alpha`, depending on intended client support.       |
-   | `services`    | This is a list of GRPC services that should be included for reflection. |
+   | Config Option | Description                                                             |
+   | :-----------: | ----------------------------------------------------------------------- |
+   |   `version`   | Either `:v1` or `:v1alpha`, depending on intended client support.       |
+   |  `services`   | This is a list of GRPC services that should be included for reflection. |
+
+   > [!NOTE]
+   > Multiple services are combined into a single reflection state. If fully-qualified symbol names collide for different payloads in those different services, one of the symbols could be overwritten by the other. The Builder tries to detect this and raise on collision
 
 1. Add the reflection supervisor to your supervision tree to host the cached reflection state
 
@@ -63,28 +66,46 @@ This is written and tested using [grpcurl](https://github.com/fullstorydev/grpcu
      run(Helloworld.Reflection.Server)
    ```
 
+Reflection calls can now be made on your existing endpoint, on its existing configured port
+
 ## Interacting with your reflection server
 
-Here are some examples using [grpcurl](https://github.com/fullstorydev/grpcurl) to demonstrate the reflection capabilities:
+List services that can be reflected:
 
-```shell
+```bash
 $ grpcurl -v -plaintext 127.0.0.1:50051 list
 helloworld.Greeter
+```
 
+List calls that are exposed by a service:
+
+```bash
 $ grpcurl -v -plaintext 127.0.0.1:50051 list helloworld.Greeter
 helloworld.Greeter.SayHello
+```
 
+Get information about a call on a service
+
+```bash
 $ grpcurl -v -plaintext 127.0.0.1:50051 describe helloworld.Greeter.SayHello
 helloworld.Greeter.SayHello is a method:
 rpc SayHello ( .helloworld.HelloRequest ) returns ( .helloworld.HelloReply );
+```
 
+Get information about a named type used in a call on a servce:
+
+```bash
 $ grpcurl -v -plaintext 127.0.0.1:50051 describe .helloworld.HelloReply
 helloworld.HelloReply is a message:
 message HelloReply {
   optional string message = 1;
   optional .google.protobuf.Timestamp today = 2;
 }
+```
 
+Execute a call using grpcurl that leverages reflection to fill in the gaps and generate an encoded request, and decoding the response.
+
+```bash
 $ grpcurl -plaintext -format text -d 'name: "faker"' localhost:50051 helloworld.Greeter.SayHello
 message: "Hello faker"
 today: <
@@ -100,8 +121,8 @@ This module is more thoroughly tested with proto3, but it has some testing with 
 
 This is **not** an exhaustive list, contributions are appreciated.
 
-| Application | Reflection version required |
-| --- | :---: |
-| [grpcurl](https://github.com/fullstorydev/grpcurl) | V1      |
-| [grpcui](https://github.com/fullstorydev/grpcui)   | V1      |
-| [postman](https://www.postman.com/)                | V1alpha |
+| Application                                        | Reflection version required |
+| -------------------------------------------------- | :-------------------------: |
+| [grpcurl](https://github.com/fullstorydev/grpcurl) |             V1              |
+| [grpcui](https://github.com/fullstorydev/grpcui)   |             V1              |
+| [postman](https://www.postman.com/)                |           V1alpha           |

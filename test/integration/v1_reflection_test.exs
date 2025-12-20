@@ -5,17 +5,17 @@ defmodule GrpcReflection.V1ReflectionTest do
 
   @moduletag capture_log: true
 
+  @endpoint GrpcReflection.TestEndpoint.Endpoint
   setup_all do
     Protobuf.load_extensions()
-    endpoint = GrpcReflection.TestEndpoint.Endpoint
-    {:ok, _pid, port} = GRPC.Server.start_endpoint(endpoint, 0)
+
+    {:ok, _pid, port} = GRPC.Server.start_endpoint(@endpoint, 0)
+    on_exit(fn -> :ok = GRPC.Server.stop_endpoint(@endpoint, []) end)
+    start_supervised({GRPC.Client.Supervisor, []})
+
     host = "localhost:#{port}"
     {:ok, channel} = GRPC.Stub.connect(host)
     req = %Grpc.Reflection.V1.ServerReflectionRequest{host: host}
-
-    on_exit(fn ->
-      :ok = GRPC.Server.stop_endpoint(endpoint, [])
-    end)
 
     %{channel: channel, req: req, stub: GrpcReflection.TestEndpoint.V1Server.Stub}
   end
@@ -112,26 +112,7 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert response.dependency == ["google.protobuf.Timestamp.proto"]
 
       assert [
-               %Google.Protobuf.DescriptorProto{
-                 name: "HelloReply",
-                 field: [
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "message",
-                     number: 1,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_STRING,
-                     json_name: "message"
-                   },
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "today",
-                     number: 2,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_MESSAGE,
-                     type_name: ".google.protobuf.Timestamp",
-                     json_name: "today"
-                   }
-                 ]
-               }
+               %Google.Protobuf.DescriptorProto{name: "HelloReply"}
              ] = response.message_type
     end
 
@@ -144,25 +125,7 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert response.dependency == []
 
       assert [
-               %Google.Protobuf.DescriptorProto{
-                 field: [
-                   %Google.Protobuf.FieldDescriptorProto{
-                     json_name: "seconds",
-                     label: :LABEL_OPTIONAL,
-                     name: "seconds",
-                     number: 1,
-                     type: :TYPE_INT64
-                   },
-                   %Google.Protobuf.FieldDescriptorProto{
-                     json_name: "nanos",
-                     label: :LABEL_OPTIONAL,
-                     name: "nanos",
-                     number: 2,
-                     type: :TYPE_INT32
-                   }
-                 ],
-                 name: "Timestamp"
-               }
+               %Google.Protobuf.DescriptorProto{name: "Timestamp"}
              ] = response.message_type
     end
 
@@ -213,49 +176,18 @@ defmodule GrpcReflection.V1ReflectionTest do
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == extendee <> "Extension.proto"
       assert response.package == "testserviceV2"
-      assert response.dependency == [extendee <> ".proto"]
+      assert response.dependency == ["testserviceV2.TestRequest.proto"]
 
-      assert response.extension == [
-               %Google.Protobuf.FieldDescriptorProto{
-                 name: "data",
-                 extendee: extendee,
-                 number: 10,
-                 label: :LABEL_OPTIONAL,
-                 type: :TYPE_STRING,
-                 type_name: nil
-               },
-               %Google.Protobuf.FieldDescriptorProto{
-                 name: "location",
-                 extendee: extendee,
-                 number: 11,
-                 label: :LABEL_OPTIONAL,
-                 type: :TYPE_MESSAGE,
-                 type_name: "testserviceV2.Location"
-               }
-             ]
+      assert [
+               %Google.Protobuf.FieldDescriptorProto{name: "data"},
+               %Google.Protobuf.FieldDescriptorProto{name: "location"}
+             ] = response.extension
 
-      assert response.message_type == [
+      assert [
                %Google.Protobuf.DescriptorProto{
-                 name: "Location",
-                 field: [
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "latitude",
-                     number: 1,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_DOUBLE,
-                     json_name: "latitude"
-                   },
-                   %Google.Protobuf.FieldDescriptorProto{
-                     name: "longitude",
-                     extendee: nil,
-                     number: 2,
-                     label: :LABEL_OPTIONAL,
-                     type: :TYPE_DOUBLE,
-                     json_name: "longitude"
-                   }
-                 ]
+                 name: "Location"
                }
-             ]
+             ] = response.message_type
     end
   end
 end

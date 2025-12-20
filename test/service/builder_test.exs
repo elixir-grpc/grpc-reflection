@@ -16,8 +16,6 @@ defmodule GrpcReflection.Service.BuilderTest do
              "google.protobuf.Timestamp.proto",
              "testserviceV3.Enum.proto",
              "testserviceV3.TestReply.proto",
-             "testserviceV3.TestRequest.GEntry.proto",
-             "testserviceV3.TestRequest.Payload.Location.proto",
              "testserviceV3.TestRequest.Payload.proto",
              "testserviceV3.TestRequest.Token.proto",
              "testserviceV3.TestRequest.proto",
@@ -39,10 +37,7 @@ defmodule GrpcReflection.Service.BuilderTest do
              "testserviceV3.TestService.CallFunction"
            ]
 
-    (Map.values(tree.files) ++ Map.values(tree.symbols))
-    |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))
-    |> Enum.map(&Google.Protobuf.FileDescriptorProto.decode/1)
-    |> Enum.each(fn payload ->
+    Enum.each(Map.values(tree.files), fn payload ->
       assert payload.syntax == "proto3"
     end)
   end
@@ -56,7 +51,6 @@ defmodule GrpcReflection.Service.BuilderTest do
              "google.protobuf.Timestamp.proto",
              "testserviceV2.Enum.proto",
              "testserviceV2.TestReply.proto",
-             "testserviceV2.TestRequest.GEntry.proto",
              "testserviceV2.TestRequest.proto",
              "testserviceV2.TestRequestExtension.proto",
              "testserviceV2.TestService.proto"
@@ -80,13 +74,9 @@ defmodule GrpcReflection.Service.BuilderTest do
     # this is a bitstring that may contain whitespace characters
     assert extensions |> to_string() |> String.trim() == ""
 
-    (Map.values(tree.files) ++ Map.values(tree.symbols))
-    |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))
-    |> Enum.map(&Google.Protobuf.FileDescriptorProto.decode/1)
-    |> Enum.each(fn
-      # the google types are proto3
-      %{name: "google" <> _} = payload -> assert payload.syntax == "proto3"
-      payload -> assert payload.syntax == "proto2"
+    Enum.each(Map.values(tree.files), fn
+      %{name: "google" <> _, syntax: syntax} -> assert syntax == "proto3"
+      %{name: _, syntax: syntax} -> assert syntax == "proto2"
     end)
   end
 
@@ -94,10 +84,7 @@ defmodule GrpcReflection.Service.BuilderTest do
     assert {:ok, tree} = Builder.build_reflection_tree([EmptyService.Service])
     assert %State{services: [EmptyService.Service]} = tree
 
-    (Map.values(tree.files) ++ Map.values(tree.symbols))
-    |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))
-    |> Enum.map(&Google.Protobuf.FileDescriptorProto.decode/1)
-    |> Enum.each(fn payload ->
+    Enum.each(Map.values(tree.files), fn payload ->
       # empty services default to proto2
       assert payload.syntax == "proto2"
       assert payload.dependency == []
@@ -119,31 +106,17 @@ defmodule GrpcReflection.Service.BuilderTest do
     assert {:ok, tree} = Builder.build_reflection_tree([HLW.TestService.Service])
     assert %State{services: [HLW.TestService.Service]} = tree
 
-    names =
-      (Map.values(tree.files) ++ Map.values(tree.symbols))
-      |> Enum.flat_map(&Map.get(&1, :file_descriptor_proto))
-      |> Enum.map(&Google.Protobuf.FileDescriptorProto.decode/1)
-      |> Enum.map(& &1.name)
+    names = Enum.map(Map.values(tree.files), & &1.name)
 
-    assert names ==
-             [
-               "google.protobuf.Any.proto",
-               "google.protobuf.Timestamp.proto",
-               "testserviceV2.Enum.proto",
-               "testserviceV2.TestReply.proto",
-               "testserviceV2.TestRequest.proto",
-               "testserviceV2.TestRequest.proto",
-               "testserviceV2.TestRequestExtension.proto",
-               "testserviceV2.TestService.proto",
-               "google.protobuf.Any.proto",
-               "google.protobuf.Timestamp.proto",
-               "testserviceV2.Enum.proto",
-               "testserviceV2.TestReply.proto",
-               "testserviceV2.TestRequest.proto",
-               "testserviceV2.TestRequest.proto",
-               "testserviceV2.TestService.proto",
-               "testserviceV2.TestService.proto"
-             ]
+    assert names == [
+             "google.protobuf.Any.proto",
+             "google.protobuf.Timestamp.proto",
+             "testserviceV2.Enum.proto",
+             "testserviceV2.TestReply.proto",
+             "testserviceV2.TestRequest.proto",
+             "testserviceV2.TestRequestExtension.proto",
+             "testserviceV2.TestService.proto"
+           ]
   end
 
   test "handles a non-service module" do
