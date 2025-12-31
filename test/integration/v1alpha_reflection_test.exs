@@ -21,7 +21,8 @@ defmodule GrpcReflection.V1alphaReflectionTest do
              "testserviceV2.TestService",
              "testserviceV3.TestService",
              "grpc.reflection.v1.ServerReflection",
-             "grpc.reflection.v1alpha.ServerReflection"
+             "grpc.reflection.v1alpha.ServerReflection",
+             "recursive_message.Service"
            ]
   end
 
@@ -240,162 +241,213 @@ defmodule GrpcReflection.V1alphaReflectionTest do
              {:file_by_filename, "grpc.reflection.v1alpha.ServiceResponse.proto"},
              {:file_by_filename, "helloworld.HelloReply.proto"},
              {:file_by_filename, "helloworld.HelloRequest.proto"},
+             {:file_by_filename, "recursive_message.Reply.proto"},
              {:file_by_filename, "testserviceV2.Enum.proto"},
              {:file_by_filename, "testserviceV2.TestReply.proto"},
              {:file_by_filename, "testserviceV2.TestRequest.proto"},
              {:file_by_filename, "testserviceV3.Enum.proto"},
              {:file_by_filename, "testserviceV3.TestReply.proto"},
              {:file_by_filename, "testserviceV3.TestRequest.proto"},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest",
-                extension_number: 10,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest",
-                extension_number: 11,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest",
-                extension_number: 12,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest",
-                extension_number: 13,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest",
-                extension_number: 14,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest",
-                extension_number: 15,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest",
-                extension_number: 16,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest",
-                extension_number: 17,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest",
-                extension_number: 18,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest",
-                extension_number: 19,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest",
-                extension_number: 20,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest",
-                extension_number: 21,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest.GEntry",
-                extension_number: 10,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest.GEntry",
-                extension_number: 11,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest.GEntry",
-                extension_number: 12,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest.GEntry",
-                extension_number: 13,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest.GEntry",
-                extension_number: 14,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest.GEntry",
-                extension_number: 15,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest.GEntry",
-                extension_number: 16,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest.GEntry",
-                extension_number: 17,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest.GEntry",
-                extension_number: 18,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest.GEntry",
-                extension_number: 19,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest.GEntry",
-                extension_number: 20,
-                __unknown_fields__: []
-              }},
-             {:file_containing_extension,
-              %Grpc.Reflection.V1alpha.ExtensionRequest{
-                containing_type: "testserviceV2.TestRequest.GEntry",
-                extension_number: 21,
-                __unknown_fields__: []
-              }},
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest",
+                 extension_number: 10
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest",
+                 extension_number: 11
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest",
+                 extension_number: 12
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest",
+                 extension_number: 13
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest",
+                 extension_number: 14
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest",
+                 extension_number: 15
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest",
+                 extension_number: 16
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest",
+                 extension_number: 17
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest",
+                 extension_number: 18
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest",
+                 extension_number: 19
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest",
+                 extension_number: 20
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest",
+                 extension_number: 21
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest.GEntry",
+                 extension_number: 10
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest.GEntry",
+                 extension_number: 11
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest.GEntry",
+                 extension_number: 12
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest.GEntry",
+                 extension_number: 13
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest.GEntry",
+                 extension_number: 14
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest.GEntry",
+                 extension_number: 15
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest.GEntry",
+                 extension_number: 16
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest.GEntry",
+                 extension_number: 17
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest.GEntry",
+                 extension_number: 18
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest.GEntry",
+                 extension_number: 19
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest.GEntry",
+                 extension_number: 20
+               }
+             },
+             {
+               :file_containing_extension,
+               %Grpc.Reflection.V1alpha.ExtensionRequest{
+                 __unknown_fields__: [],
+                 containing_type: "testserviceV2.TestRequest.GEntry",
+                 extension_number: 21
+               }
+             },
              {:file_containing_symbol, ".grpc.reflection.v1.ServerReflectionRequest"},
              {:file_containing_symbol, ".grpc.reflection.v1.ServerReflectionResponse"},
              {:file_containing_symbol, ".grpc.reflection.v1alpha.ServerReflectionRequest"},
              {:file_containing_symbol, ".grpc.reflection.v1alpha.ServerReflectionResponse"},
              {:file_containing_symbol, ".helloworld.HelloReply"},
              {:file_containing_symbol, ".helloworld.HelloRequest"},
+             {:file_containing_symbol, ".recursive_message.Reply"},
+             {:file_containing_symbol, ".recursive_message.Request"},
              {:file_containing_symbol, ".testserviceV2.TestReply"},
              {:file_containing_symbol, ".testserviceV2.TestRequest"},
              {:file_containing_symbol, ".testserviceV3.TestReply"},
@@ -403,6 +455,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
              {:file_containing_symbol, "grpc.reflection.v1.ServerReflection"},
              {:file_containing_symbol, "grpc.reflection.v1alpha.ServerReflection"},
              {:file_containing_symbol, "helloworld.Greeter"},
+             {:file_containing_symbol, "recursive_message.Service"},
              {:file_containing_symbol, "testserviceV2.TestService"},
              {:file_containing_symbol, "testserviceV3.TestService"},
              {:list_services, ""}
