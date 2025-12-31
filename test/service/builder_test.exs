@@ -141,12 +141,12 @@ defmodule GrpcReflection.Service.BuilderTest do
     assert %State{services: [WrappedService]} = tree
   end
 
-  @tag skip: "Recursive message structure currently fails to parse"
   test "handles a recursive message structure" do
     assert {:ok, tree} = Builder.build_reflection_tree([RecursiveMessage.Service.Service])
 
     assert tree.files |> Map.keys() |> Enum.sort() == [
              "recursive_message.Reply.proto",
+             "recursive_message.Request.proto",
              "recursive_message.Service.proto"
            ]
 
