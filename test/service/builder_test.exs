@@ -146,7 +146,6 @@ defmodule GrpcReflection.Service.BuilderTest do
 
     assert tree.files |> Map.keys() |> Enum.sort() == [
              "recursive_message.Reply.proto",
-             "recursive_message.Request.proto",
              "recursive_message.Service.proto"
            ]
 
