@@ -2,90 +2,74 @@ defmodule GrpcReflection.V1alphaReflectionTest do
   @moduledoc false
 
   use GrpcCase
+  use GrpcReflection.TestClient, version: :v1alpha
 
   @moduletag capture_log: true
-
-  @endpoint GrpcReflection.TestEndpoint.Endpoint
-  setup_all do
-    Protobuf.load_extensions()
-
-    {:ok, _pid, port} = GRPC.Server.start_endpoint(@endpoint, 0)
-    on_exit(fn -> :ok = GRPC.Server.stop_endpoint(@endpoint, []) end)
-    start_supervised({GRPC.Client.Supervisor, []})
-
-    host = "localhost:#{port}"
-    {:ok, channel} = GRPC.Stub.connect(host)
-    req = %Grpc.Reflection.V1alpha.ServerReflectionRequest{host: host}
-
-    %{channel: channel, req: req, stub: GrpcReflection.TestEndpoint.V1AlphaServer.Stub}
-  end
 
   test "unsupported call is rejected", ctx do
     message = {:file_containing_extension, %Grpc.Reflection.V1alpha.ExtensionRequest{}}
     assert {:error, _} = run_request(message, ctx)
   end
 
-  describe "listing services" do
-    test "listing services", ctx do
-      message = {:list_services, ""}
-      assert {:ok, %{service: service_list}} = run_request(message, ctx)
-      names = Enum.map(service_list, &Map.get(&1, :name))
+  test "listing services", ctx do
+    message = {:list_services, ""}
+    assert {:ok, %{service: service_list}} = run_request(message, ctx)
+    names = Enum.map(service_list, &Map.get(&1, :name))
 
-      assert names == [
-               "helloworld.Greeter",
-               "testserviceV2.TestService",
-               "testserviceV3.TestService",
-               "grpc.reflection.v1.ServerReflection",
-               "grpc.reflection.v1alpha.ServerReflection"
-             ]
-    end
+    assert names == [
+             "helloworld.Greeter",
+             "testserviceV2.TestService",
+             "testserviceV3.TestService",
+             "grpc.reflection.v1.ServerReflection",
+             "grpc.reflection.v1alpha.ServerReflection"
+           ]
   end
 
-  describe "describe by symbol" do
-    test "unknown symbol is rejected", ctx do
+  describe "symbol queries" do
+    test "should reject unknown symbol", ctx do
       message = {:file_containing_symbol, "other.Rejecter"}
       assert {:error, _} = run_request(message, ctx)
     end
 
-    test "listing methods on our service", ctx do
+    test "should list methods on our service", ctx do
       message = {:file_containing_symbol, "helloworld.Greeter"}
       assert {:ok, response} = run_request(message, ctx)
       assert_response(response)
     end
 
-    test "describing a method returns the service", ctx do
+    test "should resolve the service when describing a method", ctx do
       message = {:file_containing_symbol, "helloworld.Greeter.SayHello"}
       assert {:ok, response} = run_request(message, ctx)
       assert_response(response)
     end
 
-    test "describing an invalid method returns not found", ctx do
+    test "should return not found for an invalid method", ctx do
       # SayHellp is not a method on the service
       message = {:file_containing_symbol, "helloworld.Greeter.SayHellp"}
       assert {:error, _} = run_request(message, ctx)
     end
 
-    test "describing a root type returns the type", ctx do
+    test "should return the type when it is the root typy", ctx do
       message = {:file_containing_symbol, "helloworld.HelloRequest"}
       assert {:ok, response} = run_request(message, ctx)
       assert_response(response)
     end
 
-    test "describing a nested type returns the root type", ctx do
+    test "should return the containing type for a query on a nested type", ctx do
       message = {:file_containing_symbol, "testserviceV3.TestRequest.Payload"}
       assert {:ok, response} = run_request(message, ctx)
       assert response.name == "testserviceV3.TestRequest.proto"
     end
 
-    test "type with leading period still resolves", ctx do
+    test "should also resove with leading period", ctx do
       message = {:file_containing_symbol, ".helloworld.HelloRequest"}
       assert {:ok, response} = run_request(message, ctx)
       assert_response(response)
     end
   end
 
-  describe "filename traversal" do
-    test "listing methods on our service", ctx do
+  describe "filename queries" do
+    test "should list methods on our service", ctx do
       message = {:file_containing_symbol, "helloworld.Greeter"}
       assert {:ok, response} = run_request(message, ctx)
       assert_response(response)
@@ -97,13 +81,13 @@ defmodule GrpcReflection.V1alphaReflectionTest do
              ]
     end
 
-    test "reject filename that doesn't match a reflection module", ctx do
+    test "should reject a filename that isn't recognized", ctx do
       filename = "does.not.exist.proto"
       message = {:file_by_filename, filename}
       assert {:error, _} = run_request(message, ctx)
     end
 
-    test "get replytype by filename", ctx do
+    test "gshould resolve by filename", ctx do
       filename = "helloworld.HelloReply.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
@@ -135,7 +119,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
              ] = response.message_type
     end
 
-    test "get external by filename", ctx do
+    test "should resolve third party messages by filename", ctx do
       filename = "google.protobuf.Timestamp.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
@@ -166,7 +150,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
              ] = response.message_type
     end
 
-    test "ensures file descriptor dependencies are unique", ctx do
+    test "should not duplicate dependencies", ctx do
       filename = "testserviceV3.TestReply.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
@@ -179,7 +163,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
              ]
     end
 
-    test "ensure exclusion of nested types in file descriptor dependencies", ctx do
+    test "should not treat a nested type as a dependency", ctx do
       filename = "testserviceV3.TestRequest.proto"
       message = {:file_by_filename, filename}
       assert {:ok, response} = run_request(message, ctx)
@@ -195,7 +179,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
   end
 
   describe "proto2 extensions" do
-    test "get all extension numbers by type", ctx do
+    test "should get all extension numbers by type", ctx do
       type = "testserviceV2.TestRequest"
       message = {:all_extension_numbers_of_type, type}
       assert {:ok, response} = run_request(message, ctx)
@@ -203,7 +187,7 @@ defmodule GrpcReflection.V1alphaReflectionTest do
       assert response.extension_number == [10, 11]
     end
 
-    test "get extension descriptor file by extendee", ctx do
+    test "should get extension descriptor file by extendee", ctx do
       extendee = "testserviceV2.TestRequest"
 
       message =
@@ -260,5 +244,199 @@ defmodule GrpcReflection.V1alphaReflectionTest do
                }
              ]
     end
+  end
+
+  test "reflection graph is traversable", ctx do
+    ops = GrpcReflection.TestClient.traverse_service(ctx)
+
+    assert ops == [
+             {:file_by_filename, "google.protobuf.Any.proto"},
+             {:file_by_filename, "google.protobuf.StringValue.proto"},
+             {:file_by_filename, "google.protobuf.Timestamp.proto"},
+             {:file_by_filename, "grpc.reflection.v1.ErrorResponse.proto"},
+             {:file_by_filename, "grpc.reflection.v1.ExtensionNumberResponse.proto"},
+             {:file_by_filename, "grpc.reflection.v1.ExtensionRequest.proto"},
+             {:file_by_filename, "grpc.reflection.v1.FileDescriptorResponse.proto"},
+             {:file_by_filename, "grpc.reflection.v1.ListServiceResponse.proto"},
+             {:file_by_filename, "grpc.reflection.v1.ServerReflectionRequest.proto"},
+             {:file_by_filename, "grpc.reflection.v1.ServerReflectionResponse.proto"},
+             {:file_by_filename, "grpc.reflection.v1.ServiceResponse.proto"},
+             {:file_by_filename, "grpc.reflection.v1alpha.ErrorResponse.proto"},
+             {:file_by_filename, "grpc.reflection.v1alpha.ExtensionNumberResponse.proto"},
+             {:file_by_filename, "grpc.reflection.v1alpha.ExtensionRequest.proto"},
+             {:file_by_filename, "grpc.reflection.v1alpha.FileDescriptorResponse.proto"},
+             {:file_by_filename, "grpc.reflection.v1alpha.ListServiceResponse.proto"},
+             {:file_by_filename, "grpc.reflection.v1alpha.ServerReflectionRequest.proto"},
+             {:file_by_filename, "grpc.reflection.v1alpha.ServerReflectionResponse.proto"},
+             {:file_by_filename, "grpc.reflection.v1alpha.ServiceResponse.proto"},
+             {:file_by_filename, "helloworld.HelloReply.proto"},
+             {:file_by_filename, "helloworld.HelloRequest.proto"},
+             {:file_by_filename, "testserviceV2.Enum.proto"},
+             {:file_by_filename, "testserviceV2.TestReply.proto"},
+             {:file_by_filename, "testserviceV2.TestRequest.proto"},
+             {:file_by_filename, "testserviceV3.Enum.proto"},
+             {:file_by_filename, "testserviceV3.TestReply.proto"},
+             {:file_by_filename, "testserviceV3.TestRequest.proto"},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest",
+                extension_number: 10,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest",
+                extension_number: 11,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest",
+                extension_number: 12,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest",
+                extension_number: 13,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest",
+                extension_number: 14,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest",
+                extension_number: 15,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest",
+                extension_number: 16,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest",
+                extension_number: 17,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest",
+                extension_number: 18,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest",
+                extension_number: 19,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest",
+                extension_number: 20,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest",
+                extension_number: 21,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest.GEntry",
+                extension_number: 10,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest.GEntry",
+                extension_number: 11,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest.GEntry",
+                extension_number: 12,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest.GEntry",
+                extension_number: 13,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest.GEntry",
+                extension_number: 14,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest.GEntry",
+                extension_number: 15,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest.GEntry",
+                extension_number: 16,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest.GEntry",
+                extension_number: 17,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest.GEntry",
+                extension_number: 18,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest.GEntry",
+                extension_number: 19,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest.GEntry",
+                extension_number: 20,
+                __unknown_fields__: []
+              }},
+             {:file_containing_extension,
+              %Grpc.Reflection.V1alpha.ExtensionRequest{
+                containing_type: "testserviceV2.TestRequest.GEntry",
+                extension_number: 21,
+                __unknown_fields__: []
+              }},
+             {:file_containing_symbol, ".grpc.reflection.v1.ServerReflectionRequest"},
+             {:file_containing_symbol, ".grpc.reflection.v1.ServerReflectionResponse"},
+             {:file_containing_symbol, ".grpc.reflection.v1alpha.ServerReflectionRequest"},
+             {:file_containing_symbol, ".grpc.reflection.v1alpha.ServerReflectionResponse"},
+             {:file_containing_symbol, ".helloworld.HelloReply"},
+             {:file_containing_symbol, ".helloworld.HelloRequest"},
+             {:file_containing_symbol, ".testserviceV2.TestReply"},
+             {:file_containing_symbol, ".testserviceV2.TestRequest"},
+             {:file_containing_symbol, ".testserviceV3.TestReply"},
+             {:file_containing_symbol, ".testserviceV3.TestRequest"},
+             {:file_containing_symbol, "grpc.reflection.v1.ServerReflection"},
+             {:file_containing_symbol, "grpc.reflection.v1alpha.ServerReflection"},
+             {:file_containing_symbol, "helloworld.Greeter"},
+             {:file_containing_symbol, "testserviceV2.TestService"},
+             {:file_containing_symbol, "testserviceV3.TestService"},
+             {:list_services, ""}
+           ]
   end
 end
