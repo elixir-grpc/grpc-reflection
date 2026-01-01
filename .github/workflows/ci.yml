@@ -43,7 +43,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install grpcurl using snap
-        run: sudo snap install grpcurl --edge
+        run: |
+          sudo snap install grpcurl --edge
+          echo "::add-path::/snap/bin"
 
       - name: Set up Elixir
         id: beam
