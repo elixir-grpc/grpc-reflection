@@ -28,7 +28,7 @@ defmodule GrpcReflection.TestClient do
             :v1alpha -> GrpcReflection.TestEndpoint.V1AlphaServer.Stub
           end
 
-        %{channel: channel, req: req, stub: stub, version: unquote(version)}
+        %{channel: channel, req: req, stub: stub, version: unquote(version), host: host}
       end
     end
   end
@@ -147,5 +147,110 @@ defmodule GrpcReflection.TestClient do
 
       extendee_commands ++ nested_commands
     end)
+  end
+
+  def grpcurl_service(ctx) do
+    ctx
+    |> grpcurl_list_services()
+    |> Stream.unfold(fn
+      [] ->
+        nil
+
+      [{:service, service} | rest] = term ->
+        commands = grpcurl_describe_service(ctx, service)
+        {term, commands ++ rest}
+
+      [{:call, call} | rest] = term ->
+        commands = grpcurl_describe_call(ctx, call)
+        {term, commands ++ rest}
+
+      [{:type, type} | rest] = term ->
+        commands = grpcurl_describe_type(ctx, type)
+        {term, commands ++ rest}
+    end)
+    |> Enum.to_list()
+    |> List.flatten()
+    |> Enum.uniq()
+    |> Enum.sort()
+  end
+
+  defp grpcurl_list_services(%{host: host}) do
+    {result, 0} = System.cmd("grpcurl", ["-v", "-plaintext", host, "list"])
+
+    result
+    |> String.split("\n")
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.map(&{:service, &1})
+  end
+
+  defp grpcurl_describe_service(%{host: host}, service) do
+    {result, 0} = System.cmd("grpcurl", ["-v", "-plaintext", host, "list", service])
+
+    result
+    |> String.split("\n")
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.map(&{:call, &1})
+  end
+
+  defp grpcurl_describe_call(%{host: host}, call) do
+    {result, 0} = System.cmd("grpcurl", ["-v", "-plaintext", host, "describe", call])
+
+    ~r/\((?: stream)? (?<symbol>[a-zA-Z0-9.]+) \)/
+    |> Regex.scan(result, capture: ["symbol"])
+    |> List.flatten()
+    |> Enum.map(&{:type, &1})
+  end
+
+  defp grpcurl_describe_type(%{host: host}, type) do
+    {result, 0} = System.cmd("grpcurl", ["-v", "-plaintext", host, "describe", type])
+
+    # we are grabbing the referenced types to we can fetch those too
+    # but some of them might be defined inside this file
+    # so we have to identify those and filter them back out
+
+    inline_declared_symbols =
+      ~r/(?:message (?<name>\w+) {)|(?<close>})|(?<open>{)/
+      |> Regex.scan(result, capture: :all_but_first)
+      |> List.flatten()
+      |> Enum.reject(&(&1 == ""))
+      # replace first declaration with base type to get full names
+      |> then(fn [_base | rest] -> [type | rest] end)
+      |> remove_matched_parens()
+      |> Enum.reduce({[], []}, fn token, {path, inline_types} ->
+        case token do
+          "}" ->
+            [_ | path] = path
+            # End of current message — pop from path
+            {path, inline_types}
+
+          name ->
+            path = [name | path]
+            name = path |> Enum.reverse() |> Enum.join(".")
+            {path, [name | inline_types]}
+        end
+      end)
+      |> elem(1)
+
+    # now we can grab all the references, then reject the nested declarations
+    ~r/ (?<symbol>\.[a-z]+[a-zA-Z0-9.]+) /
+    |> Regex.scan(result, capture: ["symbol"])
+    |> List.flatten()
+    |> Enum.reject(&Enum.member?(inline_declared_symbols, &1))
+    |> Enum.map(&{:type, &1})
+  end
+
+  # if we only match `message XYZ {` and `}`, we get extra `}` tokens from things like the
+  # oneof declarations.  If we also match non-message `{` we can eliminate these intermeidate
+  # paren-blocks, which we do here for our needs
+  defp remove_matched_parens(["{", "}" | rest]) do
+    remove_matched_parens(rest)
+  end
+
+  defp remove_matched_parens([item | rest]) do
+    [item | remove_matched_parens(rest)]
+  end
+
+  defp remove_matched_parens(rest) do
+    rest
   end
 end
