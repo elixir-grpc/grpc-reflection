@@ -42,6 +42,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install grpcurl
+        run: |
+          GRPCURL_VERSION="1.9.3"
+          curl -sSL https://github.com/fullstorydev/grpcurl/releases/download/v1.9.3/grpcurl_${GRPCURL_VERSION}_linux_x86_64.tar.gz | tar -xvz
+          mv grpcurl /usr/local/bin/grpcurl
+          grpcurl --version
+
       - name: Set up Elixir
         id: beam
         uses: erlef/setup-beam@v1
@@ -133,6 +140,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install grpcurl
+        run: |
+          GRPCURL_VERSION="1.9.3"
+          curl -sSL https://github.com/fullstorydev/grpcurl/releases/download/v1.9.3/grpcurl_${GRPCURL_VERSION}_linux_x86_64.tar.gz | tar -xvz
+          mv grpcurl /usr/local/bin/grpcurl
+          grpcurl --version
 
       - name: Set up Elixir
         id: beam

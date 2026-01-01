@@ -461,4 +461,48 @@ defmodule GrpcReflection.V1alphaReflectionTest do
              {:list_services, ""}
            ]
   end
+
+  test "reflection graph is traversable using grpcurl", ctx do
+    ops = GrpcReflection.TestClient.grpcurl_service(ctx)
+
+    assert ops == [
+             {:call, "grpc.reflection.v1.ServerReflection.ServerReflectionInfo"},
+             {:call, "grpc.reflection.v1alpha.ServerReflection.ServerReflectionInfo"},
+             {:call, "helloworld.Greeter.SayHello"},
+             {:call, "testserviceV2.TestService.CallFunction"},
+             {:call, "testserviceV3.TestService.CallFunction"},
+             {:service, "grpc.reflection.v1.ServerReflection"},
+             {:service, "grpc.reflection.v1alpha.ServerReflection"},
+             {:service, "helloworld.Greeter"},
+             {:service, "testserviceV2.TestService"},
+             {:service, "testserviceV3.TestService"},
+             {:type, ".google.protobuf.Any"},
+             {:type, ".google.protobuf.StringValue"},
+             {:type, ".google.protobuf.Timestamp"},
+             {:type, ".grpc.reflection.v1.ErrorResponse"},
+             {:type, ".grpc.reflection.v1.ExtensionNumberResponse"},
+             {:type, ".grpc.reflection.v1.ExtensionRequest"},
+             {:type, ".grpc.reflection.v1.FileDescriptorResponse"},
+             {:type, ".grpc.reflection.v1.ListServiceResponse"},
+             {:type, ".grpc.reflection.v1.ServerReflectionRequest"},
+             {:type, ".grpc.reflection.v1.ServerReflectionResponse"},
+             {:type, ".grpc.reflection.v1.ServiceResponse"},
+             {:type, ".grpc.reflection.v1alpha.ErrorResponse"},
+             {:type, ".grpc.reflection.v1alpha.ExtensionNumberResponse"},
+             {:type, ".grpc.reflection.v1alpha.ExtensionRequest"},
+             {:type, ".grpc.reflection.v1alpha.FileDescriptorResponse"},
+             {:type, ".grpc.reflection.v1alpha.ListServiceResponse"},
+             {:type, ".grpc.reflection.v1alpha.ServerReflectionRequest"},
+             {:type, ".grpc.reflection.v1alpha.ServerReflectionResponse"},
+             {:type, ".grpc.reflection.v1alpha.ServiceResponse"},
+             {:type, ".helloworld.HelloReply"},
+             {:type, ".helloworld.HelloRequest"},
+             {:type, ".testserviceV2.Enum"},
+             {:type, ".testserviceV2.TestReply"},
+             {:type, ".testserviceV2.TestRequest"},
+             {:type, ".testserviceV3.Enum"},
+             {:type, ".testserviceV3.TestReply"},
+             {:type, ".testserviceV3.TestRequest"}
+           ]
+  end
 end
