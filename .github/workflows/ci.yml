@@ -45,7 +45,7 @@ jobs:
       - name: Install grpcurl using snap
         run: sudo snap install grpcurl --edge
 
-      - name: Add snap bin to PATH (new method)
+      - name: Add snap bin to PATH
         run: echo "/snap/bin" >> $GITHUB_PATH
 
       - name: Set up Elixir
@@ -139,6 +139,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install grpcurl using snap
+        run: sudo snap install grpcurl --edge
+
+      - name: Add snap bin to PATH
+        run: echo "/snap/bin" >> $GITHUB_PATH
 
       - name: Set up Elixir
         id: beam
