@@ -239,6 +239,9 @@ defmodule GrpcReflection.TestClient do
     |> Enum.map(&{:type, &1})
   end
 
+  # if we only match `message XYZ {` and `}`, we get extra `}` tokens from things like the
+  # oneof declarations.  If we also match non-message `{` we can eliminate these intermeidate
+  # paren-blocks, which we do here for our needs
   defp remove_matched_parens(["{", "}" | rest]) do
     remove_matched_parens(rest)
   end
