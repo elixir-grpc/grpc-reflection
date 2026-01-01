@@ -42,11 +42,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install grpcurl using snap
-        run: sudo snap install grpcurl --edge
-
-      - name: Add snap bin to PATH
-        run: echo "/snap/bin" >> $GITHUB_PATH
+      - name: Install grpcurl
+        run: |
+          GRPCURL_VERSION="1.9.3"
+          curl -sSL https://github.com/fullstorydev/grpcurl/releases/download/v1.9.3/grpcurl_${GRPCURL_VERSION}_linux_x86_64.tar.gz | tar -xvz
+          mv grpcurl /usr/local/bin/grpcurl
+          grpcurl --version
 
       - name: Set up Elixir
         id: beam
@@ -140,11 +141,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install grpcurl using snap
-        run: sudo snap install grpcurl --edge
-
-      - name: Add snap bin to PATH
-        run: echo "/snap/bin" >> $GITHUB_PATH
+      - name: Install grpcurl
+        run: |
+          GRPCURL_VERSION="1.9.3"
+          curl -sSL https://github.com/fullstorydev/grpcurl/releases/download/v1.9.3/grpcurl_${GRPCURL_VERSION}_linux_x86_64.tar.gz | tar -xvz
+          mv grpcurl /usr/local/bin/grpcurl
+          grpcurl --version
 
       - name: Set up Elixir
         id: beam
