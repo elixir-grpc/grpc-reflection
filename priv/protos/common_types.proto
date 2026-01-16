@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package common;
+
+// Common messages to be imported by other proto files
+
+message Address {
+  string street = 1;
+  string city = 2;
+  string state = 3;
+  string postal_code = 4;
+  string country = 5;
+}
+
+message Coordinates {
+  double latitude = 1;
+  double longitude = 2;
+  double altitude = 3;
+}
+
+message Money {
+  string currency_code = 1;
+  int64 units = 2;
+  int32 nanos = 3;
+}
+
+enum Priority {
+  PRIORITY_UNSPECIFIED = 0;
+  LOW = 1;
+  MEDIUM = 2;
+  HIGH = 3;
+  CRITICAL = 4;
+}
+
+message TimeRange {
+  int64 start_time = 1;
+  int64 end_time = 2;
+}
