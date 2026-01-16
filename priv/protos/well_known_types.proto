@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package well_known_types;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/field_mask.proto";
+
+// Service demonstrating all common google.protobuf well-known types
+service WellKnownTypesService {
+  rpc ProcessWellKnownTypes (WellKnownRequest) returns (WellKnownResponse) {}
+  rpc EmptyMethod (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
+
+message WellKnownRequest {
+  // Any type - can hold any message
+  google.protobuf.Any payload = 1;
+  repeated google.protobuf.Any items = 2;
+
+  // Timestamp - point in time
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+
+  // Duration - span of time
+  google.protobuf.Duration timeout = 5;
+  google.protobuf.Duration retry_delay = 6;
+
+  // Struct - arbitrary JSON-like structure
+  google.protobuf.Struct metadata = 7;
+  google.protobuf.Value dynamic_value = 8;
+  google.protobuf.ListValue list_value = 9;
+
+  // Wrappers - nullable scalar types
+  google.protobuf.StringValue nullable_string = 10;
+  google.protobuf.Int32Value nullable_int32 = 11;
+  google.protobuf.Int64Value nullable_int64 = 12;
+  google.protobuf.UInt32Value nullable_uint32 = 13;
+  google.protobuf.UInt64Value nullable_uint64 = 14;
+  google.protobuf.FloatValue nullable_float = 15;
+  google.protobuf.DoubleValue nullable_double = 16;
+  google.protobuf.BoolValue nullable_bool = 17;
+  google.protobuf.BytesValue nullable_bytes = 18;
+
+  // FieldMask - specify which fields to return/update
+  google.protobuf.FieldMask field_mask = 19;
+}
+
+message WellKnownResponse {
+  google.protobuf.Timestamp processed_at = 1;
+  google.protobuf.Duration elapsed_time = 2;
+  google.protobuf.Struct result = 3;
+
+  // Repeated wrappers
+  repeated google.protobuf.StringValue string_values = 4;
+  repeated google.protobuf.Int32Value int_values = 5;
+}
+
+// Message to be packed into Any
+message CustomPayload {
+  string data = 1;
+  int32 version = 2;
+}

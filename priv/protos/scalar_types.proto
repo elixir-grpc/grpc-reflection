@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package scalar_types;
+
+// Service demonstrating all scalar field types
+service ScalarService {
+  rpc ProcessScalars (ScalarRequest) returns (ScalarReply) {}
+}
+
+// Message containing all protobuf scalar types
+message ScalarRequest {
+  // Numeric types
+  double double_field = 1;
+  float float_field = 2;
+  int32 int32_field = 3;
+  int64 int64_field = 4;
+  uint32 uint32_field = 5;
+  uint64 uint64_field = 6;
+  sint32 sint32_field = 7;
+  sint64 sint64_field = 8;
+  fixed32 fixed32_field = 9;
+  fixed64 fixed64_field = 10;
+  sfixed32 sfixed32_field = 11;
+  sfixed64 sfixed64_field = 12;
+
+  // Boolean type
+  bool bool_field = 13;
+
+  // String types
+  string string_field = 14;
+  bytes bytes_field = 15;
+
+  // Proto3 optional (added in protobuf 3.15) - generates presence tracking
+  optional string optional_string = 18;
+  optional int32 optional_int = 19;
+
+  // Large field numbers to test range handling
+  string sparse_field_1 = 100;
+  string sparse_field_2 = 1000;
+  string sparse_field_3 = 10000;
+
+  // Reserved fields and ranges
+  reserved 16, 17, 20 to 25;
+  reserved "old_field", "deprecated_field";
+}
+
+message ScalarReply {
+  // Repeated scalars
+  repeated double double_list = 1;
+  repeated float float_list = 2;
+  repeated int32 int32_list = 3;
+  repeated int64 int64_list = 4;
+  repeated uint32 uint32_list = 5;
+  repeated uint64 uint64_list = 6;
+  repeated sint32 sint32_list = 7;
+  repeated sint64 sint64_list = 8;
+  repeated fixed32 fixed32_list = 9;
+  repeated fixed64 fixed64_list = 10;
+  repeated sfixed32 sfixed32_list = 11;
+  repeated sfixed64 sfixed64_list = 12;
+  repeated bool bool_list = 13;
+  repeated string string_list = 14;
+  repeated bytes bytes_list = 15;
+}
