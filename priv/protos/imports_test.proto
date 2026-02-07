@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package imports_test;
+
+// Import from local proto file
+import "common_types.proto";
+
+// Import from google protos
+import "google/protobuf/timestamp.proto";
+
+// Service demonstrating cross-file type usage
+service ImportTestService {
+  rpc CreateUser (UserRequest) returns (UserResponse) {}
+  rpc UpdateLocation (LocationUpdate) returns (LocationResponse) {}
+}
+
+message UserRequest {
+  string name = 1;
+  string email = 2;
+
+  // Using imported type from common_types.proto
+  common.Address address = 3;
+  common.Coordinates location = 4;
+
+  // Using imported google type
+  google.protobuf.Timestamp registered_at = 5;
+}
+
+message UserResponse {
+  string user_id = 1;
+  common.Priority priority = 2;
+  google.protobuf.Timestamp created_at = 3;
+
+  // Nested message that uses imported types
+  message Profile {
+    common.Address billing_address = 1;
+    common.Address shipping_address = 2;
+    repeated common.Coordinates recent_locations = 3;
+  }
+
+  Profile profile = 4;
+}
+
+message LocationUpdate {
+  string user_id = 1;
+  common.Coordinates new_location = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+message LocationResponse {
+  bool success = 1;
+  common.Coordinates confirmed_location = 2;
+
+  // Map using imported types
+  map<string, common.TimeRange> visit_history = 3;
+}
+
+// Message demonstrating repeated imported types
+message BulkOperation {
+  repeated common.Address addresses = 1;
+  repeated common.Money transactions = 2;
+  map<string, common.Priority> task_priorities = 3;
+}
