@@ -3,8 +3,8 @@ defmodule GrpcReflection.Service.BuilderTest do
 
   use ExUnit.Case
 
-  alias GrpcReflection.Service.State
   alias GrpcReflection.Service.Builder
+  alias GrpcReflection.Service.State
 
   test "supports all reflection types in proto3" do
     assert {:ok, tree} = Builder.build_reflection_tree([TestserviceV3.TestService.Service])
