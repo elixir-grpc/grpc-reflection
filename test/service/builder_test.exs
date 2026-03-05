@@ -119,6 +119,29 @@ defmodule GrpcReflection.Service.BuilderTest do
            ]
   end
 
+  test "does not produce top-level enum files for nested enums with the same name" do
+    assert {:ok, tree} =
+             Builder.build_reflection_tree([NestedEnumConflict.ConflictService.Service])
+
+    file_names = Map.keys(tree.files)
+
+    refute "nestedEnumConflict.ListFoosRequest.SortOrder.proto" in file_names
+    refute "nestedEnumConflict.ListBarsRequest.SortOrder.proto" in file_names
+
+    assert "nestedEnumConflict.ListFoosRequest.proto" in file_names
+    assert "nestedEnumConflict.ListBarsRequest.proto" in file_names
+
+    foos_file = tree.files["nestedEnumConflict.ListFoosRequest.proto"]
+
+    assert [%{name: "ListFoosRequest", enum_type: [%{name: "SortOrder"}]}] =
+             foos_file.message_type
+
+    bars_file = tree.files["nestedEnumConflict.ListBarsRequest.proto"]
+
+    assert [%{name: "ListBarsRequest", enum_type: [%{name: "SortOrder"}]}] =
+             bars_file.message_type
+  end
+
   test "handles a non-service module" do
     assert_raise UndefinedFunctionError, fn ->
       Builder.build_reflection_tree([Enum])

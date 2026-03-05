@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package nestedEnumConflict;
+
+// Two messages in the same package each define a nested enum with the same
+// local name (SortOrder). This triggers a name conflict when a gRPC reflection
+// client (e.g. k6) passes the resulting FileDescriptorSet to
+// protodesc.NewFiles(), because the builder incorrectly promotes nested enums
+// to top-level symbols in separate synthetic files.
+//
+// See: https://github.com/grafana/k6/issues/5712
+
+service ConflictService {
+  rpc ListFoos (ListFoosRequest) returns (ListFoosResponse) {}
+  rpc ListBars (ListBarsRequest) returns (ListBarsResponse) {}
+}
+
+message ListFoosRequest {
+  enum SortOrder {
+    SORT_ORDER_UNSPECIFIED = 0;
+    SORT_ORDER_NEWEST_FIRST = 1;
+    SORT_ORDER_OLDEST_FIRST = 2;
+  }
+
+  SortOrder sort_order = 1;
+}
+
+message ListFoosResponse {}
+
+message ListBarsRequest {
+  enum SortOrder {
+    SORT_ORDER_UNSPECIFIED = 0;
+    SORT_ORDER_NEWEST_FIRST = 1;
+    SORT_ORDER_OLDEST_FIRST = 2;
+  }
+
+  SortOrder sort_order = 1;
+}
+
+message ListBarsResponse {}

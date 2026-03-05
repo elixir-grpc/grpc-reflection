@@ -1,7 +1,10 @@
 defmodule RecursiveMessage.Request do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
+  use Protobuf,
+    full_name: "recursive_message.Request",
+    protoc_gen_elixir_version: "0.16.0",
+    syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -41,7 +44,10 @@ end
 defmodule RecursiveMessage.Reply do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
+  use Protobuf,
+    full_name: "recursive_message.Reply",
+    protoc_gen_elixir_version: "0.16.0",
+    syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -81,7 +87,7 @@ end
 defmodule RecursiveMessage.Service.Service do
   @moduledoc false
 
-  use GRPC.Service, name: "recursive_message.Service", protoc_gen_elixir_version: "0.14.1"
+  use GRPC.Service, name: "recursive_message.Service", protoc_gen_elixir_version: "0.16.0"
 
   def descriptor do
     # credo:disable-for-next-line
