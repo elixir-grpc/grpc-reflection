@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package edge_cases;
+
+// Empty service (no methods) - edge case
+service EmptyService {
+}
+
+// Service with unusual but valid patterns
+service EdgeCaseService {
+  // Method names with underscores and different conventions
+  rpc process_data (Request) returns (Response) {}
+  rpc ProcessData (Request) returns (Response) {}
+  rpc PROCESS_DATA (Request) returns (Response) {}
+
+  // Empty request or response
+  rpc EmptyInput (EmptyMessage) returns (Response) {}
+  rpc EmptyOutput (Request) returns (EmptyMessage) {}
+  rpc BothEmpty (EmptyMessage) returns (EmptyMessage) {}
+}
+
+message EmptyMessage {
+  // Intentionally empty message
+}
+
+message Request {
+  string data = 1;
+}
+
+message Response {
+  string result = 1;
+}
+
+// Unusual field numbering
+message SparseFieldNumbers {
+  string field_1 = 1;
+  string field_536870911 = 536870911;  // Max field number (2^29 - 1)
+}
+
+// Many fields
+message ManyFields {
+  string field_001 = 1;
+  string field_002 = 2;
+  string field_003 = 3;
+  string field_004 = 4;
+  string field_005 = 5;
+  string field_006 = 6;
+  string field_007 = 7;
+  string field_008 = 8;
+  string field_009 = 9;
+  string field_010 = 10;
+  string field_011 = 11;
+  string field_012 = 12;
+  string field_013 = 13;
+  string field_014 = 14;
+  string field_015 = 15;
+  string field_016 = 16;
+  string field_017 = 17;
+  string field_018 = 18;
+  string field_019 = 19;
+  string field_020 = 20;
+}
+
+// Complex enum
+enum DetailedStatus {
+  // Enum with zero value (required in proto3)
+  DETAILED_STATUS_UNSPECIFIED = 0;
+
+  // Various naming patterns
+  status_active = 1;
+  STATUS_INACTIVE = 2;
+  Status_Pending = 3;
+
+  // Negative enum values (valid but unusual)
+  ERROR_STATE = -1;
+  CRITICAL_ERROR = -100;
+
+  // Large enum values
+  MAX_STATUS = 2147483647;  // Max int32
+}
+
+// Multiple oneofs in one message
+message MultipleOneofs {
+  oneof first_choice {
+    string option_a1 = 1;
+    int32 option_a2 = 2;
+  }
+
+  oneof second_choice {
+    string option_b1 = 3;
+    int32 option_b2 = 4;
+  }
+
+  oneof third_choice {
+    string option_c1 = 5;
+    int32 option_c2 = 6;
+  }
+
+  string regular_field = 7;
+}
+
+// Nested maps
+message NestedMaps {
+  map<string, InnerMap> outer_map = 1;
+  map<int32, string> int_key_map = 2;
+  map<int64, int64> numeric_map = 3;
+  map<bool, string> bool_key_map = 4;
+}
+
+message InnerMap {
+  map<string, string> data = 1;
+  map<string, int32> counts = 2;
+}
+
+// Circular reference patterns (different from recursive_message.proto)
+message CircularA {
+  CircularB b_field = 1;
+  string data = 2;
+}
+
+message CircularB {
+  CircularC c_field = 1;
+  string data = 2;
+}
+
+message CircularC {
+  CircularA a_field = 1;
+  string data = 2;
+}
+
+// Reserved with various patterns
+message WithReservedFields {
+  string active_field_1 = 1;
+
+  reserved 2, 15, 9 to 11;
+  reserved "foo", "bar", "old_field";
+
+  string active_field_16 = 16;
+
+  reserved 100 to max;
+}
+
+// Unicode and special characters in comments
+message UnicodeTest {
+  // Field with emoji in comment: 🚀 rocket
+  string rocket_field = 1;
+
+  // Mathematical symbols: ∑ ∫ π
+  double pi_field = 2;
+
+  // Various languages: 你好 مرحبا שלום
+  string greeting = 3;
+}

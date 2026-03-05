@@ -1,44 +1,20 @@
-syntax = "proto2";
+syntax = "proto3";
 
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/any.proto";
+package custom_prefix;
 
-package testserviceV2;
-
+// This proto demonstrates Elixir-specific custom module prefix option
 import "elixirpb.proto";
-option (elixirpb.file).module_prefix = "HLW";
+option (elixirpb.file).module_prefix = "CustomPrefix";
 
-service TestService {
-  rpc CallFunction (TestRequest) returns (TestReply) {}
+// Simple service to test custom module prefix generation
+service PrefixService {
+  rpc Echo (EchoRequest) returns (EchoResponse) {}
 }
 
-message TestRequest {
-  required string name = 1;
-  optional Enum enum = 2;
-  oneof test_oneof {
-    string label = 3;
-    int32 value = 4;
-  }
-  map<string, int32> g = 5;
-  repeated google.protobuf.Any instrument = 6;
-  extensions 10 to 20;
+message EchoRequest {
+  string message = 1;
 }
 
-message Location {
-  optional double latitude = 1;
-  optional double longitude = 2;
-}
-
-extend TestRequest {
-   optional string data = 10;
-   optional Location location = 11;
-}
-
-message TestReply {
-  required google.protobuf.Timestamp today = 2;
-}
-
-enum Enum {
-  A = 0;
-  B = 1;
+message EchoResponse {
+  string reply = 1;
 }

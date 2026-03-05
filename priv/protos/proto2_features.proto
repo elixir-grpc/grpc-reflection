@@ -1,0 +1,94 @@
+syntax = "proto2";
+
+package proto2_features;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+// Service demonstrating proto2-specific features
+service Proto2Service {
+  rpc ProcessProto2 (Proto2Request) returns (Proto2Response) {}
+}
+
+message Proto2Request {
+  // Required fields (proto2 only)
+  required string required_field = 1;
+  required int32 required_id = 2;
+
+  // Optional fields (explicit in proto2)
+  optional string optional_field = 3;
+  optional int32 optional_id = 4;
+
+  // Default values (proto2 only)
+  optional string name = 5 [default = "unknown"];
+  optional int32 port = 6 [default = 8080];
+  optional bool enabled = 7 [default = true];
+  optional Status status = 8 [default = ACTIVE];
+
+  // Oneof in proto2
+  oneof proto2_oneof {
+    string oneof_string = 9;
+    int32 oneof_int = 13;
+  }
+
+  // Groups (proto2 only, deprecated but still valid)
+  repeated group Result = 10 {
+    required string url = 11;
+    optional string title = 12;
+  }
+
+  // Map in proto2 (added in proto2 v3.0.0)
+  map<string, int32> metadata_map = 14;
+
+  // Repeated Any in proto2
+  repeated google.protobuf.Any any_values = 15;
+
+  // Extensions range
+  extensions 100 to 199;
+}
+
+enum Status {
+  UNKNOWN = 0;
+  ACTIVE = 1;
+  INACTIVE = 2;
+}
+
+// Extension of Proto2Request
+extend Proto2Request {
+  optional string extended_field = 100;
+  optional int64 extended_timestamp = 101;
+  optional ExtensionData extension_data = 102;
+  optional google.protobuf.Timestamp timestamp_extension = 103;
+}
+
+message ExtensionData {
+  optional string key = 1;
+  optional string value = 2;
+}
+
+message Proto2Response {
+  required bool success = 1;
+  optional string message = 2;
+  repeated Proto2Request.Result results = 3;
+}
+
+// Message with extension and nested types
+message ExtendableMessage {
+  required string id = 1;
+  extensions 1000 to max;
+
+  message NestedInExtendable {
+    optional string data = 1;
+  }
+
+  enum ExtendableEnum {
+    OPTION_A = 0;
+    OPTION_B = 1;
+  }
+}
+
+extend ExtendableMessage {
+  optional string meta_info = 1000;
+  optional ExtendableMessage.NestedInExtendable nested_extension = 1001;
+  optional ExtendableMessage.ExtendableEnum enum_extension = 1002;
+}
