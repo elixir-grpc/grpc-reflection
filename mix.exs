@@ -45,7 +45,7 @@ defmodule GrpcReflection.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:grpc, "~> 0.11.1"},
-      {:protobuf, "~> 0.15.0"}
+      {:protobuf, "~> 0.15"}
     ]
   end
 
