@@ -9,11 +9,24 @@ defmodule GrpcReflection.Service.Builder.Util do
 
   def get_nested_types(symbol, descriptor), do: get_nested_types(symbol, descriptor, [])
 
-  def get_nested_types(_symbol, %Google.Protobuf.DescriptorProto{nested_type: []}, acc) do
+  def get_nested_types(
+        _symbol,
+        %Google.Protobuf.DescriptorProto{nested_type: [], enum_type: []},
+        acc
+      ) do
     acc
   end
 
-  def get_nested_types(symbol, %Google.Protobuf.DescriptorProto{nested_type: nested_types}, acc) do
+  def get_nested_types(
+        symbol,
+        %Google.Protobuf.DescriptorProto{nested_type: nested_types, enum_type: enum_types},
+        acc
+      ) do
+    acc =
+      Enum.reduce(enum_types, acc, fn enum_type, acc ->
+        [symbol <> "." <> enum_type.name | acc]
+      end)
+
     Enum.reduce(nested_types, acc, fn nested_type, acc ->
       new_symbol = symbol <> "." <> nested_type.name
       new_acc = [new_symbol | acc]

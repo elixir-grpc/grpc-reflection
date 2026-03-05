@@ -1,7 +1,10 @@
 defmodule Helloworld.HelloRequest do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
+  use Protobuf,
+    full_name: "helloworld.HelloRequest",
+    protoc_gen_elixir_version: "0.16.0",
+    syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -41,7 +44,10 @@ end
 defmodule Helloworld.HelloReply do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
+  use Protobuf,
+    full_name: "helloworld.HelloReply",
+    protoc_gen_elixir_version: "0.16.0",
+    syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
@@ -96,7 +102,7 @@ end
 defmodule Helloworld.Greeter.Service do
   @moduledoc false
 
-  use GRPC.Service, name: "helloworld.Greeter", protoc_gen_elixir_version: "0.14.1"
+  use GRPC.Service, name: "helloworld.Greeter", protoc_gen_elixir_version: "0.16.0"
 
   def descriptor do
     # credo:disable-for-next-line
