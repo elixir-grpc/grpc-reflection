@@ -2,9 +2,9 @@ defmodule GrpcReflection.Service.Builder do
   @moduledoc false
 
   alias Google.Protobuf.FileDescriptorProto
-  alias GrpcReflection.Service.State
-  alias GrpcReflection.Service.Builder.Util
   alias GrpcReflection.Service.Builder.Extensions
+  alias GrpcReflection.Service.Builder.Util
+  alias GrpcReflection.Service.State
 
   def build_reflection_tree(services) do
     with :ok <- Util.validate_services(services) do
