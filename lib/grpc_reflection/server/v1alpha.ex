@@ -13,40 +13,23 @@ defmodule GrpcReflection.Server.V1alpha do
 
       response =
         state_mod
-        |> GrpcReflection.Server.Process.reflect(request.message_request)
-        |> build_response()
+        |> reflect(request.message_request)
+        |> handle_errors()
 
       message =
-        struct(ServerReflectionResponse,
+        %ServerReflectionResponse{
           valid_host: request.host,
           original_request: request,
           message_response: response
-        )
+        }
 
       Server.send_reply(server, message)
     end)
   end
 
-  defp build_response({:ok, {:file_descriptor_response, file_descriptor}}) do
-    {:file_descriptor_response,
-     %Grpc.Reflection.V1alpha.FileDescriptorResponse{
-       file_descriptor_proto: [Google.Protobuf.FileDescriptorProto.encode(file_descriptor)]
-     }}
-  end
+  defp handle_errors({:ok, payload}), do: payload
 
-  defp build_response({:ok, {:all_extension_numbers_response, body}}) do
-    {:all_extension_numbers_response,
-     struct(
-       Grpc.Reflection.V1alpha.ExtensionNumberResponse,
-       body
-     )}
-  end
-
-  defp build_response({:ok, {:list_services_response, %{service: services}}}) do
-    {:list_services_response, %{service: services}}
-  end
-
-  defp build_response({:error, :unimplemented}) do
+  defp handle_errors({:error, :unimplemented}) do
     {:error_response,
      %ErrorResponse{
        error_code: GRPC.Status.unimplemented(),
@@ -54,11 +37,71 @@ defmodule GrpcReflection.Server.V1alpha do
      }}
   end
 
-  defp build_response({:error, reason}) do
+  defp handle_errors({:error, reason}) do
     {:error_response,
      %ErrorResponse{
        error_code: GRPC.Status.not_found(),
        error_message: reason
      }}
+  end
+
+  def reflect(state_mod, {:list_services, _}) do
+    state_mod.list_services()
+    |> Enum.map(fn name -> %Grpc.Reflection.V1alpha.ServiceResponse{name: name} end)
+    |> then(fn services ->
+      {:ok,
+       {:list_services_response, %Grpc.Reflection.V1alpha.ListServiceResponse{service: services}}}
+    end)
+  end
+
+  def reflect(state_mod, {:file_containing_symbol, symbol}) do
+    with {:ok, filename} <- state_mod.get_filename_by_symbol(symbol),
+         {:ok, descriptor} <- state_mod.get_by_filename(filename) do
+      {:ok,
+       {:file_descriptor_response,
+        %Grpc.Reflection.V1alpha.FileDescriptorResponse{
+          file_descriptor_proto: [Google.Protobuf.FileDescriptorProto.encode(descriptor)]
+        }}}
+    end
+  end
+
+  def reflect(state_mod, {:file_by_filename, filename}) do
+    with {:ok, descriptor} <- state_mod.get_by_filename(filename) do
+      {:ok,
+       {:file_descriptor_response,
+        %Grpc.Reflection.V1alpha.FileDescriptorResponse{
+          file_descriptor_proto: [Google.Protobuf.FileDescriptorProto.encode(descriptor)]
+        }}}
+    end
+  end
+
+  def reflect(
+        state_mod,
+        {:file_containing_extension,
+         %{containing_type: containing_type, extension_number: _extension_number}}
+      ) do
+    with {:ok, descriptor} <- state_mod.get_by_extension(containing_type) do
+      {:ok,
+       {:file_descriptor_response,
+        %Grpc.Reflection.V1alpha.FileDescriptorResponse{
+          file_descriptor_proto: [Google.Protobuf.FileDescriptorProto.encode(descriptor)]
+        }}}
+    end
+  end
+
+  def reflect(state_mod, {:all_extension_numbers_of_type, mod}) do
+    with {:ok, extension_numbers} <- state_mod.get_extension_numbers_by_type(mod) do
+      {:ok,
+       {:all_extension_numbers_response,
+        %Grpc.Reflection.V1alpha.ExtensionNumberResponse{
+          base_type_name: mod,
+          extension_number: extension_numbers
+        }}}
+    end
+  end
+
+  def reflect(_state_mod, message_request) do
+    Logger.warning("received unexpected reflection request: #{inspect(message_request)}")
+    {:error, :unimplemented}
   end
 end
