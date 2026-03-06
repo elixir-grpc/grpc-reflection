@@ -17,23 +17,23 @@ jobs:
     strategy:
       matrix:
         # https://endoflife.date/elixir
-        # elixir >= 1.15
+        # elixir >= 1.15 (security patches through current)
         # https://endoflife.date/erlang
-        # erlang >= 26
+        # otp >= 26 (26 EOL: 2026-05-15, 27 EOL: 2027-05-20, 28 EOL: 2028-05-20)
         # https://hexdocs.pm/elixir/compatibility-and-deprecations.html
         # elixir-otp version pairs defined
         runtime: [
-            # 1.15.x
+            # 1.15.x supports otp 24-26
             { elixir: 1.15.x, otp: 26.x },
-            # 1.16.x
+            # 1.16.x supports otp 24-26
             { elixir: 1.16.x, otp: 26.x },
-            # 1.17.x
+            # 1.17.x supports otp 25-27
             { elixir: 1.17.x, otp: 26.x },
             { elixir: 1.17.x, otp: 27.x },
-            # 1.18.x
+            # 1.18.x supports otp 25-27
             { elixir: 1.18.x, otp: 26.x },
             { elixir: 1.18.x, otp: 27.x },
-            # 1.19.x
+            # 1.19.x supports otp 26-28
             { elixir: 1.19.x, otp: 26.x },
             { elixir: 1.19.x, otp: 27.x },
             { elixir: 1.19.x, otp: 28.x },
@@ -85,8 +85,8 @@ jobs:
         id: beam
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 27.x
-          elixir-version: 1.18.x
+          version-file: .tool-versions
+          version-type: strict
 
       - name: Restore dependencies cache
         id: mix_cache
@@ -152,8 +152,8 @@ jobs:
         id: beam
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 27.x
-          elixir-version: 1.18.x
+          version-file: .tool-versions
+          version-type: strict
 
       - name: Restore dependencies cache
         id: mix_cache
