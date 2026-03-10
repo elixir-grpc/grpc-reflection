@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+// File with no package declaration - valid but unusual
+// Messages and services are in the global namespace
+
+service GlobalService {
+  rpc GlobalMethod (GlobalRequest) returns (GlobalResponse) {}
+}
+
+message GlobalRequest {
+  string data = 1;
+}
+
+message GlobalResponse {
+  string result = 1;
+}

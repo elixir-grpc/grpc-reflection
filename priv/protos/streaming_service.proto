@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package streaming;
+
+// Service demonstrating all four RPC streaming patterns
+service StreamingService {
+  // Unary RPC: single request, single response
+  rpc UnaryCall (StreamRequest) returns (StreamResponse) {}
+
+  // Server streaming: single request, stream of responses
+  rpc ServerStreamingCall (StreamRequest) returns (stream StreamResponse) {}
+
+  // Client streaming: stream of requests, single response
+  rpc ClientStreamingCall (stream StreamRequest) returns (StreamResponse) {}
+
+  // Bidirectional streaming: stream of requests and responses
+  rpc BidirectionalStreamingCall (stream StreamRequest) returns (stream StreamResponse) {}
+}
+
+message StreamRequest {
+  string message = 1;
+  int32 sequence = 2;
+}
+
+message StreamResponse {
+  string result = 1;
+  int32 sequence = 2;
+  bool is_final = 3;
+}
+
+// Service with multiple streaming methods showing different patterns
+service MultiStreamService {
+  rpc UploadData (stream DataChunk) returns (UploadStatus) {}
+  rpc DownloadData (DownloadRequest) returns (stream DataChunk) {}
+  rpc SyncData (stream DataChunk) returns (stream DataChunk) {}
+}
+
+message DataChunk {
+  bytes data = 1;
+  int64 offset = 2;
+  int32 size = 3;
+}
+
+message UploadStatus {
+  bool success = 1;
+  int64 total_bytes = 2;
+  string checksum = 3;
+}
+
+message DownloadRequest {
+  string file_id = 1;
+  int64 start_offset = 2;
+  int64 max_bytes = 3;
+}
