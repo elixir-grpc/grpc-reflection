@@ -71,18 +71,18 @@ defmodule EdgeCases.DetailedStatus do
   field :MAX_STATUS, 2_147_483_647
 end
 
-defmodule EdgeCases.EmptyMessage do
+defmodule EdgeCases.EmptyInputRequest do
   @moduledoc false
 
   use Protobuf,
-    full_name: "edge_cases.EmptyMessage",
+    full_name: "edge_cases.EmptyInputRequest",
     protoc_gen_elixir_version: "0.16.0",
     syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.DescriptorProto{
-      name: "EmptyMessage",
+      name: "EmptyInputRequest",
       field: [],
       nested_type: [],
       enum_type: [],
@@ -97,18 +97,18 @@ defmodule EdgeCases.EmptyMessage do
   end
 end
 
-defmodule EdgeCases.Request do
+defmodule EdgeCases.EmptyInputResponse do
   @moduledoc false
 
   use Protobuf,
-    full_name: "edge_cases.Request",
+    full_name: "edge_cases.EmptyInputResponse",
     protoc_gen_elixir_version: "0.16.0",
     syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.DescriptorProto{
-      name: "Request",
+      name: "EmptyInputResponse",
       field: [
         %Google.Protobuf.FieldDescriptorProto{
           name: "data",
@@ -140,21 +140,21 @@ defmodule EdgeCases.Request do
   field :data, 1, type: :string
 end
 
-defmodule EdgeCases.Response do
+defmodule EdgeCases.EmptyOutputRequest do
   @moduledoc false
 
   use Protobuf,
-    full_name: "edge_cases.Response",
+    full_name: "edge_cases.EmptyOutputRequest",
     protoc_gen_elixir_version: "0.16.0",
     syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.DescriptorProto{
-      name: "Response",
+      name: "EmptyOutputRequest",
       field: [
         %Google.Protobuf.FieldDescriptorProto{
-          name: "result",
+          name: "data",
           extendee: nil,
           number: 1,
           label: :LABEL_OPTIONAL,
@@ -163,7 +163,7 @@ defmodule EdgeCases.Response do
           default_value: nil,
           options: nil,
           oneof_index: nil,
-          json_name: "result",
+          json_name: "data",
           proto3_optional: nil,
           __unknown_fields__: []
         }
@@ -180,7 +180,381 @@ defmodule EdgeCases.Response do
     }
   end
 
-  field :result, 1, type: :string
+  field :data, 1, type: :string
+end
+
+defmodule EdgeCases.EmptyOutputResponse do
+  @moduledoc false
+
+  use Protobuf,
+    full_name: "edge_cases.EmptyOutputResponse",
+    protoc_gen_elixir_version: "0.16.0",
+    syntax: :proto3
+
+  def descriptor do
+    # credo:disable-for-next-line
+    %Google.Protobuf.DescriptorProto{
+      name: "EmptyOutputResponse",
+      field: [],
+      nested_type: [],
+      enum_type: [],
+      extension_range: [],
+      extension: [],
+      options: nil,
+      oneof_decl: [],
+      reserved_range: [],
+      reserved_name: [],
+      __unknown_fields__: []
+    }
+  end
+end
+
+defmodule EdgeCases.BothEmptyRequest do
+  @moduledoc false
+
+  use Protobuf,
+    full_name: "edge_cases.BothEmptyRequest",
+    protoc_gen_elixir_version: "0.16.0",
+    syntax: :proto3
+
+  def descriptor do
+    # credo:disable-for-next-line
+    %Google.Protobuf.DescriptorProto{
+      name: "BothEmptyRequest",
+      field: [],
+      nested_type: [],
+      enum_type: [],
+      extension_range: [],
+      extension: [],
+      options: nil,
+      oneof_decl: [],
+      reserved_range: [],
+      reserved_name: [],
+      __unknown_fields__: []
+    }
+  end
+end
+
+defmodule EdgeCases.BothEmptyResponse do
+  @moduledoc false
+
+  use Protobuf,
+    full_name: "edge_cases.BothEmptyResponse",
+    protoc_gen_elixir_version: "0.16.0",
+    syntax: :proto3
+
+  def descriptor do
+    # credo:disable-for-next-line
+    %Google.Protobuf.DescriptorProto{
+      name: "BothEmptyResponse",
+      field: [],
+      nested_type: [],
+      enum_type: [],
+      extension_range: [],
+      extension: [],
+      options: nil,
+      oneof_decl: [],
+      reserved_range: [],
+      reserved_name: [],
+      __unknown_fields__: []
+    }
+  end
+end
+
+defmodule EdgeCases.ComplicatedRequest do
+  @moduledoc false
+
+  use Protobuf,
+    full_name: "edge_cases.ComplicatedRequest",
+    protoc_gen_elixir_version: "0.16.0",
+    syntax: :proto3
+
+  def descriptor do
+    # credo:disable-for-next-line
+    %Google.Protobuf.DescriptorProto{
+      name: "ComplicatedRequest",
+      field: [
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "numbers",
+          extendee: nil,
+          number: 1,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.SparseFieldNumbers",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "numbers",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "fields",
+          extendee: nil,
+          number: 2,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.ManyFields",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "fields",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "status",
+          extendee: nil,
+          number: 3,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_ENUM,
+          type_name: ".edge_cases.DetailedStatus",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "status",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "oneofs",
+          extendee: nil,
+          number: 4,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.MultipleOneofs",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "oneofs",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "nested_maps",
+          extendee: nil,
+          number: 5,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.NestedMaps",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "nestedMaps",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "circular",
+          extendee: nil,
+          number: 6,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.CircularA",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "circular",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "reserved_fields",
+          extendee: nil,
+          number: 7,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.WithReservedFields",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "reservedFields",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "unicode_test",
+          extendee: nil,
+          number: 8,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.UnicodeTest",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "unicodeTest",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        }
+      ],
+      nested_type: [],
+      enum_type: [],
+      extension_range: [],
+      extension: [],
+      options: nil,
+      oneof_decl: [],
+      reserved_range: [],
+      reserved_name: [],
+      __unknown_fields__: []
+    }
+  end
+
+  field :numbers, 1, type: EdgeCases.SparseFieldNumbers
+  field :fields, 2, type: EdgeCases.ManyFields
+  field :status, 3, type: EdgeCases.DetailedStatus, enum: true
+  field :oneofs, 4, type: EdgeCases.MultipleOneofs
+  field :nested_maps, 5, type: EdgeCases.NestedMaps, json_name: "nestedMaps"
+  field :circular, 6, type: EdgeCases.CircularA
+  field :reserved_fields, 7, type: EdgeCases.WithReservedFields, json_name: "reservedFields"
+  field :unicode_test, 8, type: EdgeCases.UnicodeTest, json_name: "unicodeTest"
+end
+
+defmodule EdgeCases.ComplicatedResponse do
+  @moduledoc false
+
+  use Protobuf,
+    full_name: "edge_cases.ComplicatedResponse",
+    protoc_gen_elixir_version: "0.16.0",
+    syntax: :proto3
+
+  def descriptor do
+    # credo:disable-for-next-line
+    %Google.Protobuf.DescriptorProto{
+      name: "ComplicatedResponse",
+      field: [
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "numbers",
+          extendee: nil,
+          number: 1,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.SparseFieldNumbers",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "numbers",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "fields",
+          extendee: nil,
+          number: 2,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.ManyFields",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "fields",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "status",
+          extendee: nil,
+          number: 3,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_ENUM,
+          type_name: ".edge_cases.DetailedStatus",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "status",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "oneofs",
+          extendee: nil,
+          number: 4,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.MultipleOneofs",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "oneofs",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "nested_maps",
+          extendee: nil,
+          number: 5,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.NestedMaps",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "nestedMaps",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "circular",
+          extendee: nil,
+          number: 6,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.CircularA",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "circular",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "reserved_fields",
+          extendee: nil,
+          number: 7,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.WithReservedFields",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "reservedFields",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "unicode_test",
+          extendee: nil,
+          number: 8,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_MESSAGE,
+          type_name: ".edge_cases.UnicodeTest",
+          default_value: nil,
+          options: nil,
+          oneof_index: nil,
+          json_name: "unicodeTest",
+          proto3_optional: nil,
+          __unknown_fields__: []
+        }
+      ],
+      nested_type: [],
+      enum_type: [],
+      extension_range: [],
+      extension: [],
+      options: nil,
+      oneof_decl: [],
+      reserved_range: [],
+      reserved_name: [],
+      __unknown_fields__: []
+    }
+  end
+
+  field :numbers, 1, type: EdgeCases.SparseFieldNumbers
+  field :fields, 2, type: EdgeCases.ManyFields
+  field :status, 3, type: EdgeCases.DetailedStatus, enum: true
+  field :oneofs, 4, type: EdgeCases.MultipleOneofs
+  field :nested_maps, 5, type: EdgeCases.NestedMaps, json_name: "nestedMaps"
+  field :circular, 6, type: EdgeCases.CircularA
+  field :reserved_fields, 7, type: EdgeCases.WithReservedFields, json_name: "reservedFields"
+  field :unicode_test, 8, type: EdgeCases.UnicodeTest, json_name: "unicodeTest"
 end
 
 defmodule EdgeCases.SparseFieldNumbers do
@@ -1935,24 +2309,97 @@ defmodule EdgeCases.UnicodeTest do
   field :greeting, 3, type: :string
 end
 
-defmodule EdgeCases.EmptyService.Service do
+defmodule EdgeCases.EdgeCaseService.Service do
   @moduledoc false
 
-  use GRPC.Service, name: "edge_cases.EmptyService", protoc_gen_elixir_version: "0.16.0"
+  use GRPC.Service, name: "edge_cases.EdgeCaseService", protoc_gen_elixir_version: "0.16.0"
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.ServiceDescriptorProto{
-      name: "EmptyService",
-      method: [],
+      name: "EdgeCaseService",
+      method: [
+        %Google.Protobuf.MethodDescriptorProto{
+          name: "EmptyInput",
+          input_type: ".edge_cases.EmptyInputRequest",
+          output_type: ".edge_cases.EmptyInputResponse",
+          options: %Google.Protobuf.MethodOptions{
+            deprecated: false,
+            idempotency_level: :IDEMPOTENCY_UNKNOWN,
+            features: nil,
+            uninterpreted_option: [],
+            __pb_extensions__: %{},
+            __unknown_fields__: []
+          },
+          client_streaming: false,
+          server_streaming: false,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.MethodDescriptorProto{
+          name: "EmptyOutput",
+          input_type: ".edge_cases.EmptyOutputRequest",
+          output_type: ".edge_cases.EmptyOutputResponse",
+          options: %Google.Protobuf.MethodOptions{
+            deprecated: false,
+            idempotency_level: :IDEMPOTENCY_UNKNOWN,
+            features: nil,
+            uninterpreted_option: [],
+            __pb_extensions__: %{},
+            __unknown_fields__: []
+          },
+          client_streaming: false,
+          server_streaming: false,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.MethodDescriptorProto{
+          name: "BothEmpty",
+          input_type: ".edge_cases.BothEmptyRequest",
+          output_type: ".edge_cases.BothEmptyResponse",
+          options: %Google.Protobuf.MethodOptions{
+            deprecated: false,
+            idempotency_level: :IDEMPOTENCY_UNKNOWN,
+            features: nil,
+            uninterpreted_option: [],
+            __pb_extensions__: %{},
+            __unknown_fields__: []
+          },
+          client_streaming: false,
+          server_streaming: false,
+          __unknown_fields__: []
+        },
+        %Google.Protobuf.MethodDescriptorProto{
+          name: "Complicated",
+          input_type: ".edge_cases.ComplicatedRequest",
+          output_type: ".edge_cases.ComplicatedResponse",
+          options: %Google.Protobuf.MethodOptions{
+            deprecated: false,
+            idempotency_level: :IDEMPOTENCY_UNKNOWN,
+            features: nil,
+            uninterpreted_option: [],
+            __pb_extensions__: %{},
+            __unknown_fields__: []
+          },
+          client_streaming: false,
+          server_streaming: false,
+          __unknown_fields__: []
+        }
+      ],
       options: nil,
       __unknown_fields__: []
     }
   end
+
+  rpc :EmptyInput, EdgeCases.EmptyInputRequest, EdgeCases.EmptyInputResponse
+
+  rpc :EmptyOutput, EdgeCases.EmptyOutputRequest, EdgeCases.EmptyOutputResponse
+
+  rpc :BothEmpty, EdgeCases.BothEmptyRequest, EdgeCases.BothEmptyResponse
+
+  rpc :Complicated, EdgeCases.ComplicatedRequest, EdgeCases.ComplicatedResponse
 end
 
-defmodule EdgeCases.EmptyService.Stub do
+defmodule EdgeCases.EdgeCaseService.Stub do
   @moduledoc false
 
-  use GRPC.Stub, service: EdgeCases.EmptyService.Service
+  use GRPC.Stub, service: EdgeCases.EdgeCaseService.Service
 end

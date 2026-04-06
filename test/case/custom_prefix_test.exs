@@ -1,7 +1,5 @@
-defmodule GrpcReflection.CustomPrefixServiceTest do
-  @moduledoc """
-  Test suite covering types, cases and services from custom_prefix_service.proto
-  """
+defmodule GrpcReflection.Case.CustomPrefixServiceTest do
+  @moduledoc false
 
   use GrpcCase, service: CustomizedPrefix.PrefixService.Service
 

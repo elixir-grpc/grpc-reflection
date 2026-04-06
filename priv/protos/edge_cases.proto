@@ -2,39 +2,67 @@ syntax = "proto3";
 
 package edge_cases;
 
-// Empty service (no methods) - edge case
-service EmptyService {
-}
+
 
 // Service with unusual but valid patterns
 service EdgeCaseService {
   // Method names with underscores and different conventions
-  rpc process_data (Request) returns (Response) {}
-  rpc ProcessData (Request) returns (Response) {}
-  rpc PROCESS_DATA (Request) returns (Response) {}
+  // protoc compiles these fine, but the GRPC upstream stub does not
+  //   rpc process_data (Request) returns (Response) {}
+  //   rpc ProcessData (Request) returns (Response) {}
+  //   rpc PROCESS_DATA (Request) returns (Response) {}
 
   // Empty request or response
-  rpc EmptyInput (EmptyMessage) returns (Response) {}
-  rpc EmptyOutput (Request) returns (EmptyMessage) {}
-  rpc BothEmpty (EmptyMessage) returns (EmptyMessage) {}
+  rpc EmptyInput(EmptyInputRequest) returns (EmptyInputResponse) {}
+  rpc EmptyOutput(EmptyOutputRequest) returns (EmptyOutputResponse) {}
+  rpc BothEmpty(BothEmptyRequest) returns (BothEmptyResponse) {}
+  rpc Complicated(ComplicatedRequest) returns (ComplicatedResponse) {}
 }
 
-message EmptyMessage {
-  // Intentionally empty message
-}
-
-message Request {
+message EmptyInputRequest {}
+message EmptyInputResponse {
   string data = 1;
 }
+message EmptyOutputRequest {
+  string data = 1;
+}
+message EmptyOutputResponse {}
+message BothEmptyRequest {}
+message BothEmptyResponse {}
 
-message Response {
-  string result = 1;
+// message Request {
+//   string data = 1;
+// }
+
+// message Response {
+//   string result = 1;
+// }
+
+message ComplicatedRequest {
+  SparseFieldNumbers numbers = 1;
+  ManyFields fields = 2;
+  DetailedStatus status = 3;
+  MultipleOneofs oneofs = 4;
+  NestedMaps nested_maps = 5;
+  CircularA circular = 6;
+  WithReservedFields reserved_fields = 7;
+  UnicodeTest unicode_test = 8;
+}
+message ComplicatedResponse {
+  SparseFieldNumbers numbers = 1;
+  ManyFields fields = 2;
+  DetailedStatus status = 3;
+  MultipleOneofs oneofs = 4;
+  NestedMaps nested_maps = 5;
+  CircularA circular = 6;
+  WithReservedFields reserved_fields = 7;
+  UnicodeTest unicode_test = 8;
 }
 
 // Unusual field numbering
 message SparseFieldNumbers {
   string field_1 = 1;
-  string field_536870911 = 536870911;  // Max field number (2^29 - 1)
+  string field_536870911 = 536870911; // Max field number (2^29 - 1)
 }
 
 // Many fields
@@ -76,7 +104,7 @@ enum DetailedStatus {
   CRITICAL_ERROR = -100;
 
   // Large enum values
-  MAX_STATUS = 2147483647;  // Max int32
+  MAX_STATUS = 2147483647; // Max int32
 }
 
 // Multiple oneofs in one message

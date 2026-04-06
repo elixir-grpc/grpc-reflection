@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+package empty_service;
+
+// Empty service (no methods) - edge case
+service EmptyService {}
