@@ -1,4 +1,4 @@
-defmodule HLW.Enum do
+defmodule CustomizedPrefix.EchoRequest do
   @moduledoc false
 
   use Protobuf,
@@ -48,10 +48,10 @@ defmodule HLW.TestRequest.GEntry do
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.DescriptorProto{
-      name: "GEntry",
+      name: "EchoRequest",
       field: [
         %Google.Protobuf.FieldDescriptorProto{
-          name: "key",
+          name: "message",
           extendee: nil,
           number: 1,
           label: :LABEL_OPTIONAL,
@@ -347,34 +347,33 @@ defmodule HLW.Location do
     }
   end
 
-  field :latitude, 1, optional: true, type: :double
-  field :longitude, 2, optional: true, type: :double
+  field :message, 1, type: :string
 end
 
-defmodule HLW.TestReply do
+defmodule CustomizedPrefix.EchoResponse do
   @moduledoc false
 
   use Protobuf,
-    full_name: "testserviceV2.TestReply",
+    full_name: "custom_prefix.EchoResponse",
     protoc_gen_elixir_version: "0.16.0",
-    syntax: :proto2
+    syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.DescriptorProto{
-      name: "TestReply",
+      name: "EchoResponse",
       field: [
         %Google.Protobuf.FieldDescriptorProto{
-          name: "today",
+          name: "reply",
           extendee: nil,
-          number: 2,
-          label: :LABEL_REQUIRED,
-          type: :TYPE_MESSAGE,
-          type_name: ".google.protobuf.Timestamp",
+          number: 1,
+          label: :LABEL_OPTIONAL,
+          type: :TYPE_STRING,
+          type_name: nil,
           default_value: nil,
           options: nil,
           oneof_index: nil,
-          json_name: "today",
+          json_name: "reply",
           proto3_optional: nil,
           __unknown_fields__: []
         }
@@ -391,23 +390,23 @@ defmodule HLW.TestReply do
     }
   end
 
-  field :today, 2, required: true, type: Google.Protobuf.Timestamp
+  field :reply, 1, type: :string
 end
 
-defmodule HLW.TestService.Service do
+defmodule CustomizedPrefix.PrefixService.Service do
   @moduledoc false
 
-  use GRPC.Service, name: "testserviceV2.TestService", protoc_gen_elixir_version: "0.16.0"
+  use GRPC.Service, name: "custom_prefix.PrefixService", protoc_gen_elixir_version: "0.16.0"
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.ServiceDescriptorProto{
-      name: "TestService",
+      name: "PrefixService",
       method: [
         %Google.Protobuf.MethodDescriptorProto{
-          name: "CallFunction",
-          input_type: ".testserviceV2.TestRequest",
-          output_type: ".testserviceV2.TestReply",
+          name: "Echo",
+          input_type: ".custom_prefix.EchoRequest",
+          output_type: ".custom_prefix.EchoResponse",
           options: %Google.Protobuf.MethodOptions{
             deprecated: false,
             idempotency_level: :IDEMPOTENCY_UNKNOWN,
@@ -426,11 +425,11 @@ defmodule HLW.TestService.Service do
     }
   end
 
-  rpc :CallFunction, HLW.TestRequest, HLW.TestReply
+  rpc :Echo, CustomizedPrefix.EchoRequest, CustomizedPrefix.EchoResponse
 end
 
-defmodule HLW.TestService.Stub do
+defmodule CustomizedPrefix.PrefixService.Stub do
   @moduledoc false
 
-  use GRPC.Stub, service: HLW.TestService.Service
+  use GRPC.Stub, service: CustomizedPrefix.PrefixService.Service
 end

@@ -4,7 +4,7 @@ package custom_prefix;
 
 // This proto demonstrates Elixir-specific custom module prefix option
 import "elixirpb.proto";
-option (elixirpb.file).module_prefix = "CustomPrefix";
+option (elixirpb.file).module_prefix = "CustomizedPrefix";
 
 // Simple service to test custom module prefix generation
 service PrefixService {
