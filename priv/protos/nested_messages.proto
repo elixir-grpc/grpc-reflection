@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package nested;
+
+// Service with deeply nested message structures
+service NestedService {
+  rpc ProcessNested (OuterMessage) returns (OuterResponse) {}
+}
+
+// Deeply nested message structure
+message OuterMessage {
+  string outer_field = 1;
+
+  message MiddleMessage {
+    string middle_field = 1;
+
+    message InnerMessage {
+      string inner_field = 1;
+
+      message DeepMessage {
+        string deep_field = 1;
+
+        message VeryDeepMessage {
+          string very_deep_field = 1;
+          repeated int32 values = 2;
+        }
+
+        VeryDeepMessage very_deep = 2;
+      }
+
+      DeepMessage deep = 2;
+    }
+
+    InnerMessage inner = 2;
+    repeated InnerMessage inner_list = 3;
+  }
+
+  MiddleMessage middle = 2;
+  repeated MiddleMessage middle_list = 3;
+
+  // Map with nested message value
+  map<string, MiddleMessage> nested_map = 4;
+
+  // Oneof with nested messages
+  oneof nested_oneof {
+    MiddleMessage option_a = 5;
+    MiddleMessage.InnerMessage option_b = 6;
+    string simple_option = 7;
+  }
+}
+
+message OuterResponse {
+  // Message referencing nested types from request
+  OuterMessage.MiddleMessage.InnerMessage.DeepMessage deep_result = 1;
+  repeated OuterMessage.MiddleMessage middle_results = 2;
+}
+
+// Multiple services in the same file
+service AnotherNestedService {
+  rpc ProcessOuter (OuterMessage) returns (OuterResponse) {}
+  rpc ProcessMiddle (OuterMessage.MiddleMessage) returns (OuterMessage.MiddleMessage) {}
+  rpc ProcessInner (OuterMessage.MiddleMessage.InnerMessage) returns (OuterMessage.MiddleMessage.InnerMessage) {}
+}
+
+// Complex message with multiple nested enums
+message ComplexNested {
+  enum Status {
+    UNKNOWN = 0;
+    ACTIVE = 1;
+    INACTIVE = 2;
+  }
+
+  message Node {
+    enum NodeType {
+      LEAF = 0;
+      BRANCH = 1;
+      ROOT = 2;
+    }
+
+    string id = 1;
+    NodeType type = 2;
+    repeated Node children = 3;
+    Node parent = 4;
+    map<string, Node> named_children = 5;
+  }
+
+  Status status = 1;
+  Node root = 2;
+  repeated Node all_nodes = 3;
+}

@@ -1,7 +1,7 @@
-defmodule EmptyService.EmptyService.Service do
+defmodule Empty.EmptyService.Service do
   @moduledoc false
 
-  use GRPC.Service, name: "empty_service.EmptyService", protoc_gen_elixir_version: "0.16.0"
+  use GRPC.Service, name: "empty.EmptyService", protoc_gen_elixir_version: "0.16.0"
 
   def descriptor do
     # credo:disable-for-next-line
@@ -14,8 +14,8 @@ defmodule EmptyService.EmptyService.Service do
   end
 end
 
-defmodule EmptyService.EmptyService.Stub do
+defmodule Empty.EmptyService.Stub do
   @moduledoc false
 
-  use GRPC.Stub, service: EmptyService.EmptyService.Service
+  use GRPC.Stub, service: Empty.EmptyService.Service
 end

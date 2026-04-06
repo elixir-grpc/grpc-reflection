@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package package_b;
+
+import "package_a.proto";
+
+message MessageB {
+  string field_b = 1;
+  package_a.MessageA message_from_a = 2;
+  package_a.EnumA enum_from_a = 3;
+}
+
+service ServiceB {
+  rpc ProcessB (MessageB) returns (ResponseB) {}
+  rpc ProcessA (package_a.MessageA) returns (package_a.MessageA) {}
+}
+
+message ResponseB {
+  repeated package_a.MessageA results = 1;
+}

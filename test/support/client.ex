@@ -189,7 +189,11 @@ defmodule GrpcReflection.TestClient do
     result
     |> String.split("\n")
     |> Enum.reject(&(&1 == ""))
-    |> Enum.map(&{:call, &1})
+    |> Enum.map(fn
+      "(No methods)" -> nil
+      name -> {:call, name}
+    end)
+    |> Enum.reject(&is_nil(&1))
   end
 
   defp grpcurl_describe_call(%{host: host}, call) do
