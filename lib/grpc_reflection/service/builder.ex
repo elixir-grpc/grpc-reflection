@@ -133,7 +133,7 @@ defmodule GrpcReflection.Service.Builder do
         syntax: syntax
       }
 
-    case descriptor = descriptor do
+    case descriptor do
       %Google.Protobuf.DescriptorProto{} -> %{response_stub | message_type: [descriptor]}
       %Google.Protobuf.ServiceDescriptorProto{} -> %{response_stub | service: [descriptor]}
       %Google.Protobuf.EnumDescriptorProto{} -> %{response_stub | enum_type: [descriptor]}
@@ -144,9 +144,23 @@ defmodule GrpcReflection.Service.Builder do
   # generate descriptors.  Use this to potentially unwrap the service proto when dealing
   # with descriptors that could come from a service module.
   defp get_descriptor(module) do
-    case module.descriptor() do
-      %FileDescriptorProto{service: [proto]} -> proto
-      proto -> proto
+    # Check if the descriptor/0 function exists before calling it
+    if Code.ensure_loaded?(module) and function_exported?(module, :descriptor, 0) do
+      case module.descriptor() do
+        %FileDescriptorProto{service: [proto]} -> proto
+        # Return the descriptor if it's a struct
+        proto when is_struct(proto) -> proto
+      end
+    else
+      # Fallback: use the Fallback module to generate a descriptor
+      case GrpcReflection.Service.Builder.Fallback.generate_file_descriptor(module) do
+        {:ok, descriptor} ->
+          descriptor
+
+        # If fallback also fails, return nil to prevent crashes
+        {:error, err} ->
+          raise err
+      end
     end
   end
 end

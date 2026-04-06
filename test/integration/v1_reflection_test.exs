@@ -26,7 +26,7 @@ defmodule GrpcReflection.V1ReflectionTest do
   end
 
   describe "symbol queries" do
-    test "ushould reject nknown symbol", ctx do
+    test "should reject unknown symbol", ctx do
       message = {:file_containing_symbol, "other.Rejecter"}
       assert {:error, _} = run_request(message, ctx)
     end

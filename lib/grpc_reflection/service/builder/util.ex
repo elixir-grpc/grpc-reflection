@@ -86,7 +86,8 @@ defmodule GrpcReflection.Service.Builder.Util do
         is_integer(type) ->
           {type, nil}
 
-        is_atom(type) and Code.ensure_loaded?(type) and function_exported?(type, :descriptor, 0) ->
+        Code.ensure_loaded?(type) and
+            function_exported?(type, :__message_props__, 0) ->
           {@field_type_mapping[:TYPE_MESSAGE], get_pb_type_name(type)}
 
         true ->
