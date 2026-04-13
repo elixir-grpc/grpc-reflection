@@ -9,7 +9,7 @@ defmodule GrpcReflection.Server.V1alpha do
 
   def server_reflection_info(state_mod, request_stream, server) do
     Enum.map(request_stream, fn request ->
-      Logger.info("Received v1alpha reflection request: " <> inspect(request.message_request))
+      Logger.debug("Received v1alpha reflection request: " <> inspect(request.message_request))
 
       response =
         state_mod
