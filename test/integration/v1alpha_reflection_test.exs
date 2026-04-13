@@ -13,8 +13,13 @@ defmodule GrpcReflection.V1alphaReflectionTest do
 
   test "listing services", ctx do
     message = {:list_services, ""}
-    assert {:ok, %{service: service_list}} = run_request(message, ctx)
-    names = Enum.map(service_list, &Map.get(&1, :name))
+
+    assert {:ok, %Grpc.Reflection.V1alpha.ListServiceResponse{service: service_list}} =
+             run_request(message, ctx)
+
+    assert Enum.all?(service_list, &match?(%Grpc.Reflection.V1alpha.ServiceResponse{}, &1))
+
+    names = Enum.map(service_list, & &1.name)
 
     assert names == [
              "helloworld.Greeter",
