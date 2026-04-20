@@ -1,18 +1,15 @@
-defmodule Helloworld.HelloRequest do
+defmodule GlobalRequest do
   @moduledoc false
 
-  use Protobuf,
-    full_name: "helloworld.HelloRequest",
-    protoc_gen_elixir_version: "0.16.0",
-    syntax: :proto3
+  use Protobuf, full_name: "GlobalRequest", protoc_gen_elixir_version: "0.16.0", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.DescriptorProto{
-      name: "HelloRequest",
+      name: "GlobalRequest",
       field: [
         %Google.Protobuf.FieldDescriptorProto{
-          name: "name",
+          name: "data",
           extendee: nil,
           number: 1,
           label: :LABEL_OPTIONAL,
@@ -21,7 +18,7 @@ defmodule Helloworld.HelloRequest do
           default_value: nil,
           options: nil,
           oneof_index: nil,
-          json_name: "name",
+          json_name: "data",
           proto3_optional: nil,
           __unknown_fields__: []
         }
@@ -38,24 +35,21 @@ defmodule Helloworld.HelloRequest do
     }
   end
 
-  field :name, 1, type: :string
+  field :data, 1, type: :string
 end
 
-defmodule Helloworld.HelloReply do
+defmodule GlobalResponse do
   @moduledoc false
 
-  use Protobuf,
-    full_name: "helloworld.HelloReply",
-    protoc_gen_elixir_version: "0.16.0",
-    syntax: :proto3
+  use Protobuf, full_name: "GlobalResponse", protoc_gen_elixir_version: "0.16.0", syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.DescriptorProto{
-      name: "HelloReply",
+      name: "GlobalResponse",
       field: [
         %Google.Protobuf.FieldDescriptorProto{
-          name: "message",
+          name: "result",
           extendee: nil,
           number: 1,
           label: :LABEL_OPTIONAL,
@@ -64,21 +58,7 @@ defmodule Helloworld.HelloReply do
           default_value: nil,
           options: nil,
           oneof_index: nil,
-          json_name: "message",
-          proto3_optional: nil,
-          __unknown_fields__: []
-        },
-        %Google.Protobuf.FieldDescriptorProto{
-          name: "today",
-          extendee: nil,
-          number: 2,
-          label: :LABEL_OPTIONAL,
-          type: :TYPE_MESSAGE,
-          type_name: ".google.protobuf.Timestamp",
-          default_value: nil,
-          options: nil,
-          oneof_index: nil,
-          json_name: "today",
+          json_name: "result",
           proto3_optional: nil,
           __unknown_fields__: []
         }
@@ -95,24 +75,23 @@ defmodule Helloworld.HelloReply do
     }
   end
 
-  field :message, 1, type: :string
-  field :today, 2, type: Google.Protobuf.Timestamp
+  field :result, 1, type: :string
 end
 
-defmodule Helloworld.Greeter.Service do
+defmodule GlobalService.Service do
   @moduledoc false
 
-  use GRPC.Service, name: "helloworld.Greeter", protoc_gen_elixir_version: "0.16.0"
+  use GRPC.Service, name: "GlobalService", protoc_gen_elixir_version: "0.16.0"
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.ServiceDescriptorProto{
-      name: "Greeter",
+      name: "GlobalService",
       method: [
         %Google.Protobuf.MethodDescriptorProto{
-          name: "SayHello",
-          input_type: ".helloworld.HelloRequest",
-          output_type: ".helloworld.HelloReply",
+          name: "GlobalMethod",
+          input_type: ".GlobalRequest",
+          output_type: ".GlobalResponse",
           options: %Google.Protobuf.MethodOptions{
             deprecated: false,
             idempotency_level: :IDEMPOTENCY_UNKNOWN,
@@ -131,11 +110,11 @@ defmodule Helloworld.Greeter.Service do
     }
   end
 
-  rpc :SayHello, Helloworld.HelloRequest, Helloworld.HelloReply
+  rpc :GlobalMethod, GlobalRequest, GlobalResponse
 end
 
-defmodule Helloworld.Greeter.Stub do
+defmodule GlobalService.Stub do
   @moduledoc false
 
-  use GRPC.Stub, service: Helloworld.Greeter.Service
+  use GRPC.Stub, service: GlobalService.Service
 end

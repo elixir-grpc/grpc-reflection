@@ -1,5 +1,6 @@
-syntax = "proto2";
+syntax = "proto3";
 
-service EmptyService {
-  
-}
+package empty_service;
+
+// Empty service (no methods) - edge case
+service EmptyService {}
