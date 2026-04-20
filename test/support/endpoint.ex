@@ -7,7 +7,8 @@ defmodule GrpcReflection.TestEndpoint do
         TestserviceV2.TestService.Service,
         TestserviceV3.TestService.Service,
         Grpc.Reflection.V1.ServerReflection.Service,
-        Grpc.Reflection.V1alpha.ServerReflection.Service
+        Grpc.Reflection.V1alpha.ServerReflection.Service,
+        RecursiveMessage.Service.Service
       ]
   end
 
@@ -23,7 +24,8 @@ defmodule GrpcReflection.TestEndpoint do
         TestserviceV2.TestService.Service,
         TestserviceV3.TestService.Service,
         Grpc.Reflection.V1.ServerReflection.Service,
-        Grpc.Reflection.V1alpha.ServerReflection.Service
+        Grpc.Reflection.V1alpha.ServerReflection.Service,
+        RecursiveMessage.Service.Service
       ]
   end
 
