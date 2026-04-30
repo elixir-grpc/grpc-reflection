@@ -85,7 +85,7 @@ defmodule GrpcReflection.Case.ScalarTypesTest do
         assert %{type: :TYPE_STRING, number: 1000, label: :LABEL_OPTIONAL} =
                  by_name["sparse_field_2"]
 
-        assert %{type: :TYPE_STRING, number: 10000, label: :LABEL_OPTIONAL} =
+        assert %{type: :TYPE_STRING, number: 10_000, label: :LABEL_OPTIONAL} =
                  by_name["sparse_field_3"]
       end
 
