@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v0.3.3 (2026-04-13)
+
+Move debug log from `info` to `debug` log levels
+
+## v0.3.2 (2026-04-12)
+
+Update protobuf dependency and fix warnings
+
 ## v0.3.1 (2026-03-04)
 
 ### Bug fixes
