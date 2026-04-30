@@ -57,9 +57,13 @@ defmodule GrpcReflection.Case.WellKnownTypesTest do
                } = response
       end
 
-      # Well-known types contain circular references that cause an infinite loop in our
-      # reflection tree builder, which grpcurl exposes as a stack overflow. Out of scope
-      # for now; the reflection API itself is verified via the symbol/filename tests above.
+      test "reflection graph is traversable using grpcurl", ctx do
+        ops = GrpcReflection.TestClient.grpcurl_service(ctx)
+
+        assert {:call, "well_known_types.WellKnownTypesService.ProcessWellKnownTypes"} in ops
+        assert {:call, "well_known_types.WellKnownTypesService.EmptyMethod"} in ops
+        assert {:service, "well_known_types.WellKnownTypesService"} in ops
+      end
     end
   end
 end
