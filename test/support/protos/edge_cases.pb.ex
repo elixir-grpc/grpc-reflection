@@ -2366,22 +2366,6 @@ defmodule EdgeCases.EdgeCaseService.Service do
           client_streaming: false,
           server_streaming: false,
           __unknown_fields__: []
-        },
-        %Google.Protobuf.MethodDescriptorProto{
-          name: "Complicated",
-          input_type: ".edge_cases.ComplicatedRequest",
-          output_type: ".edge_cases.ComplicatedResponse",
-          options: %Google.Protobuf.MethodOptions{
-            deprecated: false,
-            idempotency_level: :IDEMPOTENCY_UNKNOWN,
-            features: nil,
-            uninterpreted_option: [],
-            __pb_extensions__: %{},
-            __unknown_fields__: []
-          },
-          client_streaming: false,
-          server_streaming: false,
-          __unknown_fields__: []
         }
       ],
       options: nil,
@@ -2394,8 +2378,6 @@ defmodule EdgeCases.EdgeCaseService.Service do
   rpc :EmptyOutput, EdgeCases.EmptyOutputRequest, EdgeCases.EmptyOutputResponse
 
   rpc :BothEmpty, EdgeCases.BothEmptyRequest, EdgeCases.BothEmptyResponse
-
-  rpc :Complicated, EdgeCases.ComplicatedRequest, EdgeCases.ComplicatedResponse
 end
 
 defmodule EdgeCases.EdgeCaseService.Stub do

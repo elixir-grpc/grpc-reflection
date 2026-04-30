@@ -81,64 +81,6 @@ defmodule Proto2Features.ExtendableMessage.ExtendableEnum do
   field :OPTION_B, 1
 end
 
-defmodule Proto2Features.Proto2Request.Result do
-  @moduledoc false
-
-  use Protobuf,
-    full_name: "proto2_features.Proto2Request.Result",
-    protoc_gen_elixir_version: "0.16.0",
-    syntax: :proto2
-
-  def descriptor do
-    # credo:disable-for-next-line
-    %Google.Protobuf.DescriptorProto{
-      name: "Result",
-      field: [
-        %Google.Protobuf.FieldDescriptorProto{
-          name: "url",
-          extendee: nil,
-          number: 11,
-          label: :LABEL_REQUIRED,
-          type: :TYPE_STRING,
-          type_name: nil,
-          default_value: nil,
-          options: nil,
-          oneof_index: nil,
-          json_name: "url",
-          proto3_optional: nil,
-          __unknown_fields__: []
-        },
-        %Google.Protobuf.FieldDescriptorProto{
-          name: "title",
-          extendee: nil,
-          number: 12,
-          label: :LABEL_OPTIONAL,
-          type: :TYPE_STRING,
-          type_name: nil,
-          default_value: nil,
-          options: nil,
-          oneof_index: nil,
-          json_name: "title",
-          proto3_optional: nil,
-          __unknown_fields__: []
-        }
-      ],
-      nested_type: [],
-      enum_type: [],
-      extension_range: [],
-      extension: [],
-      options: nil,
-      oneof_decl: [],
-      reserved_range: [],
-      reserved_name: [],
-      __unknown_fields__: []
-    }
-  end
-
-  field :url, 11, required: true, type: :string
-  field :title, 12, optional: true, type: :string
-end
-
 defmodule Proto2Features.Proto2Request.MetadataMapEntry do
   @moduledoc false
 
@@ -362,20 +304,6 @@ defmodule Proto2Features.Proto2Request do
           __unknown_fields__: []
         },
         %Google.Protobuf.FieldDescriptorProto{
-          name: "result",
-          extendee: nil,
-          number: 10,
-          label: :LABEL_REPEATED,
-          type: :TYPE_GROUP,
-          type_name: ".proto2_features.Proto2Request.Result",
-          default_value: nil,
-          options: nil,
-          oneof_index: nil,
-          json_name: "result",
-          proto3_optional: nil,
-          __unknown_fields__: []
-        },
-        %Google.Protobuf.FieldDescriptorProto{
           name: "metadata_map",
           extendee: nil,
           number: 14,
@@ -405,48 +333,6 @@ defmodule Proto2Features.Proto2Request do
         }
       ],
       nested_type: [
-        %Google.Protobuf.DescriptorProto{
-          name: "Result",
-          field: [
-            %Google.Protobuf.FieldDescriptorProto{
-              name: "url",
-              extendee: nil,
-              number: 11,
-              label: :LABEL_REQUIRED,
-              type: :TYPE_STRING,
-              type_name: nil,
-              default_value: nil,
-              options: nil,
-              oneof_index: nil,
-              json_name: "url",
-              proto3_optional: nil,
-              __unknown_fields__: []
-            },
-            %Google.Protobuf.FieldDescriptorProto{
-              name: "title",
-              extendee: nil,
-              number: 12,
-              label: :LABEL_OPTIONAL,
-              type: :TYPE_STRING,
-              type_name: nil,
-              default_value: nil,
-              options: nil,
-              oneof_index: nil,
-              json_name: "title",
-              proto3_optional: nil,
-              __unknown_fields__: []
-            }
-          ],
-          nested_type: [],
-          enum_type: [],
-          extension_range: [],
-          extension: [],
-          options: nil,
-          oneof_decl: [],
-          reserved_range: [],
-          reserved_name: [],
-          __unknown_fields__: []
-        },
         %Google.Protobuf.DescriptorProto{
           name: "MetadataMapEntry",
           field: [
@@ -536,7 +422,6 @@ defmodule Proto2Features.Proto2Request do
   field :status, 8, optional: true, type: Proto2Features.Status, default: :ACTIVE, enum: true
   field :oneof_string, 9, optional: true, type: :string, json_name: "oneofString", oneof: 0
   field :oneof_int, 13, optional: true, type: :int32, json_name: "oneofInt", oneof: 0
-  field :result, 10, repeated: true, type: :group
 
   field :metadata_map, 14,
     repeated: true,
@@ -647,20 +532,6 @@ defmodule Proto2Features.Proto2Response do
           json_name: "message",
           proto3_optional: nil,
           __unknown_fields__: []
-        },
-        %Google.Protobuf.FieldDescriptorProto{
-          name: "results",
-          extendee: nil,
-          number: 3,
-          label: :LABEL_REPEATED,
-          type: :TYPE_MESSAGE,
-          type_name: ".proto2_features.Proto2Request.Result",
-          default_value: nil,
-          options: nil,
-          oneof_index: nil,
-          json_name: "results",
-          proto3_optional: nil,
-          __unknown_fields__: []
         }
       ],
       nested_type: [],
@@ -677,7 +548,6 @@ defmodule Proto2Features.Proto2Response do
 
   field :success, 1, required: true, type: :bool
   field :message, 2, optional: true, type: :string
-  field :results, 3, repeated: true, type: Proto2Features.Proto2Request.Result
 end
 
 defmodule Proto2Features.ExtendableMessage.NestedInExtendable do

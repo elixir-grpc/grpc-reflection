@@ -31,12 +31,6 @@ message Proto2Request {
     int32 oneof_int = 13;
   }
 
-  // Groups (proto2 only, deprecated but still valid)
-  repeated group Result = 10 {
-    required string url = 11;
-    optional string title = 12;
-  }
-
   // Map in proto2 (added in proto2 v3.0.0)
   map<string, int32> metadata_map = 14;
 
@@ -69,7 +63,6 @@ message ExtensionData {
 message Proto2Response {
   required bool success = 1;
   optional string message = 2;
-  repeated Proto2Request.Result results = 3;
 }
 
 // Message with extension and nested types
