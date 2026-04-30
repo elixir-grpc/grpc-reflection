@@ -24,6 +24,44 @@ defmodule GrpcReflection.Case.Proto2FeaturesTest do
                } = response
       end
 
+      test "proto2 required fields have LABEL_REQUIRED", ctx do
+        message = {:file_containing_symbol, "proto2_features.Proto2Request"}
+        assert {:ok, response} = run_request(message, ctx)
+
+        assert %Google.Protobuf.FileDescriptorProto{
+                 message_type: [
+                   %Google.Protobuf.DescriptorProto{name: "Proto2Request", field: fields}
+                 ]
+               } = response
+
+        by_name = Map.new(fields, &{&1.name, &1})
+
+        assert %{label: :LABEL_REQUIRED, type: :TYPE_STRING, number: 1} =
+                 by_name["required_field"]
+
+        assert %{label: :LABEL_REQUIRED, type: :TYPE_INT32, number: 2} = by_name["required_id"]
+
+        assert %{label: :LABEL_OPTIONAL, type: :TYPE_STRING, number: 3} =
+                 by_name["optional_field"]
+
+        assert %{label: :LABEL_OPTIONAL, type: :TYPE_INT32, number: 4} = by_name["optional_id"]
+      end
+
+      test "proto2 response required fields have LABEL_REQUIRED", ctx do
+        message = {:file_containing_symbol, "proto2_features.Proto2Response"}
+        assert {:ok, response} = run_request(message, ctx)
+
+        assert %Google.Protobuf.FileDescriptorProto{
+                 message_type: [
+                   %Google.Protobuf.DescriptorProto{name: "Proto2Response", field: fields}
+                 ]
+               } = response
+
+        by_name = Map.new(fields, &{&1.name, &1})
+        assert %{label: :LABEL_REQUIRED, type: :TYPE_BOOL, number: 1} = by_name["success"]
+        assert %{label: :LABEL_OPTIONAL, type: :TYPE_STRING, number: 2} = by_name["message"]
+      end
+
       test "should return extension numbers for an extendable type", ctx do
         message = {:all_extension_numbers_of_type, "proto2_features.Proto2Request"}
         assert {:ok, response} = run_request(message, ctx)

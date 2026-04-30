@@ -16,13 +16,25 @@ defmodule GrpcReflection.Case.MultiStreamingTest do
         assert Enum.map(service_list, &Map.get(&1, :name)) == expected_services
       end
 
-      test "should list methods on StreamingService", ctx do
+      test "should list methods on MultiStreamService with correct streaming flags", ctx do
         message = {:file_containing_symbol, "streaming.MultiStreamService"}
         assert {:ok, response} = run_request(message, ctx)
 
         assert %Google.Protobuf.FileDescriptorProto{
-                 package: "streaming"
+                 package: "streaming",
+                 service: [
+                   %Google.Protobuf.ServiceDescriptorProto{
+                     name: "MultiStreamService",
+                     method: methods
+                   }
+                 ]
                } = response
+
+        by_name = Map.new(methods, &{&1.name, &1})
+
+        assert %{client_streaming: true, server_streaming: false} = by_name["UploadData"]
+        assert %{client_streaming: false, server_streaming: true} = by_name["DownloadData"]
+        assert %{client_streaming: true, server_streaming: true} = by_name["SyncData"]
       end
 
       test "reflection graph is traversable using grpcurl", ctx do

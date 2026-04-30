@@ -29,6 +29,38 @@ defmodule GrpcReflection.Case.EdgeCasesTest do
                } = response
       end
 
+      test "empty request message has no fields", ctx do
+        message = {:file_containing_symbol, "edge_cases.EmptyInputRequest"}
+        assert {:ok, response} = run_request(message, ctx)
+
+        assert %Google.Protobuf.FileDescriptorProto{
+                 message_type: [
+                   %Google.Protobuf.DescriptorProto{name: "EmptyInputRequest", field: []}
+                 ]
+               } = response
+      end
+
+      test "message with only a response field reflects correctly", ctx do
+        message = {:file_containing_symbol, "edge_cases.EmptyInputResponse"}
+        assert {:ok, response} = run_request(message, ctx)
+
+        assert %Google.Protobuf.FileDescriptorProto{
+                 message_type: [
+                   %Google.Protobuf.DescriptorProto{
+                     name: "EmptyInputResponse",
+                     field: [
+                       %Google.Protobuf.FieldDescriptorProto{
+                         name: "data",
+                         number: 1,
+                         type: :TYPE_STRING,
+                         label: :LABEL_OPTIONAL
+                       }
+                     ]
+                   }
+                 ]
+               } = response
+      end
+
       test "reflection graph is traversable using grpcurl", ctx do
         ops = GrpcReflection.TestClient.grpcurl_service(ctx)
 
