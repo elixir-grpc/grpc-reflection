@@ -10,18 +10,18 @@ defmodule GrpcReflection.ServerTest do
   test "adding a service changes responses" do
     assert Service.list_services() == []
 
-    assert Service.get_filename_by_symbol("helloworld.Greeter") ==
+    assert Service.get_filename_by_symbol("scalar_types.ScalarService") ==
              {:error, "symbol not found"}
 
-    assert Service.get_by_filename("helloworld.Greeter.proto") ==
+    assert Service.get_by_filename("scalar_types.ScalarService.proto") ==
              {:error, "filename not found"}
 
-    assert :ok == Service.put_services([Helloworld.Greeter.Service])
+    assert :ok == Service.put_services([ScalarTypes.ScalarService.Service])
 
-    assert Service.list_services() == ["helloworld.Greeter"]
+    assert Service.list_services() == ["scalar_types.ScalarService"]
 
     assert {:ok, filename} =
-             Service.get_filename_by_symbol("helloworld.Greeter")
+             Service.get_filename_by_symbol("scalar_types.ScalarService")
 
     assert {:ok, %Google.Protobuf.FileDescriptorProto{name: ^filename}} =
              Service.get_by_filename(filename)
@@ -30,7 +30,7 @@ defmodule GrpcReflection.ServerTest do
   describe "reflection state testing" do
     setup do
       Service.put_services([
-        Helloworld.Greeter.Service,
+        ScalarTypes.ScalarService.Service,
         Grpc.Reflection.V1.ServerReflection.Service,
         Grpc.Reflection.V1alpha.ServerReflection.Service
       ])
@@ -38,7 +38,7 @@ defmodule GrpcReflection.ServerTest do
 
     test "expected services are present" do
       assert Service.list_services() == [
-               "helloworld.Greeter",
+               "scalar_types.ScalarService",
                "grpc.reflection.v1.ServerReflection",
                "grpc.reflection.v1alpha.ServerReflection"
              ]
@@ -46,7 +46,7 @@ defmodule GrpcReflection.ServerTest do
 
     test "method files return service descriptors" do
       assert {:ok, filename} =
-               Service.get_filename_by_symbol("helloworld.Greeter")
+               Service.get_filename_by_symbol("scalar_types.ScalarService")
 
       assert {:ok, %Google.Protobuf.FileDescriptorProto{name: ^filename}} =
                Service.get_by_filename(filename)
@@ -54,7 +54,7 @@ defmodule GrpcReflection.ServerTest do
 
     test "describing a type returns the type" do
       assert {:ok, filename} =
-               Service.get_filename_by_symbol("helloworld.HelloRequest")
+               Service.get_filename_by_symbol("scalar_types.ScalarRequest")
 
       assert {:ok, %Google.Protobuf.FileDescriptorProto{name: ^filename}} =
                Service.get_by_filename(filename)
@@ -62,7 +62,7 @@ defmodule GrpcReflection.ServerTest do
 
     test "type with leading period still resolves" do
       assert {:ok, filename} =
-               Service.get_filename_by_symbol(".helloworld.HelloRequest")
+               Service.get_filename_by_symbol(".scalar_types.ScalarRequest")
 
       assert {:ok, %Google.Protobuf.FileDescriptorProto{name: ^filename}} =
                Service.get_by_filename(filename)

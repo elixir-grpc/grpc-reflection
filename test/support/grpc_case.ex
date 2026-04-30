@@ -1,77 +1,79 @@
 defmodule GrpcCase do
   use ExUnit.CaseTemplate
 
-  using(service: service) do
+  using opts do
+    service = Keyword.get(opts, :service)
+
     quote do
       import GrpcCase
 
-      setup_all do
-        Protobuf.load_extensions()
-      end
+      if unquote(service) do
+        setup_all do
+          Protobuf.load_extensions()
+        end
 
-      defmodule V1Server do
-        use GrpcReflection.Server, version: :v1, services: [unquote(service)]
-      end
+        defmodule V1Server do
+          use GrpcReflection.Server, version: :v1, services: [unquote(service)]
+        end
 
-      defmodule V1Server.Stub do
-        use GRPC.Stub, service: Grpc.Reflection.V1.ServerReflection.Service
-      end
+        defmodule V1Server.Stub do
+          use GRPC.Stub, service: Grpc.Reflection.V1.ServerReflection.Service
+        end
 
-      defmodule V1AlphaServer do
-        use GrpcReflection.Server, version: :v1alpha, services: [unquote(service)]
-      end
+        defmodule V1AlphaServer do
+          use GrpcReflection.Server, version: :v1alpha, services: [unquote(service)]
+        end
 
-      defmodule V1AlphaServer.Stub do
-        use GRPC.Stub, service: Grpc.Reflection.V1alpha.ServerReflection.Service
-      end
+        defmodule V1AlphaServer.Stub do
+          use GRPC.Stub, service: Grpc.Reflection.V1alpha.ServerReflection.Service
+        end
 
-      defmodule Endpoint do
-        use GRPC.Endpoint
+        defmodule Endpoint do
+          use GRPC.Endpoint
 
-        run(V1Server)
-        run(V1AlphaServer)
-      end
+          run(V1Server)
+          run(V1AlphaServer)
+        end
 
-      defp stub_v1_server(_) do
-        # %{endpoint: Endpoint, stub: V1Server.Stub}
+        defp stub_v1_server(_) do
+          {:ok, _pid, port} = GRPC.Server.start_endpoint(Endpoint, 0)
+          on_exit(fn -> :ok = GRPC.Server.stop_endpoint(Endpoint, []) end)
+          start_supervised({GRPC.Client.Supervisor, []})
 
-        {:ok, _pid, port} = GRPC.Server.start_endpoint(Endpoint, 0)
-        on_exit(fn -> :ok = GRPC.Server.stop_endpoint(Endpoint, []) end)
-        start_supervised({GRPC.Client.Supervisor, []})
+          host = "localhost:#{port}"
+          {:ok, channel} = GRPC.Stub.connect(host)
 
-        host = "localhost:#{port}"
-        {:ok, channel} = GRPC.Stub.connect(host)
+          req = %Grpc.Reflection.V1.ServerReflectionRequest{host: host}
 
-        req = %Grpc.Reflection.V1.ServerReflectionRequest{host: host}
+          %{
+            channel: channel,
+            req: req,
+            version: :v1,
+            host: host,
+            endpoint: Endpoint,
+            stub: V1Server.Stub
+          }
+        end
 
-        %{
-          channel: channel,
-          req: req,
-          version: :v1,
-          host: host,
-          endpoint: Endpoint,
-          stub: V1Server.Stub
-        }
-      end
+        defp stub_v1alpha_server(_) do
+          {:ok, _pid, port} = GRPC.Server.start_endpoint(Endpoint, 0)
+          on_exit(fn -> :ok = GRPC.Server.stop_endpoint(Endpoint, []) end)
+          start_supervised({GRPC.Client.Supervisor, []})
 
-      defp stub_v1alpha_server(_) do
-        {:ok, _pid, port} = GRPC.Server.start_endpoint(Endpoint, 0)
-        on_exit(fn -> :ok = GRPC.Server.stop_endpoint(Endpoint, []) end)
-        start_supervised({GRPC.Client.Supervisor, []})
+          host = "localhost:#{port}"
+          {:ok, channel} = GRPC.Stub.connect(host)
 
-        host = "localhost:#{port}"
-        {:ok, channel} = GRPC.Stub.connect(host)
+          req = %Grpc.Reflection.V1alpha.ServerReflectionRequest{host: host}
 
-        req = %Grpc.Reflection.V1alpha.ServerReflectionRequest{host: host}
-
-        %{
-          channel: channel,
-          req: req,
-          version: :v1alpha,
-          host: host,
-          endpoint: Endpoint,
-          stub: V1AlphaServer.Stub
-        }
+          %{
+            channel: channel,
+            req: req,
+            version: :v1alpha,
+            host: host,
+            endpoint: Endpoint,
+            stub: V1AlphaServer.Stub
+          }
+        end
       end
     end
   end
