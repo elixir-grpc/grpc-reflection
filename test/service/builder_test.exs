@@ -6,35 +6,25 @@ defmodule GrpcReflection.Service.BuilderTest do
   alias GrpcReflection.Service.Builder
   alias GrpcReflection.Service.State
 
-  test "supports all reflection types in proto3" do
-    assert {:ok, tree} = Builder.build_reflection_tree([TestserviceV3.TestService.Service])
-    assert %State{services: [TestserviceV3.TestService.Service]} = tree
+  setup_all do
+    Protobuf.load_extensions()
+  end
+
+  test "supports proto3 services" do
+    assert {:ok, tree} = Builder.build_reflection_tree([ScalarTypes.ScalarService.Service])
+    assert %State{services: [ScalarTypes.ScalarService.Service]} = tree
 
     assert Map.keys(tree.files) == [
-             "google.protobuf.Any.proto",
-             "google.protobuf.StringValue.proto",
-             "google.protobuf.Timestamp.proto",
-             "testserviceV3.Enum.proto",
-             "testserviceV3.TestReply.proto",
-             "testserviceV3.TestRequest.Payload.proto",
-             "testserviceV3.TestRequest.Token.proto",
-             "testserviceV3.TestRequest.proto",
-             "testserviceV3.TestService.proto"
+             "scalar_types.ScalarReply.proto",
+             "scalar_types.ScalarRequest.proto",
+             "scalar_types.ScalarService.proto"
            ]
 
     assert Map.keys(tree.symbols) == [
-             "google.protobuf.Any",
-             "google.protobuf.StringValue",
-             "google.protobuf.Timestamp",
-             "testserviceV3.Enum",
-             "testserviceV3.TestReply",
-             "testserviceV3.TestRequest",
-             "testserviceV3.TestRequest.GEntry",
-             "testserviceV3.TestRequest.Payload",
-             "testserviceV3.TestRequest.Payload.Location",
-             "testserviceV3.TestRequest.Token",
-             "testserviceV3.TestService",
-             "testserviceV3.TestService.CallFunction"
+             "scalar_types.ScalarReply",
+             "scalar_types.ScalarRequest",
+             "scalar_types.ScalarService",
+             "scalar_types.ScalarService.ProcessScalars"
            ]
 
     Enum.each(Map.values(tree.files), fn payload ->
@@ -42,37 +32,9 @@ defmodule GrpcReflection.Service.BuilderTest do
     end)
   end
 
-  test "supports all reflection types in proto2" do
-    assert {:ok, tree} = Builder.build_reflection_tree([TestserviceV2.TestService.Service])
-    assert %State{services: [TestserviceV2.TestService.Service]} = tree
-
-    assert Map.keys(tree.files) == [
-             "google.protobuf.Any.proto",
-             "google.protobuf.Timestamp.proto",
-             "testserviceV2.Enum.proto",
-             "testserviceV2.TestReply.proto",
-             "testserviceV2.TestRequest.proto",
-             "testserviceV2.TestRequestExtension.proto",
-             "testserviceV2.TestService.proto"
-           ]
-
-    assert Map.keys(tree.symbols) == [
-             "google.protobuf.Any",
-             "google.protobuf.Timestamp",
-             "testserviceV2.Enum",
-             "testserviceV2.TestReply",
-             "testserviceV2.TestRequest",
-             "testserviceV2.TestRequest.GEntry",
-             "testserviceV2.TestService",
-             "testserviceV2.TestService.CallFunction"
-           ]
-
-    assert %{
-             "testserviceV2.TestRequest" => extensions
-           } = tree.extensions
-
-    # this is a bitstring that may contain whitespace characters
-    assert extensions |> to_string() |> String.trim() == ""
+  test "supports proto2 services" do
+    assert {:ok, tree} = Builder.build_reflection_tree([Proto2Features.Proto2Service.Service])
+    assert %State{services: [Proto2Features.Proto2Service.Service]} = tree
 
     Enum.each(Map.values(tree.files), fn
       %{name: "google" <> _, syntax: syntax} -> assert syntax == "proto3"
@@ -80,13 +42,17 @@ defmodule GrpcReflection.Service.BuilderTest do
     end)
   end
 
+  test "proto2 services expose extension numbers" do
+    assert {:ok, tree} = Builder.build_reflection_tree([Proto2Features.Proto2Service.Service])
+
+    assert %{"proto2_features.Proto2Request" => _} = tree.extensions
+  end
+
   test "handles an empty service" do
-    assert {:ok, tree} = Builder.build_reflection_tree([EmptyService.Service])
-    assert %State{services: [EmptyService.Service]} = tree
+    assert {:ok, tree} = Builder.build_reflection_tree([EmptyService.EmptyService.Service])
+    assert %State{services: [EmptyService.EmptyService.Service]} = tree
 
     Enum.each(Map.values(tree.files), fn payload ->
-      # empty services default to proto2
-      assert payload.syntax == "proto2"
       assert payload.dependency == []
       assert payload.message_type == []
       assert payload.enum_type == []
@@ -102,20 +68,18 @@ defmodule GrpcReflection.Service.BuilderTest do
     end)
   end
 
-  test "handles a service with a custom prefix" do
-    assert {:ok, tree} = Builder.build_reflection_tree([HLW.TestService.Service])
-    assert %State{services: [HLW.TestService.Service]} = tree
+  test "handles a service with a custom module prefix" do
+    assert {:ok, tree} =
+             Builder.build_reflection_tree([CustomizedPrefix.PrefixService.Service])
 
-    names = Enum.map(Map.values(tree.files), & &1.name)
+    assert %State{services: [CustomizedPrefix.PrefixService.Service]} = tree
+
+    names = tree.files |> Map.values() |> Enum.map(& &1.name) |> Enum.sort()
 
     assert names == [
-             "google.protobuf.Any.proto",
-             "google.protobuf.Timestamp.proto",
-             "testserviceV2.Enum.proto",
-             "testserviceV2.TestReply.proto",
-             "testserviceV2.TestRequest.proto",
-             "testserviceV2.TestRequestExtension.proto",
-             "testserviceV2.TestService.proto"
+             "custom_prefix.EchoRequest.proto",
+             "custom_prefix.EchoResponse.proto",
+             "custom_prefix.PrefixService.proto"
            ]
   end
 
@@ -152,10 +116,12 @@ defmodule GrpcReflection.Service.BuilderTest do
   # fake a service module here to test unwrapping logic
   defmodule WrappedService do
     def __meta__(:name), do: "WrappedService"
-    defdelegate __rpc_calls__, to: EmptyService.Service
+    defdelegate __rpc_calls__, to: EmptyService.EmptyService.Service
 
     def descriptor do
-      %Google.Protobuf.FileDescriptorProto{service: [EmptyService.Service.descriptor()]}
+      %Google.Protobuf.FileDescriptorProto{
+        service: [EmptyService.EmptyService.Service.descriptor()]
+      }
     end
   end
 

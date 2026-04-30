@@ -20,9 +20,24 @@ defmodule GrpcReflection.MixProject do
       test_coverage: [
         ignore_modules: [
           ~r/^Grpc\./,
-          ~r/^Helloworld\./,
-          ~r/^TestserviceV2\./,
-          ~r/^TestserviceV3\./,
+          ~r/^Google\./,
+          ~r/^ScalarTypes\./,
+          ~r/^Streaming\./,
+          ~r/^EmptyService\./,
+          ~r/^EdgeCases\./,
+          ~r/^Proto2Features\./,
+          ~r/^CustomizedPrefix\./,
+          ~r/^ImportsTest\./,
+          ~r/^CommonTypes\./,
+          ~r/^GlobalService$/,
+          ~r/^GlobalRequest$/,
+          ~r/^GlobalResponse$/,
+          ~r/^Nested\./,
+          ~r/^WellKnownTypes\./,
+          ~r/^PackageA\./,
+          ~r/^PackageB\./,
+          ~r/^NestedEnumConflict\./,
+          ~r/^RecursiveMessage\./,
           GrpcReflection.TestEndpoint,
           GrpcReflection.TestEndpoint.Endpoint
         ]

@@ -2,13 +2,7 @@ defmodule GrpcReflection.TestEndpoint do
   defmodule V1Server do
     use GrpcReflection.Server,
       version: :v1,
-      services: [
-        Helloworld.Greeter.Service,
-        TestserviceV2.TestService.Service,
-        TestserviceV3.TestService.Service,
-        Grpc.Reflection.V1.ServerReflection.Service,
-        Grpc.Reflection.V1alpha.ServerReflection.Service
-      ]
+      services: [ScalarTypes.ScalarService.Service]
   end
 
   defmodule V1Server.Stub do
@@ -18,13 +12,7 @@ defmodule GrpcReflection.TestEndpoint do
   defmodule V1AlphaServer do
     use GrpcReflection.Server,
       version: :v1alpha,
-      services: [
-        Helloworld.Greeter.Service,
-        TestserviceV2.TestService.Service,
-        TestserviceV3.TestService.Service,
-        Grpc.Reflection.V1.ServerReflection.Service,
-        Grpc.Reflection.V1alpha.ServerReflection.Service
-      ]
+      services: [ScalarTypes.ScalarService.Service]
   end
 
   defmodule V1AlphaServer.Stub do
@@ -34,7 +22,6 @@ defmodule GrpcReflection.TestEndpoint do
   defmodule Endpoint do
     use GRPC.Endpoint
 
-    run(Helloworld.Greeter.Server)
     run(V1Server)
     run(V1AlphaServer)
   end
