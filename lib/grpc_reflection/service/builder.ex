@@ -14,7 +14,10 @@ defmodule GrpcReflection.Service.Builder do
           new_state = process_service(service)
           State.merge(state, new_state)
         end)
+        # shrink_cycles must run first so the symbol table reflects final merged filenames
+        # before resolve_dependencies rewrites dep strings through it
         |> State.shrink_cycles()
+        |> resolve_dependencies()
 
       {:ok, tree}
     end
@@ -76,38 +79,46 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   defp trace_message_fields(state, parent_symbol, module, fields) do
-    # nested types arent a "separate file", they return their parents' response
     nested_types = Util.get_nested_types(parent_symbol, module.descriptor())
 
     module.__message_props__().field_props
     |> Map.values()
     |> Enum.map(fn %{name: name, type: type} ->
-      %{
-        mod:
-          case type do
-            {_, mod} -> mod
-            mod -> mod
-          end,
-        symbol: Enum.find(fields, fn f -> f.name == name end).type_name
-      }
-    end)
-    |> Enum.reject(fn %{symbol: s} -> is_nil(s) or State.has_symbol?(state, s) end)
-    |> Enum.reduce(state, fn %{mod: mod, symbol: symbol}, state ->
-      symbol = Util.trim_symbol(symbol)
-
-      response =
-        if symbol in nested_types do
-          build_response(parent_symbol, module)
-        else
-          build_response(symbol, mod)
+      mod =
+        case type do
+          {_, mod} -> mod
+          mod -> mod
         end
 
-      state
-      |> Extensions.add_extensions(symbol, mod)
-      |> State.add_file(response)
-      |> State.add_symbol(symbol, response.name)
-      |> trace_message_refs(symbol, mod)
+      %{mod: mod, symbol: Enum.find(fields, fn f -> f.name == name end).type_name}
     end)
+    |> Enum.reject(fn %{symbol: s} -> is_nil(s) end)
+    |> Enum.reduce(state, fn %{mod: mod, symbol: symbol}, state ->
+      trace_field_ref(state, parent_symbol, Util.trim_symbol(symbol), mod, nested_types)
+    end)
+  end
+
+  defp trace_field_ref(state, _parent_symbol, symbol, _mod, _nested_types)
+       when is_map_key(state.symbols, symbol),
+       do: state
+
+  defp trace_field_ref(state, parent_symbol, symbol, mod, nested_types) do
+    {file, filename} =
+      if symbol in nested_types do
+        # nested types belong in the same file as their ancestor — look it up rather
+        # than building a new synthetic file (which would have wrong FQDNs)
+        parent_filename = state.symbols[parent_symbol]
+        {state.files[parent_filename], parent_filename}
+      else
+        response = build_response(symbol, mod)
+        {response, response.name}
+      end
+
+    state
+    |> Extensions.add_extensions(symbol, mod)
+    |> State.add_file(file)
+    |> State.add_symbol(symbol, filename)
+    |> trace_message_refs(symbol, mod)
   end
 
   defp build_response(symbol, module) do
@@ -138,6 +149,27 @@ defmodule GrpcReflection.Service.Builder do
       %Google.Protobuf.ServiceDescriptorProto{} -> %{response_stub | service: [descriptor]}
       %Google.Protobuf.EnumDescriptorProto{} -> %{response_stub | enum_type: [descriptor]}
     end
+  end
+
+  # Rewrite each file's dependency list to use actual filenames from the symbol table.
+  # build_response names deps as `type_symbol <> ".proto"`, but nested types share a file
+  # with their ancestor, so that filename may not exist. Must run after shrink_cycles so
+  # merged cycle filenames are already reflected in the symbol table.
+  defp resolve_dependencies(%State{files: files, symbols: symbols} = state) do
+    resolved_files =
+      Map.new(files, fn {filename, descriptor} ->
+        resolved_deps =
+          descriptor.dependency
+          |> Enum.map(fn dep ->
+            type_symbol = String.trim_trailing(dep, ".proto")
+            symbols[type_symbol] || dep
+          end)
+          |> Enum.uniq()
+
+        {filename, %{descriptor | dependency: resolved_deps}}
+      end)
+
+    %{state | files: resolved_files}
   end
 
   # protoc with the elixir generator and protobuf.generate slightly differ for how they
