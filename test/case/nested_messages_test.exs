@@ -3,12 +3,6 @@ defmodule GrpcReflection.Case.NestedMessagesTest do
 
   use GrpcCase, service: Nested.NestedService.Service
 
-  # nested_messages.proto defines two services sharing the same deeply nested types.
-  # The builder raises a symbol conflict when processing the second traversal of
-  # OuterMessage.MiddleMessage.InnerMessage via AnotherNestedService.
-  # Tagged skip until the library supports multi-service files with shared nested types.
-  @moduletag :skip
-
   versions = ["v1", "v1alpha"]
 
   for version <- versions do
