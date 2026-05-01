@@ -79,46 +79,46 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   defp trace_message_fields(state, parent_symbol, module, fields) do
-    # nested types arent a "separate file", they return their parents' response
     nested_types = Util.get_nested_types(parent_symbol, module.descriptor())
 
     module.__message_props__().field_props
     |> Map.values()
     |> Enum.map(fn %{name: name, type: type} ->
-      %{
-        mod:
-          case type do
-            {_, mod} -> mod
-            mod -> mod
-          end,
-        symbol: Enum.find(fields, fn f -> f.name == name end).type_name
-      }
+      mod =
+        case type do
+          {_, mod} -> mod
+          mod -> mod
+        end
+
+      %{mod: mod, symbol: Enum.find(fields, fn f -> f.name == name end).type_name}
     end)
     |> Enum.reject(fn %{symbol: s} -> is_nil(s) end)
     |> Enum.reduce(state, fn %{mod: mod, symbol: symbol}, state ->
-      symbol = Util.trim_symbol(symbol)
-
-      if State.has_symbol?(state, symbol) do
-        state
-      else
-        {file, filename} =
-          if symbol in nested_types do
-            # nested types belong in the same file as their ancestor — look it up rather
-            # than building a new synthetic file (which would have wrong FQDNs)
-            parent_filename = state.symbols[parent_symbol]
-            {state.files[parent_filename], parent_filename}
-          else
-            response = build_response(symbol, mod)
-            {response, response.name}
-          end
-
-        state
-        |> Extensions.add_extensions(symbol, mod)
-        |> State.add_file(file)
-        |> State.add_symbol(symbol, filename)
-        |> trace_message_refs(symbol, mod)
-      end
+      trace_field_ref(state, parent_symbol, Util.trim_symbol(symbol), mod, nested_types)
     end)
+  end
+
+  defp trace_field_ref(state, _parent_symbol, symbol, _mod, _nested_types)
+       when is_map_key(state.symbols, symbol),
+       do: state
+
+  defp trace_field_ref(state, parent_symbol, symbol, mod, nested_types) do
+    {file, filename} =
+      if symbol in nested_types do
+        # nested types belong in the same file as their ancestor — look it up rather
+        # than building a new synthetic file (which would have wrong FQDNs)
+        parent_filename = state.symbols[parent_symbol]
+        {state.files[parent_filename], parent_filename}
+      else
+        response = build_response(symbol, mod)
+        {response, response.name}
+      end
+
+    state
+    |> Extensions.add_extensions(symbol, mod)
+    |> State.add_file(file)
+    |> State.add_symbol(symbol, filename)
+    |> trace_message_refs(symbol, mod)
   end
 
   defp build_response(symbol, module) do
