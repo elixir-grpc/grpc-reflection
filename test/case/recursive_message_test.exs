@@ -3,10 +3,6 @@ defmodule GrpcReflection.Case.RecursiveMessageTest do
 
   use GrpcCase, service: RecursiveMessage.Service.Service
 
-  # Recursive message structures cause infinite loops in the builder's graph traversal.
-  # Tracked for future fix; protos and tests are in place to validate when resolved.
-  @moduletag :skip
-
   versions = ["v1", "v1alpha"]
 
   for version <- versions do

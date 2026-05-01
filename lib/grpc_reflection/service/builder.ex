@@ -14,7 +14,7 @@ defmodule GrpcReflection.Service.Builder do
           new_state = process_service(service)
           State.merge(state, new_state)
         end)
-        |> State.group_symbols_by_namespace()
+        |> State.shrink_cycles()
 
       {:ok, tree}
     end

@@ -116,9 +116,68 @@ defmodule GrpcReflection.Service.State do
     end
   end
 
-  def group_symbols_by_namespace(%__MODULE__{} = state) do
-    # group symbols by namespace and combine
-    # IO.inspect(state)
-    state
+  def shrink_cycles(%__MODULE__{} = state) do
+    new_state =
+      state
+      |> GrpcReflection.Service.Cycle.get_cycles()
+      |> Enum.reduce(state, fn filenames, acc ->
+        files = filenames |> Enum.map(&acc.files[&1]) |> Enum.reject(&is_nil/1)
+
+        if length(files) < 2 do
+          acc
+        else
+          update_with_combined(acc, combine_file_descriptors(files), filenames)
+        end
+      end)
+
+    if new_state == state, do: state, else: shrink_cycles(new_state)
+  end
+
+  defp update_with_combined(state, combined_file, combined_filenames) do
+    new_files =
+      state.files
+      |> Map.drop(combined_filenames)
+      |> Map.new(fn {filename, descriptor} ->
+        if Enum.any?(descriptor.dependency, &(&1 in combined_filenames)) do
+          updated_deps = (descriptor.dependency -- combined_filenames) ++ [combined_file.name]
+          {filename, %{descriptor | dependency: Enum.uniq(updated_deps)}}
+        else
+          {filename, descriptor}
+        end
+      end)
+      |> Map.put(combined_file.name, combined_file)
+
+    new_symbols =
+      Map.new(state.symbols, fn {symbol, filename} ->
+        if filename in combined_filenames do
+          {symbol, combined_file.name}
+        else
+          {symbol, filename}
+        end
+      end)
+
+    %{state | files: new_files, symbols: new_symbols}
+  end
+
+  defp combine_file_descriptors(file_descriptors) do
+    combined_names = Enum.map(file_descriptors, & &1.name)
+    canonical_name = Enum.min(combined_names)
+
+    Enum.reduce(
+      file_descriptors,
+      %Google.Protobuf.FileDescriptorProto{name: canonical_name},
+      fn descriptor, acc ->
+        %{
+          acc
+          | syntax: acc.syntax || descriptor.syntax,
+            package: acc.package || descriptor.package,
+            message_type: Enum.uniq(acc.message_type ++ descriptor.message_type),
+            service: Enum.uniq(acc.service ++ descriptor.service),
+            enum_type: Enum.uniq(acc.enum_type ++ descriptor.enum_type),
+            dependency: Enum.uniq(acc.dependency ++ (descriptor.dependency -- combined_names)),
+            extension: Enum.uniq(acc.extension ++ descriptor.extension)
+        }
+      end
+    )
   end
 end
