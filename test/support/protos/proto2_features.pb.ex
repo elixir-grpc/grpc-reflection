@@ -330,6 +330,37 @@ defmodule Proto2Features.Proto2Request do
           json_name: "anyValues",
           proto3_optional: nil,
           __unknown_fields__: []
+        },
+        %Google.Protobuf.FieldDescriptorProto{
+          name: "packed_ints",
+          extendee: nil,
+          number: 16,
+          label: :LABEL_REPEATED,
+          type: :TYPE_INT32,
+          type_name: nil,
+          default_value: nil,
+          options: %Google.Protobuf.FieldOptions{
+            ctype: :STRING,
+            packed: true,
+            deprecated: false,
+            lazy: false,
+            jstype: :JS_NORMAL,
+            weak: false,
+            unverified_lazy: false,
+            debug_redact: false,
+            retention: nil,
+            targets: [],
+            edition_defaults: [],
+            features: nil,
+            feature_support: nil,
+            uninterpreted_option: [],
+            __pb_extensions__: %{},
+            __unknown_fields__: []
+          },
+          oneof_index: nil,
+          json_name: "packedInts",
+          proto3_optional: nil,
+          __unknown_fields__: []
         }
       ],
       nested_type: [
@@ -430,6 +461,13 @@ defmodule Proto2Features.Proto2Request do
     map: true
 
   field :any_values, 15, repeated: true, type: Google.Protobuf.Any, json_name: "anyValues"
+
+  field :packed_ints, 16,
+    repeated: true,
+    type: :int32,
+    json_name: "packedInts",
+    packed: true,
+    deprecated: false
 
   extensions [{100, 200}]
 end

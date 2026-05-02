@@ -37,6 +37,9 @@ message Proto2Request {
   // Repeated Any in proto2
   repeated google.protobuf.Any any_values = 15;
 
+  // Packed repeated field (proto2 requires explicit [packed=true])
+  repeated int32 packed_ints = 16 [packed=true];
+
   // Extensions range
   extensions 100 to 199;
 }

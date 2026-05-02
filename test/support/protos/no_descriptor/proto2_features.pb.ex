@@ -73,6 +73,13 @@ defmodule NoDescriptor.Proto2Features.Proto2Request do
 
   field :any_values, 15, repeated: true, type: Google.Protobuf.Any, json_name: "anyValues"
 
+  field :packed_ints, 16,
+    repeated: true,
+    type: :int32,
+    json_name: "packedInts",
+    packed: true,
+    deprecated: false
+
   extensions [{100, 200}]
 end
 
