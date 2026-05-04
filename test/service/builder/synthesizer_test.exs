@@ -25,10 +25,12 @@ defmodule GrpcReflection.Service.Builder.SynthesizerTest do
     |> Map.update(:options, nil, &normalize_options/1)
   end
 
-  # The real descriptor populates many FieldOptions fields with defaults (ctype, deprecated,
-  # lazy, etc). We only synthesize packed, so normalize to just that for comparison.
+  # The real descriptor populates many FieldOptions fields with defaults (ctype, lazy, etc).
+  # We only synthesize packed and deprecated, so normalize to just those for comparison.
   defp normalize_options(nil), do: nil
-  defp normalize_options(%Google.Protobuf.FieldOptions{packed: packed}), do: %{packed: packed}
+
+  defp normalize_options(%Google.Protobuf.FieldOptions{packed: packed, deprecated: deprecated}),
+    do: %{packed: packed, deprecated: deprecated || nil}
 
   defp comparable_fields(descriptor), do: Enum.map(descriptor.field, &comparable_field/1)
 
@@ -89,6 +91,14 @@ defmodule GrpcReflection.Service.Builder.SynthesizerTest do
       real_decl_names = Enum.map(real.oneof_decl, & &1.name)
       synth_decl_names = Enum.map(synth.oneof_decl, & &1.name)
       assert real_decl_names == synth_decl_names
+    end
+
+    test "DeprecatedRequest fields match protoc output" do
+      real = DeprecatedFields.DeprecatedRequest.descriptor()
+      synth = Synthesizer.message_descriptor(NoDescriptor.DeprecatedFields.DeprecatedRequest)
+
+      assert synth.name == real.name
+      assert comparable_fields(synth) == comparable_fields(real)
     end
   end
 

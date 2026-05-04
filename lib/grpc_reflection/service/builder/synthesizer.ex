@@ -121,10 +121,18 @@ defmodule GrpcReflection.Service.Builder.Synthesizer do
 
   # proto3 repeated scalars are implicitly packed — reflection clients infer this from
   # syntax, so options.packed must not be set (matches real protoc output).
-  defp field_options(%Protobuf.FieldProps{packed?: true}, :proto2),
-    do: %Google.Protobuf.FieldOptions{packed: true}
+  defp field_options(props, syntax) do
+    packed = props.packed? == true and syntax == :proto2
+    deprecated = props.deprecated? == true
 
-  defp field_options(_, _), do: nil
+    case {packed, deprecated} do
+      {false, false} ->
+        nil
+
+      {packed, deprecated} ->
+        %Google.Protobuf.FieldOptions{packed: packed || nil, deprecated: deprecated || nil}
+    end
+  end
 
   defp encode_default(nil), do: nil
   defp encode_default(v) when is_binary(v), do: v

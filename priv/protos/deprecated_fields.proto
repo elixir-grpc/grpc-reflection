@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package deprecated_fields;
+
+option go_package = "deprecated_fields";
+
+// A message with a mix of active and deprecated fields.
+message DeprecatedRequest {
+  string active_field = 1;
+  string legacy_field = 2 [deprecated = true];
+  int32  active_id    = 3;
+  int32  old_id       = 4 [deprecated = true];
+}
+
+message DeprecatedResponse {
+  bool   success      = 1;
+  string result       = 2;
+  string old_result   = 3 [deprecated = true];
+}
+
+service DeprecatedFieldsService {
+  rpc Process(DeprecatedRequest) returns (DeprecatedResponse);
+}
