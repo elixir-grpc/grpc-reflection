@@ -187,8 +187,6 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   defp synthesize_descriptor(module) do
-    Code.ensure_loaded?(module)
-
     cond do
       function_exported?(module, :__rpc_calls__, 0) ->
         GrpcReflection.Service.Builder.Synthesizer.service_descriptor(module)
@@ -200,7 +198,10 @@ defmodule GrpcReflection.Service.Builder do
         GrpcReflection.Service.Builder.Synthesizer.message_descriptor(module)
 
       true ->
-        raise "Module #{inspect(module)} has no descriptor/0 and cannot be synthesized"
+        # unreachable in practice: validate_services/1 only admits modules that export
+        # __rpc_calls__/0, __message_props__/0, or descriptor/0, so a module reaching
+        # synthesize_descriptor/1 without any of those three is impossible.
+        raise "Module #{inspect(module)} exports neither descriptor/0, __rpc_calls__/0, nor __message_props__/0 — cannot synthesize a descriptor"
     end
   end
 end

@@ -107,9 +107,7 @@ defmodule GrpcReflection.Service.BuilderTest do
   end
 
   test "handles a non-service module" do
-    assert_raise UndefinedFunctionError, fn ->
-      Builder.build_reflection_tree([Enum])
-    end
+    assert {:error, "non-service module provided"} = Builder.build_reflection_tree([Enum])
   end
 
   # protobuf_generate wraps service descriptors into FileDescriptors

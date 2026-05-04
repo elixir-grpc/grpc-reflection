@@ -77,8 +77,10 @@ defmodule GrpcReflection.MixProject do
 
   @protoc_opts "gen_descriptors=true,plugins=grpc"
   @protoc_opts_no_descriptor "package_prefix=NoDescriptor,plugins=grpc"
-  # Protos with a file-level (elixirpb.file).module_prefix override package_prefix,
-  # so the no-descriptor pass would produce duplicate module names.
+  # Protos that set (elixirpb.file).module_prefix must be skipped here: that option
+  # overrides package_prefix entirely, so the no-descriptor pass would emit modules with
+  # the same name as the descriptor pass, causing a compile-time conflict.
+  # Add any proto that uses the elixirpb.file module_prefix option to this list.
   @skip_no_descriptor ["custom_prefix_service.proto"]
 
   defp build_protos(_argv) do

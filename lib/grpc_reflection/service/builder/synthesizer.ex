@@ -6,7 +6,7 @@ defmodule GrpcReflection.Service.Builder.Synthesizer do
   # oneof indices are assigned in message_descriptor/1 where all fields are visible.
   # syntax must be passed explicitly when building from message context; proto3 repeated
   # scalars have packed?: true in FieldProps but must NOT set options.packed (implicit).
-  def field_descriptor_from_props(%Protobuf.FieldProps{} = props, syntax \\ :proto2) do
+  def field_descriptor_from_props(%Protobuf.FieldProps{} = props, syntax \\ :proto3) do
     {type, type_name} = resolve_type(props)
 
     %Google.Protobuf.FieldDescriptorProto{
@@ -58,6 +58,11 @@ defmodule GrpcReflection.Service.Builder.Synthesizer do
       field: fields,
       oneof_decl: real_oneof_decls ++ synthetic_oneof_decls,
       extension_range: extension_ranges,
+      # nested_type is always [] in synthesized descriptors. All message types — including
+      # map-entry types and any inline nested message definitions in the original .proto —
+      # are discovered via field traversal in builder.ex and emitted as separate files.
+      # This differs from protoc output (which embeds nested types in the parent descriptor)
+      # but is handled correctly by standard reflection clients.
       nested_type: [],
       enum_type: []
     }
@@ -145,7 +150,7 @@ defmodule GrpcReflection.Service.Builder.Synthesizer do
 
   defp build_method_descriptor(method, req, req_stream, resp, resp_stream) do
     %Google.Protobuf.MethodDescriptorProto{
-      name: method |> Atom.to_string() |> Macro.camelize(),
+      name: Atom.to_string(method),
       input_type: "." <> req.full_name(),
       output_type: "." <> resp.full_name(),
       client_streaming: req_stream,
