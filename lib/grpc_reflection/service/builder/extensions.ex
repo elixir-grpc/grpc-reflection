@@ -5,9 +5,7 @@ defmodule GrpcReflection.Service.Builder.Extensions do
   alias GrpcReflection.Service.State
 
   def add_extensions(state, symbol, module) do
-    if not (Code.ensure_loaded?(module) and function_exported?(module, :descriptor, 0)) do
-      state
-    else
+    if Code.ensure_loaded?(module) and function_exported?(module, :descriptor, 0) do
       extension_file = symbol <> "Extension.proto"
 
       case process_extensions(module, symbol, extension_file, module.descriptor()) do
@@ -19,6 +17,8 @@ defmodule GrpcReflection.Service.Builder.Extensions do
         :ignore ->
           state
       end
+    else
+      state
     end
   end
 
