@@ -149,6 +149,23 @@ defmodule GrpcReflection.TestClient do
     end)
   end
 
+  # Makes a real gRPC call using reflection (no -proto flag). grpcurl fetches the
+  # descriptor from the server, encodes the JSON request into binary protobuf using
+  # that descriptor, sends it, and decodes the response. Asserts exit code 0 and
+  # returns the parsed JSON response map.
+  def grpcurl_call(%{host: host}, method, json_request) do
+    {result, 0} =
+      System.cmd("grpcurl", [
+        "-plaintext",
+        "-d",
+        Jason.encode!(json_request),
+        host,
+        method
+      ])
+
+    Jason.decode!(result)
+  end
+
   def grpcurl_service(ctx) do
     ctx
     |> grpcurl_list_services()

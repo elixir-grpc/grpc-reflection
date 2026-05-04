@@ -3,6 +3,7 @@ defmodule GrpcCase do
 
   using opts do
     service = Keyword.get(opts, :service)
+    handler = Keyword.get(opts, :handler)
 
     quote do
       import GrpcCase
@@ -33,6 +34,7 @@ defmodule GrpcCase do
 
           run(V1Server)
           run(V1AlphaServer)
+          if unquote(handler), do: run(unquote(handler))
         end
 
         defp stub_v1_server(_) do
