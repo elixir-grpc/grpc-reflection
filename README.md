@@ -6,12 +6,12 @@
 [![License](https://img.shields.io/hexpm/l/grpc_reflection.svg)](https://github.com/elixir-grpc/grpc-reflection/blob/main/LICENSE)
 [![Total Downloads](https://img.shields.io/hexpm/dt/grpc_reflection.svg)](https://hex.pm/packages/grpc_reflection)
 
-Server reflection allows servers to assist clients in runtime construction of requests without having stub information precompiled into the client.
+Server reflection is a mechanism that allows servers to assist clients in runtime construction of requests by informing the client directly at runtime.  No pre-shared schema is required.
 
 According to the [GRPC Server Reflection Protocol
 ](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md), the primary usecase for server reflection is to write (typically) command line debugging tools for talking to a grpc server. In particular, such a tool will take in a method and a payload (in human readable text format) send it to the server (typically in binary proto wire format), and then take the response and decode it to text to present to the user.
 
-GrpcReflection adds reflection support to applications built with [grpc-elixir](https://hex.pm/packages/grpc). It is a supervised application that can be implemented as a gRPC server using [grpc-elixir](https://github.com/elixir-grpc/grpc).
+The GrpcReflection library adds reflection support to applications built with [grpc-elixir](https://hex.pm/packages/grpc).
 
 ## Installation
 
@@ -31,7 +31,11 @@ This is written and tested using [grpcurl](https://github.com/fullstorydev/grpcu
 
 ## Enable reflection on your application
 
-1. Rebuild your protos with descriptors enabled. Each module and/or service that you would like to expose through reflection must use the protoc elixir-out option `gen_descriptors=true`.
+1. Ensure your protos are available using one of these options:
+
+    - **Recommended:** expose descriptors from your proto files using the protoc elixir-out option `gen_descriptors=true`, rebuild your protos with this option and note if it is present in your `<module>.pb.ex` file
+
+    - **Experimental:** GrpcReflection will synthesize reflection data by introspecting your service and messages — no recompile or option needed.
 
 1. Create a reflection server
 
@@ -48,8 +52,8 @@ This is written and tested using [grpcurl](https://github.com/fullstorydev/grpcu
    |   `version`   | Either `:v1` or `:v1alpha`, depending on intended client support.       |
    |  `services`   | This is a list of GRPC services that should be included for reflection. |
 
-   > [!NOTE]
-   > Multiple services are combined into a single reflection state. If fully-qualified symbol names collide for different payloads in those different services, one of the symbols could be overwritten by the other. The Builder tries to detect this and raise on collision
+   > #### Note {: .info}
+   > Multiple services are combined into a single reflection state. If fully-qualified symbol names collide across services, the Builder will raise at startup.
 
 1. Add the reflection supervisor to your supervision tree to host the cached reflection state
 
