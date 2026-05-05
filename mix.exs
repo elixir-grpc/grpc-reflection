@@ -38,6 +38,7 @@ defmodule GrpcReflection.MixProject do
           ~r/^PackageB\./,
           ~r/^NestedEnumConflict\./,
           ~r/^RecursiveMessage\./,
+          ~r/^NoDescriptor\./,
           GrpcReflection.TestEndpoint,
           GrpcReflection.TestEndpoint.Endpoint
         ]
@@ -74,16 +75,15 @@ defmodule GrpcReflection.MixProject do
     ]
   end
 
-  defp build_protos(_argv) do
-    options =
-      Enum.join(
-        [
-          "gen_descriptors=true",
-          "plugins=grpc"
-        ],
-        ","
-      )
+  @protoc_opts "gen_descriptors=true,plugins=grpc"
+  @protoc_opts_no_descriptor "package_prefix=NoDescriptor,plugins=grpc"
+  # Protos that set (elixirpb.file).module_prefix must be skipped here: that option
+  # overrides package_prefix entirely, so the no-descriptor pass would emit modules with
+  # the same name as the descriptor pass, causing a compile-time conflict.
+  # Add any proto that uses the elixirpb.file module_prefix option to this list.
+  @skip_no_descriptor ["custom_prefix_service.proto"]
 
+  defp build_protos(_argv) do
     # compile reflection protos
     Enum.each(
       [
@@ -92,19 +92,25 @@ defmodule GrpcReflection.MixProject do
       ],
       fn reflection_proto ->
         Mix.shell().cmd(
-          "protoc --elixir_out=#{options}:./lib/proto --proto_path=priv/protos/ #{reflection_proto}"
+          "protoc --elixir_out=#{@protoc_opts}:./lib/proto --proto_path=priv/protos/ #{reflection_proto}"
         )
       end
     )
 
-    # compile test protos
+    # compile test protos — once with descriptors, once without
     "./priv/protos"
     |> File.ls!()
     |> Enum.filter(&Regex.match?(~r/.*.proto$/, &1))
-    |> Enum.each(fn reflection_proto ->
+    |> Enum.each(fn proto ->
       Mix.shell().cmd(
-        "protoc --elixir_out=#{options}:./test/support/protos -I priv/protos/ -I deps/protobuf/src #{reflection_proto}"
+        "protoc --elixir_out=#{@protoc_opts}:./test/support/protos -I priv/protos/ -I deps/protobuf/src #{proto}"
       )
+
+      unless proto in @skip_no_descriptor do
+        Mix.shell().cmd(
+          "protoc --elixir_out=#{@protoc_opts_no_descriptor}:./test/support/protos/no_descriptor -I priv/protos/ -I deps/protobuf/src #{proto}"
+        )
+      end
     end)
   end
 

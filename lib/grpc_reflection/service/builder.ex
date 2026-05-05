@@ -69,7 +69,7 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   defp trace_message_refs(state, parent_symbol, module) do
-    case module.descriptor() do
+    case get_descriptor(module) do
       %{field: fields} ->
         trace_message_fields(state, parent_symbol, module, fields)
 
@@ -79,7 +79,7 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   defp trace_message_fields(state, parent_symbol, module, fields) do
-    nested_types = Util.get_nested_types(parent_symbol, module.descriptor())
+    nested_types = Util.get_nested_types(parent_symbol, get_descriptor(module))
 
     module.__message_props__().field_props
     |> Map.values()
@@ -176,9 +176,37 @@ defmodule GrpcReflection.Service.Builder do
   # generate descriptors.  Use this to potentially unwrap the service proto when dealing
   # with descriptors that could come from a service module.
   defp get_descriptor(module) do
-    case module.descriptor() do
-      %FileDescriptorProto{service: [proto]} -> proto
-      proto -> proto
+    cond do
+      not Code.ensure_loaded?(module) ->
+        raise "Module #{inspect(module)} is not loaded"
+
+      function_exported?(module, :descriptor, 0) ->
+        case module.descriptor() do
+          %FileDescriptorProto{service: [proto]} -> proto
+          proto -> proto
+        end
+
+      true ->
+        synthesize_descriptor(module)
+    end
+  end
+
+  defp synthesize_descriptor(module) do
+    cond do
+      function_exported?(module, :__rpc_calls__, 0) ->
+        GrpcReflection.Service.Builder.Synthesizer.service_descriptor(module)
+
+      function_exported?(module, :mapping, 0) ->
+        GrpcReflection.Service.Builder.Synthesizer.enum_descriptor(module)
+
+      function_exported?(module, :__message_props__, 0) ->
+        GrpcReflection.Service.Builder.Synthesizer.message_descriptor(module)
+
+      true ->
+        # unreachable in practice: validate_services/1 only admits modules that export
+        # __rpc_calls__/0, __message_props__/0, or descriptor/0, so a module reaching
+        # synthesize_descriptor/1 without any of those three is impossible.
+        raise "Module #{inspect(module)} exports neither descriptor/0, __rpc_calls__/0, nor __message_props__/0 — cannot synthesize a descriptor"
     end
   end
 end

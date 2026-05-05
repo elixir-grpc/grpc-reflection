@@ -2,7 +2,11 @@ defmodule GrpcReflection do
   @moduledoc """
   Reflection support for the grpc-elixir package
 
-  To use these servers, all protos must be compiled with the `gen_descriptors=true` option, as that is the source of truth for the reflection service.
+  Protos compiled with `gen_descriptors=true` provide the richest reflection output.
+  If that option is omitted, this library synthesizes descriptors from runtime module
+  metadata (`__message_props__`, `__rpc_calls__`). The synthesized path produces
+  equivalent output for standard gRPC reflection clients; only proto2 extensions and
+  custom proto options are unavailable without `gen_descriptors=true`.
 
   To turn on reflection in your application, do the following:
 

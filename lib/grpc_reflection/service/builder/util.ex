@@ -107,8 +107,11 @@ defmodule GrpcReflection.Service.Builder.Util do
   def validate_services(services) do
     invalid_services =
       Enum.reject(services, fn service_mod ->
-        is_binary(service_mod.__meta__(:name)) and
-          is_struct(service_mod.descriptor())
+        Code.ensure_loaded?(service_mod) and
+          function_exported?(service_mod, :__meta__, 1) and
+          is_binary(service_mod.__meta__(:name)) and
+          (function_exported?(service_mod, :descriptor, 0) or
+             function_exported?(service_mod, :__rpc_calls__, 0))
       end)
 
     case invalid_services do

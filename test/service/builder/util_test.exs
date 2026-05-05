@@ -40,6 +40,13 @@ defmodule GrpcReflection.Service.Builder.UtilTest do
     end
   end
 
+  describe "validate_services/1 without descriptor/0" do
+    test "accepts a service module that has __rpc_calls__ but no descriptor/0" do
+      assert :ok =
+               Util.validate_services([NoDescriptor.ScalarTypes.ScalarService.Service])
+    end
+  end
+
   describe "utils for dealing with proto2 only" do
     test "convert %Google.Protobuf.FieldProps{} to %Google.Protobuf.FieldDescriptorProto{}" do
       extendee = Proto2Features.Proto2Request
