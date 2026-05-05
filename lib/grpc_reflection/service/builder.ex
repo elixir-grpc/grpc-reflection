@@ -176,13 +176,18 @@ defmodule GrpcReflection.Service.Builder do
   # generate descriptors.  Use this to potentially unwrap the service proto when dealing
   # with descriptors that could come from a service module.
   defp get_descriptor(module) do
-    if Code.ensure_loaded?(module) and function_exported?(module, :descriptor, 0) do
-      case module.descriptor() do
-        %FileDescriptorProto{service: [proto]} -> proto
-        proto -> proto
-      end
-    else
-      synthesize_descriptor(module)
+    cond do
+      not Code.ensure_loaded?(module) ->
+        raise "Module #{inspect(module)} is not loaded"
+
+      function_exported?(module, :descriptor, 0) ->
+        case module.descriptor() do
+          %FileDescriptorProto{service: [proto]} -> proto
+          proto -> proto
+        end
+
+      true ->
+        synthesize_descriptor(module)
     end
   end
 
