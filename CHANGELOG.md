@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## v0.4.0 (2026-05-05)
+
+### Enhancements
+
+- Add descriptor synthesizer as a fallback for services compiled without `use GRPC.Server, descriptor?: true` — reflection now works even when no file descriptor is present (#84)
+- Add support for recursive message types, preventing infinite loops during symbol resolution (#82)
+- Improve resolution of deeply nested message types (#83)
+
+### Internal
+
+- Overhaul test suite with representative `.proto` definitions and generated `.pb.ex` fixtures, replacing ad-hoc test services with a comprehensive set of cases covering scalar types, well-known types, streaming, imports, cross-package refs, proto2 features, edge cases, and more (#72)
+
 ## v0.3.3 (2026-04-13)
 
 Move debug log from `info` to `debug` log levels
