@@ -3,7 +3,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionRequest do
 
   use Protobuf,
     full_name: "grpc.reflection.v1.ServerReflectionRequest",
-    protoc_gen_elixir_version: "0.16.0",
+    proto_source: "reflection.proto",
+    protoc_gen_elixir_version: "0.17.0",
     syntax: :proto3
 
   def descriptor do
@@ -23,7 +24,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionRequest do
           oneof_index: nil,
           json_name: "host",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         },
         %Google.Protobuf.FieldDescriptorProto{
           name: "file_by_filename",
@@ -37,7 +39,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionRequest do
           oneof_index: 0,
           json_name: "fileByFilename",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         },
         %Google.Protobuf.FieldDescriptorProto{
           name: "file_containing_symbol",
@@ -51,7 +54,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionRequest do
           oneof_index: 0,
           json_name: "fileContainingSymbol",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         },
         %Google.Protobuf.FieldDescriptorProto{
           name: "file_containing_extension",
@@ -65,7 +69,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionRequest do
           oneof_index: 0,
           json_name: "fileContainingExtension",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         },
         %Google.Protobuf.FieldDescriptorProto{
           name: "all_extension_numbers_of_type",
@@ -79,7 +84,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionRequest do
           oneof_index: 0,
           json_name: "allExtensionNumbersOfType",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         },
         %Google.Protobuf.FieldDescriptorProto{
           name: "list_services",
@@ -93,7 +99,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionRequest do
           oneof_index: 0,
           json_name: "listServices",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         }
       ],
       nested_type: [],
@@ -105,12 +112,14 @@ defmodule Grpc.Reflection.V1.ServerReflectionRequest do
         %Google.Protobuf.OneofDescriptorProto{
           name: "message_request",
           options: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         }
       ],
       reserved_range: [],
       reserved_name: [],
-      __unknown_fields__: []
+      __unknown_fields__: [],
+      __protobuf__: true
     }
   end
 
@@ -138,7 +147,8 @@ defmodule Grpc.Reflection.V1.ExtensionRequest do
 
   use Protobuf,
     full_name: "grpc.reflection.v1.ExtensionRequest",
-    protoc_gen_elixir_version: "0.16.0",
+    proto_source: "reflection.proto",
+    protoc_gen_elixir_version: "0.17.0",
     syntax: :proto3
 
   def descriptor do
@@ -158,7 +168,8 @@ defmodule Grpc.Reflection.V1.ExtensionRequest do
           oneof_index: nil,
           json_name: "containingType",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         },
         %Google.Protobuf.FieldDescriptorProto{
           name: "extension_number",
@@ -172,7 +183,8 @@ defmodule Grpc.Reflection.V1.ExtensionRequest do
           oneof_index: nil,
           json_name: "extensionNumber",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         }
       ],
       nested_type: [],
@@ -183,7 +195,8 @@ defmodule Grpc.Reflection.V1.ExtensionRequest do
       oneof_decl: [],
       reserved_range: [],
       reserved_name: [],
-      __unknown_fields__: []
+      __unknown_fields__: [],
+      __protobuf__: true
     }
   end
 
@@ -196,7 +209,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionResponse do
 
   use Protobuf,
     full_name: "grpc.reflection.v1.ServerReflectionResponse",
-    protoc_gen_elixir_version: "0.16.0",
+    proto_source: "reflection.proto",
+    protoc_gen_elixir_version: "0.17.0",
     syntax: :proto3
 
   def descriptor do
@@ -216,7 +230,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionResponse do
           oneof_index: nil,
           json_name: "validHost",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         },
         %Google.Protobuf.FieldDescriptorProto{
           name: "original_request",
@@ -230,7 +245,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionResponse do
           oneof_index: nil,
           json_name: "originalRequest",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         },
         %Google.Protobuf.FieldDescriptorProto{
           name: "file_descriptor_response",
@@ -244,7 +260,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionResponse do
           oneof_index: 0,
           json_name: "fileDescriptorResponse",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         },
         %Google.Protobuf.FieldDescriptorProto{
           name: "all_extension_numbers_response",
@@ -258,7 +275,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionResponse do
           oneof_index: 0,
           json_name: "allExtensionNumbersResponse",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         },
         %Google.Protobuf.FieldDescriptorProto{
           name: "list_services_response",
@@ -272,7 +290,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionResponse do
           oneof_index: 0,
           json_name: "listServicesResponse",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         },
         %Google.Protobuf.FieldDescriptorProto{
           name: "error_response",
@@ -286,7 +305,8 @@ defmodule Grpc.Reflection.V1.ServerReflectionResponse do
           oneof_index: 0,
           json_name: "errorResponse",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         }
       ],
       nested_type: [],
@@ -298,12 +318,14 @@ defmodule Grpc.Reflection.V1.ServerReflectionResponse do
         %Google.Protobuf.OneofDescriptorProto{
           name: "message_response",
           options: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         }
       ],
       reserved_range: [],
       reserved_name: [],
-      __unknown_fields__: []
+      __unknown_fields__: [],
+      __protobuf__: true
     }
   end
 
@@ -341,7 +363,8 @@ defmodule Grpc.Reflection.V1.FileDescriptorResponse do
 
   use Protobuf,
     full_name: "grpc.reflection.v1.FileDescriptorResponse",
-    protoc_gen_elixir_version: "0.16.0",
+    proto_source: "reflection.proto",
+    protoc_gen_elixir_version: "0.17.0",
     syntax: :proto3
 
   def descriptor do
@@ -361,7 +384,8 @@ defmodule Grpc.Reflection.V1.FileDescriptorResponse do
           oneof_index: nil,
           json_name: "fileDescriptorProto",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         }
       ],
       nested_type: [],
@@ -372,7 +396,8 @@ defmodule Grpc.Reflection.V1.FileDescriptorResponse do
       oneof_decl: [],
       reserved_range: [],
       reserved_name: [],
-      __unknown_fields__: []
+      __unknown_fields__: [],
+      __protobuf__: true
     }
   end
 
@@ -384,7 +409,8 @@ defmodule Grpc.Reflection.V1.ExtensionNumberResponse do
 
   use Protobuf,
     full_name: "grpc.reflection.v1.ExtensionNumberResponse",
-    protoc_gen_elixir_version: "0.16.0",
+    proto_source: "reflection.proto",
+    protoc_gen_elixir_version: "0.17.0",
     syntax: :proto3
 
   def descriptor do
@@ -404,7 +430,8 @@ defmodule Grpc.Reflection.V1.ExtensionNumberResponse do
           oneof_index: nil,
           json_name: "baseTypeName",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         },
         %Google.Protobuf.FieldDescriptorProto{
           name: "extension_number",
@@ -418,7 +445,8 @@ defmodule Grpc.Reflection.V1.ExtensionNumberResponse do
           oneof_index: nil,
           json_name: "extensionNumber",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         }
       ],
       nested_type: [],
@@ -429,7 +457,8 @@ defmodule Grpc.Reflection.V1.ExtensionNumberResponse do
       oneof_decl: [],
       reserved_range: [],
       reserved_name: [],
-      __unknown_fields__: []
+      __unknown_fields__: [],
+      __protobuf__: true
     }
   end
 
@@ -442,7 +471,8 @@ defmodule Grpc.Reflection.V1.ListServiceResponse do
 
   use Protobuf,
     full_name: "grpc.reflection.v1.ListServiceResponse",
-    protoc_gen_elixir_version: "0.16.0",
+    proto_source: "reflection.proto",
+    protoc_gen_elixir_version: "0.17.0",
     syntax: :proto3
 
   def descriptor do
@@ -462,7 +492,8 @@ defmodule Grpc.Reflection.V1.ListServiceResponse do
           oneof_index: nil,
           json_name: "service",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         }
       ],
       nested_type: [],
@@ -473,7 +504,8 @@ defmodule Grpc.Reflection.V1.ListServiceResponse do
       oneof_decl: [],
       reserved_range: [],
       reserved_name: [],
-      __unknown_fields__: []
+      __unknown_fields__: [],
+      __protobuf__: true
     }
   end
 
@@ -485,7 +517,8 @@ defmodule Grpc.Reflection.V1.ServiceResponse do
 
   use Protobuf,
     full_name: "grpc.reflection.v1.ServiceResponse",
-    protoc_gen_elixir_version: "0.16.0",
+    proto_source: "reflection.proto",
+    protoc_gen_elixir_version: "0.17.0",
     syntax: :proto3
 
   def descriptor do
@@ -505,7 +538,8 @@ defmodule Grpc.Reflection.V1.ServiceResponse do
           oneof_index: nil,
           json_name: "name",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         }
       ],
       nested_type: [],
@@ -516,7 +550,8 @@ defmodule Grpc.Reflection.V1.ServiceResponse do
       oneof_decl: [],
       reserved_range: [],
       reserved_name: [],
-      __unknown_fields__: []
+      __unknown_fields__: [],
+      __protobuf__: true
     }
   end
 
@@ -528,7 +563,8 @@ defmodule Grpc.Reflection.V1.ErrorResponse do
 
   use Protobuf,
     full_name: "grpc.reflection.v1.ErrorResponse",
-    protoc_gen_elixir_version: "0.16.0",
+    proto_source: "reflection.proto",
+    protoc_gen_elixir_version: "0.17.0",
     syntax: :proto3
 
   def descriptor do
@@ -548,7 +584,8 @@ defmodule Grpc.Reflection.V1.ErrorResponse do
           oneof_index: nil,
           json_name: "errorCode",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         },
         %Google.Protobuf.FieldDescriptorProto{
           name: "error_message",
@@ -562,7 +599,8 @@ defmodule Grpc.Reflection.V1.ErrorResponse do
           oneof_index: nil,
           json_name: "errorMessage",
           proto3_optional: nil,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         }
       ],
       nested_type: [],
@@ -573,7 +611,8 @@ defmodule Grpc.Reflection.V1.ErrorResponse do
       oneof_decl: [],
       reserved_range: [],
       reserved_name: [],
-      __unknown_fields__: []
+      __unknown_fields__: [],
+      __protobuf__: true
     }
   end
 
@@ -586,7 +625,9 @@ defmodule Grpc.Reflection.V1.ServerReflection.Service do
 
   use GRPC.Service,
     name: "grpc.reflection.v1.ServerReflection",
-    protoc_gen_elixir_version: "0.16.0"
+    protoc_gen_elixir_version: "0.17.0"
+
+  def proto_source(), do: "reflection.proto"
 
   def descriptor do
     # credo:disable-for-next-line
@@ -600,11 +641,13 @@ defmodule Grpc.Reflection.V1.ServerReflection.Service do
           options: nil,
           client_streaming: true,
           server_streaming: true,
-          __unknown_fields__: []
+          __unknown_fields__: [],
+          __protobuf__: true
         }
       ],
       options: nil,
-      __unknown_fields__: []
+      __unknown_fields__: [],
+      __protobuf__: true
     }
   end
 

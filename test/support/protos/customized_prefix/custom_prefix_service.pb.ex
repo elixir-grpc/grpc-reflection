@@ -1,19 +1,19 @@
-defmodule GlobalRequest do
+defmodule CustomizedPrefix.EchoRequest do
   @moduledoc false
 
   use Protobuf,
-    full_name: "GlobalRequest",
-    proto_source: "global_service.proto",
+    full_name: "custom_prefix.EchoRequest",
+    proto_source: "custom_prefix_service.proto",
     protoc_gen_elixir_version: "0.17.0",
     syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.DescriptorProto{
-      name: "GlobalRequest",
+      name: "EchoRequest",
       field: [
         %Google.Protobuf.FieldDescriptorProto{
-          name: "data",
+          name: "message",
           extendee: nil,
           number: 1,
           label: :LABEL_OPTIONAL,
@@ -22,7 +22,7 @@ defmodule GlobalRequest do
           default_value: nil,
           options: nil,
           oneof_index: nil,
-          json_name: "data",
+          json_name: "message",
           proto3_optional: nil,
           __unknown_fields__: [],
           __protobuf__: true
@@ -41,25 +41,25 @@ defmodule GlobalRequest do
     }
   end
 
-  field :data, 1, type: :string
+  field :message, 1, type: :string
 end
 
-defmodule GlobalResponse do
+defmodule CustomizedPrefix.EchoResponse do
   @moduledoc false
 
   use Protobuf,
-    full_name: "GlobalResponse",
-    proto_source: "global_service.proto",
+    full_name: "custom_prefix.EchoResponse",
+    proto_source: "custom_prefix_service.proto",
     protoc_gen_elixir_version: "0.17.0",
     syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.DescriptorProto{
-      name: "GlobalResponse",
+      name: "EchoResponse",
       field: [
         %Google.Protobuf.FieldDescriptorProto{
-          name: "result",
+          name: "reply",
           extendee: nil,
           number: 1,
           label: :LABEL_OPTIONAL,
@@ -68,7 +68,7 @@ defmodule GlobalResponse do
           default_value: nil,
           options: nil,
           oneof_index: nil,
-          json_name: "result",
+          json_name: "reply",
           proto3_optional: nil,
           __unknown_fields__: [],
           __protobuf__: true
@@ -87,25 +87,25 @@ defmodule GlobalResponse do
     }
   end
 
-  field :result, 1, type: :string
+  field :reply, 1, type: :string
 end
 
-defmodule GlobalService.Service do
+defmodule CustomizedPrefix.PrefixService.Service do
   @moduledoc false
 
-  use GRPC.Service, name: "GlobalService", protoc_gen_elixir_version: "0.17.0"
+  use GRPC.Service, name: "custom_prefix.PrefixService", protoc_gen_elixir_version: "0.17.0"
 
-  def proto_source(), do: "global_service.proto"
+  def proto_source(), do: "custom_prefix_service.proto"
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.ServiceDescriptorProto{
-      name: "GlobalService",
+      name: "PrefixService",
       method: [
         %Google.Protobuf.MethodDescriptorProto{
-          name: "GlobalMethod",
-          input_type: ".GlobalRequest",
-          output_type: ".GlobalResponse",
+          name: "Echo",
+          input_type: ".custom_prefix.EchoRequest",
+          output_type: ".custom_prefix.EchoResponse",
           options: %Google.Protobuf.MethodOptions{
             deprecated: false,
             idempotency_level: :IDEMPOTENCY_UNKNOWN,
@@ -127,11 +127,11 @@ defmodule GlobalService.Service do
     }
   end
 
-  rpc :GlobalMethod, GlobalRequest, GlobalResponse
+  rpc :Echo, CustomizedPrefix.EchoRequest, CustomizedPrefix.EchoResponse
 end
 
-defmodule GlobalService.Stub do
+defmodule CustomizedPrefix.PrefixService.Stub do
   @moduledoc false
 
-  use GRPC.Stub, service: GlobalService.Service
+  use GRPC.Stub, service: CustomizedPrefix.PrefixService.Service
 end
