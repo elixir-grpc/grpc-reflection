@@ -75,8 +75,8 @@ defmodule GrpcReflection.MixProject do
     ]
   end
 
-  @protoc_opts "gen_descriptors=true,plugins=grpc"
-  @protoc_opts_no_descriptor "package_prefix=NoDescriptor,plugins=grpc"
+  @protoc_opts "gen_descriptors=true,gen_proto_source=true,paths=source_relative,plugins=grpc"
+  @protoc_opts_no_descriptor "package_prefix=NoDescriptor,gen_proto_source=true,paths=source_relative,plugins=grpc"
   # Protos that set (elixirpb.file).module_prefix must be skipped here: that option
   # overrides package_prefix entirely, so the no-descriptor pass would emit modules with
   # the same name as the descriptor pass, causing a compile-time conflict.
@@ -84,34 +84,50 @@ defmodule GrpcReflection.MixProject do
   @skip_no_descriptor ["custom_prefix_service.proto"]
 
   defp build_protos(_argv) do
+    {reflection, fixtures} =
+      "./priv/protos/**/*.proto"
+      |> Path.wildcard()
+      |> Enum.split_with(&String.contains?(&1, "reflection.proto"))
+
     # compile reflection protos
-    Enum.each(
-      [
-        "priv/protos/grpc/reflection/v1alpha/reflection.proto",
-        "priv/protos/grpc/reflection/v1/reflection.proto"
-      ],
-      fn reflection_proto ->
-        Mix.shell().cmd(
-          "protoc --elixir_out=#{@protoc_opts}:./lib/proto --proto_path=priv/protos/ #{reflection_proto}"
-        )
-      end
-    )
+    cmds =
+      reflection
+      |> Enum.map(fn reflection_proto ->
+        # protoc now grabs the path to the file and includes it with
+        # the message name, which for us leads to bad paths
+        i_path =
+          reflection_proto
+          |> Path.split()
+          |> List.delete_at(-1)
+          |> Path.join()
+
+        "protoc --elixir_out=#{@protoc_opts}:./lib/proto -I=#{i_path} #{reflection_proto}"
+      end)
 
     # compile test protos — once with descriptors, once without
-    "./priv/protos"
-    |> File.ls!()
-    |> Enum.filter(&Regex.match?(~r/.*.proto$/, &1))
-    |> Enum.each(fn proto ->
-      Mix.shell().cmd(
-        "protoc --elixir_out=#{@protoc_opts}:./test/support/protos -I priv/protos/ -I deps/protobuf/src #{proto}"
-      )
+    fixtures
+    |> Enum.flat_map(fn proto ->
+      i_path =
+        proto
+        |> Path.split()
+        |> List.delete_at(-1)
+        |> Path.join()
 
-      unless proto in @skip_no_descriptor do
-        Mix.shell().cmd(
-          "protoc --elixir_out=#{@protoc_opts_no_descriptor}:./test/support/protos/no_descriptor -I priv/protos/ -I deps/protobuf/src #{proto}"
-        )
+      with_descriptors =
+        "protoc --elixir_out=#{@protoc_opts}:./test/support/protos -I=#{i_path} -I priv/protos -I deps/protobuf/src #{proto}"
+
+      without_descriptors =
+        "protoc --elixir_out=#{@protoc_opts_no_descriptor}:./test/support/protos -I=#{i_path} -I priv/protos -I deps/protobuf/src #{proto}"
+
+      if Enum.any?(@skip_no_descriptor, &String.contains?(proto, &1)) do
+        [with_descriptors]
+      else
+        [with_descriptors, without_descriptors]
       end
     end)
+    |> Enum.concat(cmds)
+    |> Task.async_stream(&Mix.shell().cmd(&1))
+    |> Enum.to_list()
   end
 
   defp package do

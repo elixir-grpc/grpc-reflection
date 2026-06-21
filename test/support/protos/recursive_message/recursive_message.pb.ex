@@ -1,28 +1,28 @@
-defmodule GlobalRequest do
+defmodule RecursiveMessage.Request do
   @moduledoc false
 
   use Protobuf,
-    full_name: "GlobalRequest",
-    proto_source: "global_service.proto",
+    full_name: "recursive_message.Request",
+    proto_source: "recursive_message.proto",
     protoc_gen_elixir_version: "0.17.0",
     syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.DescriptorProto{
-      name: "GlobalRequest",
+      name: "Request",
       field: [
         %Google.Protobuf.FieldDescriptorProto{
-          name: "data",
+          name: "reply",
           extendee: nil,
           number: 1,
           label: :LABEL_OPTIONAL,
-          type: :TYPE_STRING,
-          type_name: nil,
+          type: :TYPE_MESSAGE,
+          type_name: ".recursive_message.Reply",
           default_value: nil,
           options: nil,
           oneof_index: nil,
-          json_name: "data",
+          json_name: "reply",
           proto3_optional: nil,
           __unknown_fields__: [],
           __protobuf__: true
@@ -41,34 +41,34 @@ defmodule GlobalRequest do
     }
   end
 
-  field :data, 1, type: :string
+  field :reply, 1, type: RecursiveMessage.Reply
 end
 
-defmodule GlobalResponse do
+defmodule RecursiveMessage.Reply do
   @moduledoc false
 
   use Protobuf,
-    full_name: "GlobalResponse",
-    proto_source: "global_service.proto",
+    full_name: "recursive_message.Reply",
+    proto_source: "recursive_message.proto",
     protoc_gen_elixir_version: "0.17.0",
     syntax: :proto3
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.DescriptorProto{
-      name: "GlobalResponse",
+      name: "Reply",
       field: [
         %Google.Protobuf.FieldDescriptorProto{
-          name: "result",
+          name: "request",
           extendee: nil,
           number: 1,
           label: :LABEL_OPTIONAL,
-          type: :TYPE_STRING,
-          type_name: nil,
+          type: :TYPE_MESSAGE,
+          type_name: ".recursive_message.Request",
           default_value: nil,
           options: nil,
           oneof_index: nil,
-          json_name: "result",
+          json_name: "request",
           proto3_optional: nil,
           __unknown_fields__: [],
           __protobuf__: true
@@ -87,25 +87,25 @@ defmodule GlobalResponse do
     }
   end
 
-  field :result, 1, type: :string
+  field :request, 1, type: RecursiveMessage.Request
 end
 
-defmodule GlobalService.Service do
+defmodule RecursiveMessage.Service.Service do
   @moduledoc false
 
-  use GRPC.Service, name: "GlobalService", protoc_gen_elixir_version: "0.17.0"
+  use GRPC.Service, name: "recursive_message.Service", protoc_gen_elixir_version: "0.17.0"
 
-  def proto_source(), do: "global_service.proto"
+  def proto_source(), do: "recursive_message.proto"
 
   def descriptor do
     # credo:disable-for-next-line
     %Google.Protobuf.ServiceDescriptorProto{
-      name: "GlobalService",
+      name: "Service",
       method: [
         %Google.Protobuf.MethodDescriptorProto{
-          name: "GlobalMethod",
-          input_type: ".GlobalRequest",
-          output_type: ".GlobalResponse",
+          name: "call",
+          input_type: ".recursive_message.Request",
+          output_type: ".recursive_message.Reply",
           options: %Google.Protobuf.MethodOptions{
             deprecated: false,
             idempotency_level: :IDEMPOTENCY_UNKNOWN,
@@ -127,11 +127,11 @@ defmodule GlobalService.Service do
     }
   end
 
-  rpc :GlobalMethod, GlobalRequest, GlobalResponse
+  rpc :call, RecursiveMessage.Request, RecursiveMessage.Reply
 end
 
-defmodule GlobalService.Stub do
+defmodule RecursiveMessage.Service.Stub do
   @moduledoc false
 
-  use GRPC.Stub, service: GlobalService.Service
+  use GRPC.Stub, service: RecursiveMessage.Service.Service
 end

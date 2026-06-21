@@ -1,7 +1,7 @@
 defmodule Proto2Features.PbExtension do
   @moduledoc false
 
-  use Protobuf, protoc_gen_elixir_version: "0.16.0"
+  use Protobuf, protoc_gen_elixir_version: "0.17.0"
 
   extend Proto2Features.Proto2Request, :extended_field, 100,
     optional: true,
