@@ -1,7 +1,7 @@
 defmodule GrpcReflection.MixProject do
   use Mix.Project
 
-  @version "0.4.0"
+  @version "0.5.0"
   @source_url "https://github.com/elixir-grpc/grpc-reflection"
   @description "gRPC reflection server for Elixir"
 
@@ -65,7 +65,7 @@ defmodule GrpcReflection.MixProject do
       # grpc 1.0 made the HTTP client adapters optional; the test suite connects
       # real stubs to the in-process server, so it needs an adapter (Gun).
       {:gun, "~> 2.0", only: :test},
-      {:protobuf, "~> 0.15"}
+      {:protobuf, "~> 0.17"}
     ]
   end
 
