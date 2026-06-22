@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased
+## v0.5.0 (2026-06-22)
 
 ### Enhancements
 
@@ -9,6 +9,7 @@
 ### Internal
 
 - Drop the obsolete `start_supervised({GRPC.Client.Supervisor, []})` calls from the test support — `grpc` 1.0 starts the client supervisor automatically via its application, and the module is no longer a valid child spec. Add `gun` as a test-only dependency since the HTTP client adapters are now optional in `grpc` 1.0.
+- updated to protobuf 0.17.0 and regenerated pb files
 
 ## v0.4.0 (2026-05-05)
 
