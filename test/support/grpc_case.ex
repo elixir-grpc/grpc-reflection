@@ -40,7 +40,6 @@ defmodule GrpcCase do
         defp stub_v1_server(_) do
           {:ok, _pid, port} = GRPC.Server.start_endpoint(Endpoint, 0)
           on_exit(fn -> :ok = GRPC.Server.stop_endpoint(Endpoint, []) end)
-          start_supervised({GRPC.Client.Supervisor, []})
 
           host = "localhost:#{port}"
           {:ok, channel} = GRPC.Stub.connect(host)
@@ -60,7 +59,6 @@ defmodule GrpcCase do
         defp stub_v1alpha_server(_) do
           {:ok, _pid, port} = GRPC.Server.start_endpoint(Endpoint, 0)
           on_exit(fn -> :ok = GRPC.Server.stop_endpoint(Endpoint, []) end)
-          start_supervised({GRPC.Client.Supervisor, []})
 
           host = "localhost:#{port}"
           {:ok, channel} = GRPC.Stub.connect(host)

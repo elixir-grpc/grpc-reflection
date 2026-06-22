@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## Unreleased
+
+### Enhancements
+
+- Support `grpc` 1.0, which split the server into the separate `grpc_server` package. Depend on both `grpc ~> 1.0` (client/`GRPC.Stub`, used by the generated reflection stubs) and `grpc_server ~> 1.0` (`GRPC.Server`/`GRPC.Endpoint`).
+
+### Internal
+
+- Drop the obsolete `start_supervised({GRPC.Client.Supervisor, []})` calls from the test support — `grpc` 1.0 starts the client supervisor automatically via its application, and the module is no longer a valid child spec. Add `gun` as a test-only dependency since the HTTP client adapters are now optional in `grpc` 1.0.
+
 ## v0.4.0 (2026-05-05)
 
 ### Enhancements

@@ -11,7 +11,6 @@ defmodule GrpcReflection.TestClient do
 
         {:ok, _pid, port} = GRPC.Server.start_endpoint(unquote(endpoint), 0)
         on_exit(fn -> :ok = GRPC.Server.stop_endpoint(unquote(endpoint), []) end)
-        start_supervised({GRPC.Client.Supervisor, []})
 
         host = "localhost:#{port}"
         {:ok, channel} = GRPC.Stub.connect(host)

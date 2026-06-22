@@ -60,7 +60,11 @@ defmodule GrpcReflection.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:grpc, "~> 0.11.1"},
+      {:grpc, "~> 1.0"},
+      {:grpc_server, "~> 1.0"},
+      # grpc 1.0 made the HTTP client adapters optional; the test suite connects
+      # real stubs to the in-process server, so it needs an adapter (Gun).
+      {:gun, "~> 2.0", only: :test},
       {:protobuf, "~> 0.15"}
     ]
   end
