@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package self_reference;
+
+service Service {
+  rpc call (Request) returns (Reply) {}
+}
+
+// a message that refers to itself, directly and through a repeated field
+message Request {
+  string name = 1;
+  Request child = 2;
+  repeated Request children = 3;
+  Outer outer = 4;
+}
+
+message Reply {
+  string message = 1;
+}
+
+// a nested type that refers back to its enclosing message
+message Outer {
+  message Inner {
+    Outer parent = 1;
+  }
+
+  Inner inner = 1;
+}
