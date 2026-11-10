@@ -212,6 +212,41 @@ defmodule GrpcReflection.Service.BuilderTest do
     def descriptor, do: Fakes.service("Service", ".odd.Outer", ".odd.Outer")
   end
 
+  # Orphan.Outer declares a nested type that has no module at all, that nothing refers to,
+  # and that uses a type nothing else does.
+  defmodule Orphan.External do
+    use Protobuf, full_name: "orphan.External", syntax: :proto3
+    field(:value, 1, type: :string)
+    def descriptor, do: Fakes.message("External", [Fakes.string_field("value", 1)])
+  end
+
+  defmodule Orphan.Outer do
+    use Protobuf, full_name: "orphan.Outer", syntax: :proto3
+    field(:value, 1, type: :string)
+
+    def descriptor do
+      Fakes.message(
+        "Outer",
+        [Fakes.string_field("value", 1)],
+        [
+          Fakes.message(
+            "Lost",
+            [Fakes.message_field("external", 1, ".orphan.External")],
+            [Fakes.message("Deeper", [Fakes.string_field("value", 1)])]
+          ),
+          # no module either, but it uses nothing that is missing
+          Fakes.message("Harmless", [Fakes.string_field("value", 1)])
+        ]
+      )
+    end
+  end
+
+  defmodule Orphan.Service do
+    use GRPC.Service, name: "orphan.Service"
+    rpc(:call, Orphan.Outer, Orphan.Outer)
+    def descriptor, do: Fakes.service("Service", ".orphan.Outer", ".orphan.Outer")
+  end
+
   # The descriptor says Ghost.Outer uses a type that its fields do not (anymore), so
   # nothing traces it.
   defmodule Ghost.Outer do
@@ -246,6 +281,45 @@ defmodule GrpcReflection.Service.BuilderTest do
         end)
 
       assert log == ""
+    end
+  end
+
+  describe "a nested type that nothing refers to and cannot be traced" do
+    import ExUnit.CaptureLog
+
+    test "is left out, so the file can still be loaded" do
+      capture_log(fn ->
+        assert {:ok, tree} = Builder.build_reflection_tree([Orphan.Service])
+
+        assert [%{name: "Outer", nested_type: [%{name: "Harmless"}]}] =
+                 tree.files["orphan.Outer.proto"].message_type
+
+        assert tree.files["orphan.Outer.proto"].dependency == []
+        refute is_map_key(tree.symbols, "orphan.Outer.Lost")
+        refute is_map_key(tree.symbols, "orphan.Outer.Lost.Deeper")
+        assert tree.symbols["orphan.Outer.Harmless"] == "orphan.Outer.proto"
+        assert GrpcReflection.GraphCheck.violations(tree) == []
+      end)
+    end
+
+    test "says what was left out and why" do
+      log = capture_log(fn -> Builder.build_reflection_tree([Orphan.Service]) end)
+
+      assert log =~ "[warning]"
+      assert log =~ "orphan.Outer.Lost"
+      assert log =~ "orphan.External"
+      refute log =~ "[error]"
+    end
+
+    test "keeps nested types that can be loaded" do
+      capture_log(fn ->
+        assert {:ok, tree} = Builder.build_reflection_tree([NestedCrossReference.Service.Service])
+
+        assert tree.files["nested_cross_reference.Holder.proto"].message_type
+               |> hd()
+               |> Map.fetch!(:nested_type)
+               |> Enum.map(& &1.name) == ["Item", "Unused"]
+      end)
     end
   end
 

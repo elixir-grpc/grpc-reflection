@@ -4,6 +4,7 @@ defmodule GrpcReflection.Service.Builder do
   alias Google.Protobuf.FileDescriptorProto
   alias GrpcReflection.Service.Builder.Extensions
   alias GrpcReflection.Service.Builder.Nesting
+  alias GrpcReflection.Service.Builder.Repair
   alias GrpcReflection.Service.Builder.Util
   alias GrpcReflection.Service.State
 
@@ -19,6 +20,7 @@ defmodule GrpcReflection.Service.Builder do
           new_state = process_service(service, nested)
           State.merge(state, new_state)
         end)
+        |> Repair.drop_unresolvable_nested()
         # dependencies must name real files before looking for cycles: an edge to a nested
         # type only closes a cycle once it is rewritten to the file of its enclosing message
         |> resolve_dependencies()
@@ -154,14 +156,7 @@ defmodule GrpcReflection.Service.Builder do
     # we build our own file responses, so unwrap any present
     descriptor = get_descriptor(state, module)
 
-    dependencies =
-      descriptor
-      |> Util.types_from_descriptor()
-      |> Enum.uniq()
-      |> Kernel.--(Util.get_nested_types(symbol, descriptor))
-      |> Enum.map(fn name ->
-        Util.trim_symbol(name) <> ".proto"
-      end)
+    dependencies = Util.dependencies(symbol, descriptor)
 
     syntax = Util.get_syntax(module)
 

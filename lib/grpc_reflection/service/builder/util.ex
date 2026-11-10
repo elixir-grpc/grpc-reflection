@@ -183,6 +183,16 @@ defmodule GrpcReflection.Service.Builder.Util do
     fields ++ Enum.flat_map(nested_types, &all_fields/1)
   end
 
+  # The files a type's file has to import: every type its descriptor refers to, except
+  # the ones declared in that same file, as `symbol <> ".proto"`.
+  def dependencies(symbol, descriptor) do
+    descriptor
+    |> types_from_descriptor()
+    |> Enum.uniq()
+    |> Kernel.--(get_nested_types(symbol, descriptor))
+    |> Enum.map(fn name -> trim_symbol(name) <> ".proto" end)
+  end
+
   # in gRPC, the leading "." signifies it is a FQDN
   # we trim it and assume everything is a FQDN
   # it works so far, but there may be corner cases
