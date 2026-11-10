@@ -146,7 +146,9 @@ defmodule GrpcReflection.Service.Builder do
 
       %{mod: mod, symbol: Enum.find(fields, fn f -> f.name == name end).type_name}
     end)
-    |> Enum.reject(fn %{symbol: s} -> is_nil(s) end)
+    # a proto2 group field has no module of its own: its message is declared inside the
+    # enclosing message, and traced with the rest of that message's nested types
+    |> Enum.reject(fn %{mod: mod, symbol: s} -> is_nil(s) or mod == :group end)
     |> Enum.reduce(state, fn %{mod: mod, symbol: symbol}, state ->
       trace_type(state, Util.trim_symbol(symbol), mod)
     end)

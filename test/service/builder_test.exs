@@ -306,6 +306,65 @@ defmodule GrpcReflection.Service.BuilderTest do
     def descriptor, do: Fakes.service("Service", ".legacy.Request", ".legacy.Request")
   end
 
+  # proto2 `group` fields: the field's type is the atom `:group`, not a module. The group's
+  # message is declared inside the enclosing message, like any nested type.
+  defmodule Grouped.Outer.Result do
+    use Protobuf, full_name: "grouped.Outer.Result", syntax: :proto2
+    field(:url, 1, optional: true, type: :string)
+
+    def descriptor, do: Fakes.message("Result", [Fakes.string_field("url", 1)])
+  end
+
+  defmodule Grouped.Outer do
+    use Protobuf, full_name: "grouped.Outer", syntax: :proto2
+
+    alias GrpcReflection.Service.BuilderTest.Grouped.Outer.Result
+
+    field(:result, 1, optional: true, type: :group)
+
+    def descriptor do
+      Fakes.message(
+        "Outer",
+        [
+          %Google.Protobuf.FieldDescriptorProto{
+            name: "result",
+            number: 1,
+            label: :LABEL_OPTIONAL,
+            type: :TYPE_GROUP,
+            type_name: ".grouped.Outer.Result"
+          }
+        ],
+        [Result.descriptor()]
+      )
+    end
+  end
+
+  defmodule Grouped.Service do
+    use GRPC.Service, name: "grouped.Service"
+    rpc(:call, Grouped.Outer, Grouped.Outer)
+    def descriptor, do: Fakes.service("Service", ".grouped.Outer", ".grouped.Outer")
+  end
+
+  describe "a message with a proto2 group field" do
+    import ExUnit.CaptureLog
+
+    test "serves the group inside the file of its enclosing message" do
+      log =
+        capture_log(fn ->
+          assert {:ok, tree} = Builder.build_reflection_tree([Grouped.Service])
+
+          assert tree.symbols["grouped.Outer.Result"] == "grouped.Outer.proto"
+
+          assert [%{name: "Outer", nested_type: [%{name: "Result"}]}] =
+                   tree.files["grouped.Outer.proto"].message_type
+
+          assert GrpcReflection.GraphCheck.violations(tree) == []
+        end)
+
+      assert log == ""
+    end
+  end
+
   describe "a nested type in a module that does not record its full name" do
     import ExUnit.CaptureLog
 
