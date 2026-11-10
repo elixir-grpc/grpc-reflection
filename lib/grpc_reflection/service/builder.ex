@@ -25,7 +25,7 @@ defmodule GrpcReflection.Service.Builder do
         |> State.shrink_cycles()
         |> report_missing_dependencies()
         # only needed while building
-        |> Map.put(:nested, %{})
+        |> Map.merge(%{nested: %{}, traced: MapSet.new()})
 
       {:ok, tree}
     end
@@ -63,10 +63,14 @@ defmodule GrpcReflection.Service.Builder do
   end
 
   # A nested type is not a file of its own: it lives in the file of the outermost message
-  # that encloses it. Whatever references a type, it is that message we trace.
+  # that encloses it. Whatever references a type, it is that message we trace, and then
+  # the nested type itself, whose module we were just handed.
   defp trace_type(state, symbol, module) do
     {top_symbol, top_module} = Nesting.top_level(symbol, module)
-    trace_top_level(state, top_symbol, top_module)
+
+    state
+    |> trace_top_level(top_symbol, top_module)
+    |> trace_members([{symbol, module}])
   end
 
   defp trace_top_level(state, symbol, _module) when is_map_key(state.symbols, symbol), do: state
@@ -97,30 +101,27 @@ defmodule GrpcReflection.Service.Builder do
     |> String.split(".")
     |> Enum.reduce_while(top_module, fn name, parent ->
       case Nesting.child_module(parent, name) do
-        {:ok, child} ->
-          {:cont, child}
-
-        :error ->
-          Logger.warning(
-            "reflection could not find the module for nested type #{nested_symbol} " <>
-              "(looked for #{inspect(Module.concat(parent, Macro.camelize(name)))}); " <>
-              "types only it refers to will not be traced"
-          )
-
-          {:halt, nil}
+        {:ok, child} -> {:cont, child}
+        :error -> {:halt, nil}
       end
     end)
   end
 
+  # Follow the types a message refers to, once. Members whose module we could not find are
+  # skipped: they are traced if something refers to them, and left out of the tree if not.
   defp trace_members(state, members) do
     Enum.reduce(members, state, fn
       {_symbol, nil}, state ->
         state
 
       {symbol, module}, state ->
-        state
-        |> Extensions.add_extensions(symbol, module)
-        |> trace_message_refs(module)
+        if MapSet.member?(state.traced, symbol) do
+          state
+        else
+          %{state | traced: MapSet.put(state.traced, symbol)}
+          |> Extensions.add_extensions(symbol, module)
+          |> trace_message_refs(module)
+        end
     end)
   end
 

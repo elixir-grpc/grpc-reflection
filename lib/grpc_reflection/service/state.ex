@@ -1,7 +1,12 @@
 defmodule GrpcReflection.Service.State do
   @moduledoc false
 
-  defstruct services: [], files: %{}, symbols: %{}, extensions: %{}, nested: %{}
+  defstruct services: [],
+            files: %{},
+            symbols: %{},
+            extensions: %{},
+            nested: %{},
+            traced: MapSet.new()
 
   @type descriptor_t :: Google.Protobuf.FileDescriptorProto.t()
   @type symbol_t :: %{optional(binary()) => binary()}
@@ -12,7 +17,8 @@ defmodule GrpcReflection.Service.State do
           files: entry_t(),
           symbols: symbol_t(),
           extensions: %{optional(binary()) => list(integer())},
-          nested: %{optional(module()) => list(module())}
+          nested: %{optional(module()) => list(module())},
+          traced: MapSet.t(binary())
         }
 
   @spec new(list(module), map()) :: t()
@@ -25,7 +31,8 @@ defmodule GrpcReflection.Service.State do
       files: merge_map!("Files", state1.files, state2.files),
       symbols: merge_map!("Symbols", state1.symbols, state2.symbols),
       extensions: merge_map!("Extensions", state1.extensions, state2.extensions),
-      nested: merge_map!("Nested", state1.nested, state2.nested)
+      nested: merge_map!("Nested", state1.nested, state2.nested),
+      traced: MapSet.union(state1.traced, state2.traced)
     }
   end
 

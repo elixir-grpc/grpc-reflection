@@ -144,95 +144,131 @@ defmodule GrpcReflection.Service.BuilderTest do
            ]
   end
 
-  # A message that declares a nested type, but whose nested module the builder cannot
-  # find (there is no `Dangling.Outer.Inner`). The nested type needs `Dangling.External`,
-  # which nothing else refers to, so it never gets traced.
-  defmodule Dangling.External do
-    use Protobuf, full_name: "dangling.External", syntax: :proto3
+  # Hand-built modules for shapes protoc-gen-elixir never generates: they break the
+  # naming convention the builder uses to find nested types.
+  defmodule Fakes do
+    alias Google.Protobuf.DescriptorProto
+    alias Google.Protobuf.FieldDescriptorProto
+    alias Google.Protobuf.MethodDescriptorProto
+    alias Google.Protobuf.ServiceDescriptorProto
+
+    def string_field(name, number),
+      do: %FieldDescriptorProto{name: name, number: number, type: :TYPE_STRING}
+
+    def message_field(name, number, type_name),
+      do: %FieldDescriptorProto{
+        name: name,
+        number: number,
+        type: :TYPE_MESSAGE,
+        type_name: type_name
+      }
+
+    def message(name, fields, nested \\ []),
+      do: %DescriptorProto{name: name, field: fields, nested_type: nested}
+
+    def service(name, request, response) do
+      %ServiceDescriptorProto{
+        name: name,
+        method: [%MethodDescriptorProto{name: "call", input_type: request, output_type: response}]
+      }
+    end
+  end
+
+  # Odd.Outer.Inner is declared as "odd.Outer.Inner", but its module is not named after it,
+  # so it cannot be found by name. The field that refers to it hands over its module.
+  defmodule Odd.External do
+    use Protobuf, full_name: "odd.External", syntax: :proto3
+    field(:value, 1, type: :string)
+    def descriptor, do: Fakes.message("External", [Fakes.string_field("value", 1)])
+  end
+
+  defmodule Odd.Outer.Renamed do
+    use Protobuf, full_name: "odd.Outer.Inner", syntax: :proto3
+    field(:external, 1, type: Odd.External)
+
+    def descriptor,
+      do: Fakes.message("Inner", [Fakes.message_field("external", 1, ".odd.External")])
+  end
+
+  defmodule Odd.Outer do
+    use Protobuf, full_name: "odd.Outer", syntax: :proto3
+
+    alias GrpcReflection.Service.BuilderTest.Odd.Outer.Renamed
+
+    field(:inner, 1, type: Odd.Outer.Renamed)
+
+    def descriptor do
+      Fakes.message(
+        "Outer",
+        [Fakes.message_field("inner", 1, ".odd.Outer.Inner")],
+        [Renamed.descriptor()]
+      )
+    end
+  end
+
+  defmodule Odd.Service do
+    use GRPC.Service, name: "odd.Service"
+    rpc(:call, Odd.Outer, Odd.Outer)
+    def descriptor, do: Fakes.service("Service", ".odd.Outer", ".odd.Outer")
+  end
+
+  # The descriptor says Ghost.Outer uses a type that its fields do not (anymore), so
+  # nothing traces it.
+  defmodule Ghost.Outer do
+    use Protobuf, full_name: "ghost.Outer", syntax: :proto3
     field(:value, 1, type: :string)
 
     def descriptor do
-      %Google.Protobuf.DescriptorProto{
-        name: "External",
-        field: [
-          %Google.Protobuf.FieldDescriptorProto{name: "value", number: 1, type: :TYPE_STRING}
-        ]
-      }
+      Fakes.message("Outer", [
+        Fakes.string_field("value", 1),
+        Fakes.message_field("ghost", 2, ".ghost.Missing")
+      ])
     end
   end
 
-  defmodule Dangling.Outer do
-    use Protobuf, full_name: "dangling.Outer", syntax: :proto3
-    field(:value, 1, type: :string)
-
-    def descriptor do
-      %Google.Protobuf.DescriptorProto{
-        name: "Outer",
-        field: [
-          %Google.Protobuf.FieldDescriptorProto{name: "value", number: 1, type: :TYPE_STRING}
-        ],
-        nested_type: [
-          %Google.Protobuf.DescriptorProto{
-            name: "Inner",
-            field: [
-              %Google.Protobuf.FieldDescriptorProto{
-                name: "external",
-                number: 1,
-                type: :TYPE_MESSAGE,
-                type_name: ".dangling.External"
-              }
-            ]
-          }
-        ]
-      }
-    end
+  defmodule Ghost.Service do
+    use GRPC.Service, name: "ghost.Service"
+    rpc(:call, Ghost.Outer, Ghost.Outer)
+    def descriptor, do: Fakes.service("Service", ".ghost.Outer", ".ghost.Outer")
   end
 
-  defmodule Dangling.Service do
-    use GRPC.Service, name: "dangling.Service"
-
-    rpc(:call, Dangling.Outer, Dangling.Outer)
-
-    def descriptor do
-      %Google.Protobuf.ServiceDescriptorProto{
-        name: "Service",
-        method: [
-          %Google.Protobuf.MethodDescriptorProto{
-            name: "call",
-            input_type: ".dangling.Outer",
-            output_type: ".dangling.Outer"
-          }
-        ]
-      }
-    end
-  end
-
-  describe "when a nested type cannot be traced" do
+  describe "a nested type whose module cannot be found by name" do
     import ExUnit.CaptureLog
 
-    test "warns that the nested module was not found" do
-      log = capture_log(fn -> Builder.build_reflection_tree([Dangling.Service]) end)
+    test "is traced through the module that refers to it" do
+      log =
+        capture_log(fn ->
+          assert {:ok, tree} = Builder.build_reflection_tree([Odd.Service])
 
-      assert log =~ "dangling.Outer.Inner"
-      assert log =~ "could not find the module"
+          assert is_map_key(tree.files, "odd.External.proto")
+          assert tree.files["odd.Outer.proto"].dependency == ["odd.External.proto"]
+          assert GrpcReflection.GraphCheck.violations(tree) == []
+        end)
+
+      assert log == ""
     end
+  end
 
-    test "reports the dependency that no file provides" do
-      log = capture_log(fn -> Builder.build_reflection_tree([Dangling.Service]) end)
+  describe "a dependency no file provides" do
+    import ExUnit.CaptureLog
 
-      assert log =~ "dangling.Outer.proto, but it depends on dangling.External.proto"
+    test "is reported as an error naming both files" do
+      log = capture_log(fn -> Builder.build_reflection_tree([Ghost.Service]) end)
+
+      assert log =~ "[error]"
+      assert log =~ "ghost.Outer.proto, but it depends on ghost.Missing.proto"
       assert log =~ "clients will not be able to load it"
     end
 
     test "still serves everything it could build" do
       capture_log(fn ->
-        assert {:ok, tree} = Builder.build_reflection_tree([Dangling.Service])
-        assert is_map_key(tree.files, "dangling.Outer.proto")
-        assert is_map_key(tree.files, "dangling.Service.proto")
+        assert {:ok, tree} = Builder.build_reflection_tree([Ghost.Service])
+        assert is_map_key(tree.files, "ghost.Outer.proto")
+        assert is_map_key(tree.files, "ghost.Service.proto")
       end)
     end
 
-    test "stays quiet when everything is found" do
+    test "is never reported for valid services" do
       log =
         capture_log(fn ->
           Builder.build_reflection_tree([
