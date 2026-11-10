@@ -102,6 +102,56 @@ defmodule GrpcReflection.Service.Builder.SynthesizerTest do
     end
   end
 
+  describe "message_descriptor/2 with nested types" do
+    alias GrpcReflection.Service.Builder.Nesting
+
+    # name, field names, and the same for everything nested inside
+    defp shape(%Google.Protobuf.DescriptorProto{} = message) do
+      {message.name, Enum.map(message.field, & &1.name),
+       message.nested_type |> Enum.map(&shape/1) |> Enum.sort(),
+       message.enum_type |> Enum.map(& &1.name) |> Enum.sort()}
+    end
+
+    test "nests the reachable messages and enums like protoc does" do
+      index = Nesting.index([NoDescriptor.Nested.NestedService.Service])
+
+      real = Nested.OuterMessage.MiddleMessage.descriptor()
+
+      synth =
+        Synthesizer.message_descriptor(NoDescriptor.Nested.OuterMessage.MiddleMessage, index)
+
+      assert shape(synth) == shape(real)
+    end
+
+    test "nests enums" do
+      index = Nesting.index([NoDescriptor.NestedCrossReference.Service.Service])
+
+      synth = Synthesizer.message_descriptor(NoDescriptor.NestedCrossReference.Holder, index)
+
+      assert [%{name: "Item"}] = synth.nested_type
+      assert [%{name: "Kind", value: [_, _]}] = synth.enum_type
+    end
+
+    test "has no nested types without an index" do
+      synth = Synthesizer.message_descriptor(NoDescriptor.NestedCrossReference.Holder)
+
+      assert synth.nested_type == []
+      assert synth.enum_type == []
+    end
+
+    test "marks map entries like protoc does" do
+      real = NestedCrossReference.Request.ItemsEntry.descriptor()
+      synth = Synthesizer.message_descriptor(NoDescriptor.NestedCrossReference.Request.ItemsEntry)
+
+      assert %{map_entry: true} = real.options
+      assert %{map_entry: true} = synth.options
+    end
+
+    test "leaves ordinary messages without options" do
+      assert Synthesizer.message_descriptor(NoDescriptor.ScalarTypes.ScalarReply).options == nil
+    end
+  end
+
   describe "enum_descriptor/1 matches real descriptor" do
     test "Status matches protoc output" do
       real = Proto2Features.Status.descriptor()

@@ -21,6 +21,12 @@ defmodule GrpcReflection.Service.Builder.UtilTest do
                Util.get_package("grpc.reflection.v1alpha.FileDescriptorResponse")
     end
 
+    test "get package does not depend on how type names are capitalized" do
+      assert "short_names" == Util.get_package("short_names.A")
+      assert "short_names" == Util.get_package("short_names.lower")
+      assert "Acme.Api" == Util.get_package("Acme.Api.Widget")
+    end
+
     test "downcase_first" do
       assert "hello" == Util.downcase_first("Hello")
     end

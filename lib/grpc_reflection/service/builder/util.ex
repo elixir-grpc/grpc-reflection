@@ -36,14 +36,12 @@ defmodule GrpcReflection.Service.Builder.Util do
 
   def get_nested_types(_, _, acc), do: acc
 
+  # The package of a top-level symbol is everything before its last segment. Nested types
+  # never get here: they live in the file of their outermost message.
   def get_package(symbol) do
-    # assuming this symbol follows normal GRPC practices, Types are capilatized
-    #
-    # So if we split on "." and drop anything capitalized we arrive at the package name
-
     symbol
     |> String.split(".")
-    |> Enum.reject(fn s -> Regex.match?(~r/^[A-Z].+/, s) end)
+    |> Enum.drop(-1)
     |> Enum.join(".")
   end
 

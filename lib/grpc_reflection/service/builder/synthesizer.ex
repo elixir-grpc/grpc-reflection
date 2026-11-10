@@ -24,8 +24,11 @@ defmodule GrpcReflection.Service.Builder.Synthesizer do
     }
   end
 
-  def message_descriptor(module) do
+  # `nested` maps a message module to the modules declared inside it (see
+  # Builder.Nesting.index/1); without descriptors that is the only record of nesting.
+  def message_descriptor(module, nested \\ %{}) do
     props = module.__message_props__()
+    {nested_enums, nested_messages} = nested |> Map.get(module, []) |> Enum.split_with(&enum?/1)
 
     fields =
       props.ordered_tags
@@ -58,15 +61,18 @@ defmodule GrpcReflection.Service.Builder.Synthesizer do
       field: fields,
       oneof_decl: real_oneof_decls ++ synthetic_oneof_decls,
       extension_range: extension_ranges,
-      # nested_type is always [] in synthesized descriptors. All message types — including
-      # map-entry types and any inline nested message definitions in the original .proto —
-      # are discovered via field traversal in builder.ex and emitted as separate files.
-      # This differs from protoc output (which embeds nested types in the parent descriptor)
-      # but is handled correctly by standard reflection clients.
-      nested_type: [],
-      enum_type: []
+      options: message_options(props),
+      nested_type: Enum.map(nested_messages, &message_descriptor(&1, nested)),
+      enum_type: Enum.map(nested_enums, &enum_descriptor/1)
     }
   end
+
+  # protoc marks the synthetic message behind a `map<k, v>` field, and clients use the
+  # mark to tell a map from a repeated message
+  defp message_options(%{map?: true}), do: %Google.Protobuf.MessageOptions{map_entry: true}
+  defp message_options(_props), do: nil
+
+  defp enum?(module), do: module.__message_props__().enum?
 
   def enum_descriptor(module) do
     short_name = module.full_name() |> String.split(".") |> List.last()

@@ -1,7 +1,7 @@
 defmodule GrpcReflection.Service.State do
   @moduledoc false
 
-  defstruct services: [], files: %{}, symbols: %{}, extensions: %{}
+  defstruct services: [], files: %{}, symbols: %{}, extensions: %{}, nested: %{}
 
   @type descriptor_t :: Google.Protobuf.FileDescriptorProto.t()
   @type symbol_t :: %{optional(binary()) => binary()}
@@ -11,11 +11,12 @@ defmodule GrpcReflection.Service.State do
           services: list(module()),
           files: entry_t(),
           symbols: symbol_t(),
-          extensions: %{optional(binary()) => list(integer())}
+          extensions: %{optional(binary()) => list(integer())},
+          nested: %{optional(module()) => list(module())}
         }
 
-  @spec new(list(module)) :: t()
-  def new(services \\ []), do: %__MODULE__{services: services}
+  @spec new(list(module), map()) :: t()
+  def new(services \\ [], nested \\ %{}), do: %__MODULE__{services: services, nested: nested}
 
   @spec merge(t(), t()) :: t()
   def merge(%__MODULE__{} = state1, %__MODULE__{} = state2) do
@@ -23,7 +24,8 @@ defmodule GrpcReflection.Service.State do
       services: Enum.uniq(state1.services ++ state2.services),
       files: merge_map!("Files", state1.files, state2.files),
       symbols: merge_map!("Symbols", state1.symbols, state2.symbols),
-      extensions: merge_map!("Extensions", state1.extensions, state2.extensions)
+      extensions: merge_map!("Extensions", state1.extensions, state2.extensions),
+      nested: merge_map!("Nested", state1.nested, state2.nested)
     }
   end
 
