@@ -91,7 +91,15 @@ defmodule GrpcReflection.Case.ImportsTestServiceTest do
         assert ops == [
                  {:call, "imports_test.ImportTestService.CreateUser"},
                  {:call, "imports_test.ImportTestService.UpdateLocation"},
-                 {:service, "imports_test.ImportTestService"}
+                 {:service, "imports_test.ImportTestService"},
+                 {:type, ".common.Address"},
+                 {:type, ".common.Coordinates"},
+                 {:type, ".common.Priority"},
+                 {:type, ".google.protobuf.Timestamp"},
+                 {:type, ".imports_test.LocationResponse"},
+                 {:type, ".imports_test.LocationUpdate"},
+                 {:type, ".imports_test.UserRequest"},
+                 {:type, ".imports_test.UserResponse"}
                ]
       end
     end

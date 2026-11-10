@@ -127,7 +127,9 @@ defmodule GrpcReflection.Case.ScalarTypesTest do
 
         assert ops == [
                  {:call, "scalar_types.ScalarService.ProcessScalars"},
-                 {:service, "scalar_types.ScalarService"}
+                 {:service, "scalar_types.ScalarService"},
+                 {:type, ".scalar_types.ScalarReply"},
+                 {:type, ".scalar_types.ScalarRequest"}
                ]
       end
     end

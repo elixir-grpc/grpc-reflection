@@ -168,27 +168,24 @@ defmodule GrpcReflection.TestClient do
   def grpcurl_service(ctx) do
     ctx
     |> grpcurl_list_services()
-    |> Stream.unfold(fn
-      [] ->
-        nil
-
-      [{:service, service} | rest] = term ->
-        commands = grpcurl_describe_service(ctx, service)
-        {term, commands ++ rest}
-
-      [{:call, call} | rest] = term ->
-        commands = grpcurl_describe_call(ctx, call)
-        {term, commands ++ rest}
-
-      [{:type, type} | rest] = term ->
-        commands = grpcurl_describe_type(ctx, type)
-        {term, commands ++ rest}
-    end)
-    |> Enum.to_list()
-    |> List.flatten()
-    |> Enum.uniq()
+    |> walk_reflection_graph(ctx, MapSet.new())
     |> Enum.sort()
   end
+
+  # types may refer back to themselves, so never describe the same thing twice
+  defp walk_reflection_graph([], _ctx, visited), do: MapSet.to_list(visited)
+
+  defp walk_reflection_graph([item | rest], ctx, visited) do
+    if MapSet.member?(visited, item) do
+      walk_reflection_graph(rest, ctx, visited)
+    else
+      walk_reflection_graph(describe(ctx, item) ++ rest, ctx, MapSet.put(visited, item))
+    end
+  end
+
+  defp describe(ctx, {:service, service}), do: grpcurl_describe_service(ctx, service)
+  defp describe(ctx, {:call, call}), do: grpcurl_describe_call(ctx, call)
+  defp describe(ctx, {:type, type}), do: grpcurl_describe_type(ctx, type)
 
   defp grpcurl_list_services(%{host: host}) do
     {result, 0} = System.cmd("grpcurl", ["-v", "-plaintext", host, "list"])
@@ -215,7 +212,7 @@ defmodule GrpcReflection.TestClient do
   defp grpcurl_describe_call(%{host: host}, call) do
     {result, 0} = System.cmd("grpcurl", ["-v", "-plaintext", host, "describe", call])
 
-    ~r/\((?: stream)? (?<symbol>[a-zA-Z0-9.]+) \)/
+    ~r/\((?: stream)? (?<symbol>[a-zA-Z0-9._]+) \)/
     |> Regex.scan(result, capture: ["symbol"])
     |> List.flatten()
     |> Enum.map(&{:type, &1})
@@ -252,7 +249,7 @@ defmodule GrpcReflection.TestClient do
       |> elem(1)
 
     # now we can grab all the references, then reject the nested declarations
-    ~r/ (?<symbol>\.[a-z]+[a-zA-Z0-9.]+) /
+    ~r/ (?<symbol>\.[a-z][a-zA-Z0-9._]*) /
     |> Regex.scan(result, capture: ["symbol"])
     |> List.flatten()
     |> Enum.reject(&Enum.member?(inline_declared_symbols, &1))
