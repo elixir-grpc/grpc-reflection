@@ -345,6 +345,55 @@ defmodule GrpcReflection.Service.BuilderTest do
     def descriptor, do: Fakes.service("Service", ".grouped.Outer", ".grouped.Outer")
   end
 
+  # a nested message that can be extended: its extension file takes the package of the file
+  # it is declared in, not the name of its enclosing message
+  defmodule Extendable.Outer.Inner do
+    use Protobuf, full_name: "extendable.Outer.Inner", syntax: :proto2
+    field(:value, 1, optional: true, type: :string)
+
+    def descriptor do
+      %{
+        Fakes.message("Inner", [Fakes.string_field("value", 1)])
+        | extension_range: [%Google.Protobuf.DescriptorProto.ExtensionRange{start: 100, end: 200}]
+      }
+    end
+  end
+
+  defmodule Extendable.Outer do
+    use Protobuf, full_name: "extendable.Outer", syntax: :proto2
+
+    alias GrpcReflection.Service.BuilderTest.Extendable.Outer.Inner
+
+    field(:inner, 1, optional: true, type: Inner)
+
+    def descriptor do
+      Fakes.message(
+        "Outer",
+        [Fakes.message_field("inner", 1, ".extendable.Outer.Inner")],
+        [Inner.descriptor()]
+      )
+    end
+  end
+
+  defmodule Extendable.Service do
+    use GRPC.Service, name: "extendable.Service"
+    rpc(:call, Extendable.Outer, Extendable.Outer)
+    def descriptor, do: Fakes.service("Service", ".extendable.Outer", ".extendable.Outer")
+  end
+
+  describe "extensions of a nested message" do
+    test "are filed under the package of the file that declares it" do
+      assert {:ok, tree} = Builder.build_reflection_tree([Extendable.Service])
+
+      file = tree.files["extendable.Outer.InnerExtension.proto"]
+
+      assert file.package == "extendable"
+      assert file.dependency == ["extendable.Outer.proto"]
+      assert is_map_key(tree.extensions, "extendable.Outer.Inner")
+      assert GrpcReflection.GraphCheck.violations(tree) == []
+    end
+  end
+
   describe "a message with a proto2 group field" do
     import ExUnit.CaptureLog
 
