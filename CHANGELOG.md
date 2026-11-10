@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## Unreleased
+
+### Bug fixes
+
+- A message that refers to itself, or a nested type that refers back to its enclosing message, no longer makes its file depend on itself. Clients such as grpcurl overflowed their stack loading it https://github.com/elixir-grpc/grpc-reflection/issues/90 https://github.com/elixir-grpc/grpc-reflection/pull/91
+- Nested messages and enums are served inside the file of the message that declares them, wherever they are referenced from (another message, a map value, an rpc request or response, or a cycle) and also when protos are compiled without descriptors. Before, clients failed with `cannot resolve type` https://github.com/elixir-grpc/grpc-reflection/issues/92
+- Types used only by a message nested two or more levels deep are now listed as dependencies of its file
+- A cycle that runs through a nested type is merged into one file like any other cycle, instead of leaving two files that depend on each other
+- A file's package is no longer guessed from capitalization, so single letter and lowercase type names (`message A`, `message lower`) stay out of the package
+- Without descriptors, map entry messages are marked as map entries, so clients see `map<k, v>` fields as maps
+
+### Enhancements
+
+- A nested type that cannot be traced, and that nothing refers to, is left out of its file with a warning, so the file can still be loaded
+- An error is logged for any file that depends on a file that was never built
+
+### Internal
+
+- Link-check the reflection tree built for every fixture service the way a client would (`GrpcReflection.GraphCheck`): dependencies exist, no cycles, every type resolves, every symbol is defined by its file
+- The grpcurl graph walk in the tests follows types in snake_case packages and stops at types it already described
+- New fixtures for nested types referenced across messages, cycles through nested types, deeply nested dependencies, and short type names
+
 ## v0.5.0 (2026-06-22)
 
 ### Enhancements
