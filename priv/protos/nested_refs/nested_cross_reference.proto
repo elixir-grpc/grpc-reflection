@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package nested_cross_reference;
+
+service Service {
+  rpc call (Request) returns (Reply) {}
+  // a nested type used directly as an rpc request
+  rpc callItem (Holder.Item) returns (Reply) {}
+}
+
+// references nested types owned by a different message
+message Request {
+  Holder.Item item = 1;
+  Holder.Kind kind = 2;
+  map<string, Holder.Item> items = 3;
+}
+
+message Reply {
+  string message = 1;
+}
+
+message Holder {
+  message Item {
+    string name = 1;
+  }
+
+  // never referenced by a field, but still part of Holder
+  message Unused {
+    string note = 1;
+    Extra extra = 2;
+  }
+
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_ONE = 1;
+  }
+
+  enum UnusedKind {
+    UNUSED_KIND_UNSPECIFIED = 0;
+  }
+}
+
+// only referenced from Holder.Unused
+message Extra {
+  string value = 1;
+}
