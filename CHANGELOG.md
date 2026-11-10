@@ -5,7 +5,7 @@
 ### Bug fixes
 
 - A message that refers to itself, or a nested type that refers back to its enclosing message, no longer makes its file depend on itself. Clients such as grpcurl overflowed their stack loading it https://github.com/elixir-grpc/grpc-reflection/issues/90 https://github.com/elixir-grpc/grpc-reflection/pull/91
-- Nested messages and enums are served inside the file of the message that declares them, wherever they are referenced from (another message, a map value, an rpc request or response, or a cycle) and also when protos are compiled without descriptors. Before, clients failed with `cannot resolve type` https://github.com/elixir-grpc/grpc-reflection/issues/92
+- Nested messages and enums are served inside the file of the message that declares them, wherever they are referenced from (another message, a map value, an rpc request or response, or a cycle) and also when protos are compiled without descriptors, where only the nested types that something refers to are served. Before, clients failed with `cannot resolve type` https://github.com/elixir-grpc/grpc-reflection/issues/92
 - Types used only by a message nested two or more levels deep are now listed as dependencies of its file
 - A cycle that runs through a nested type is merged into one file like any other cycle, instead of leaving two files that depend on each other
 - A file's package is no longer guessed from capitalization, so single letter and lowercase type names (`message A`, `message lower`) stay out of the package
