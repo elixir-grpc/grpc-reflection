@@ -163,7 +163,8 @@ defmodule GrpcReflection.Service.Builder.Util do
   end
 
   def types_from_descriptor(%Google.Protobuf.DescriptorProto{} = descriptor) do
-    (descriptor.field ++ Enum.flat_map(descriptor.nested_type, & &1.field))
+    descriptor
+    |> all_fields()
     |> Enum.map(fn field -> field.type_name end)
     |> Enum.reject(&is_nil/1)
     |> Enum.map(&String.trim_leading(&1, "."))
@@ -177,6 +178,11 @@ defmodule GrpcReflection.Service.Builder.Util do
   # Google.Protobuf.OneofDescriptorProto
   def types_from_descriptor(_) do
     []
+  end
+
+  # fields of a message and of every message nested inside it, at any depth
+  defp all_fields(%Google.Protobuf.DescriptorProto{field: fields, nested_type: nested_types}) do
+    fields ++ Enum.flat_map(nested_types, &all_fields/1)
   end
 
   # in gRPC, the leading "." signifies it is a FQDN
