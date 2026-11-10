@@ -143,4 +143,105 @@ defmodule GrpcReflection.Service.BuilderTest do
              "recursive_message.Service.call"
            ]
   end
+
+  # A message that declares a nested type, but whose nested module the builder cannot
+  # find (there is no `Dangling.Outer.Inner`). The nested type needs `Dangling.External`,
+  # which nothing else refers to, so it never gets traced.
+  defmodule Dangling.External do
+    use Protobuf, full_name: "dangling.External", syntax: :proto3
+    field(:value, 1, type: :string)
+
+    def descriptor do
+      %Google.Protobuf.DescriptorProto{
+        name: "External",
+        field: [
+          %Google.Protobuf.FieldDescriptorProto{name: "value", number: 1, type: :TYPE_STRING}
+        ]
+      }
+    end
+  end
+
+  defmodule Dangling.Outer do
+    use Protobuf, full_name: "dangling.Outer", syntax: :proto3
+    field(:value, 1, type: :string)
+
+    def descriptor do
+      %Google.Protobuf.DescriptorProto{
+        name: "Outer",
+        field: [
+          %Google.Protobuf.FieldDescriptorProto{name: "value", number: 1, type: :TYPE_STRING}
+        ],
+        nested_type: [
+          %Google.Protobuf.DescriptorProto{
+            name: "Inner",
+            field: [
+              %Google.Protobuf.FieldDescriptorProto{
+                name: "external",
+                number: 1,
+                type: :TYPE_MESSAGE,
+                type_name: ".dangling.External"
+              }
+            ]
+          }
+        ]
+      }
+    end
+  end
+
+  defmodule Dangling.Service do
+    use GRPC.Service, name: "dangling.Service"
+
+    rpc(:call, Dangling.Outer, Dangling.Outer)
+
+    def descriptor do
+      %Google.Protobuf.ServiceDescriptorProto{
+        name: "Service",
+        method: [
+          %Google.Protobuf.MethodDescriptorProto{
+            name: "call",
+            input_type: ".dangling.Outer",
+            output_type: ".dangling.Outer"
+          }
+        ]
+      }
+    end
+  end
+
+  describe "when a nested type cannot be traced" do
+    import ExUnit.CaptureLog
+
+    test "warns that the nested module was not found" do
+      log = capture_log(fn -> Builder.build_reflection_tree([Dangling.Service]) end)
+
+      assert log =~ "dangling.Outer.Inner"
+      assert log =~ "could not find the module"
+    end
+
+    test "reports the dependency that no file provides" do
+      log = capture_log(fn -> Builder.build_reflection_tree([Dangling.Service]) end)
+
+      assert log =~ "dangling.Outer.proto, but it depends on dangling.External.proto"
+      assert log =~ "clients will not be able to load it"
+    end
+
+    test "still serves everything it could build" do
+      capture_log(fn ->
+        assert {:ok, tree} = Builder.build_reflection_tree([Dangling.Service])
+        assert is_map_key(tree.files, "dangling.Outer.proto")
+        assert is_map_key(tree.files, "dangling.Service.proto")
+      end)
+    end
+
+    test "stays quiet when everything is found" do
+      log =
+        capture_log(fn ->
+          Builder.build_reflection_tree([
+            NestedCrossReference.Service.Service,
+            NoDescriptor.Nested.NestedService.Service
+          ])
+        end)
+
+      assert log == ""
+    end
+  end
 end

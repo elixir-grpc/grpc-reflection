@@ -7,6 +7,8 @@ defmodule GrpcReflection.Service.Builder do
   alias GrpcReflection.Service.Builder.Util
   alias GrpcReflection.Service.State
 
+  require Logger
+
   def build_reflection_tree(services) do
     with :ok <- Util.validate_services(services) do
       nested = Nesting.index(services)
@@ -21,6 +23,7 @@ defmodule GrpcReflection.Service.Builder do
         # type only closes a cycle once it is rewritten to the file of its enclosing message
         |> resolve_dependencies()
         |> State.shrink_cycles()
+        |> report_missing_dependencies()
         # only needed while building
         |> Map.put(:nested, %{})
 
@@ -94,8 +97,17 @@ defmodule GrpcReflection.Service.Builder do
     |> String.split(".")
     |> Enum.reduce_while(top_module, fn name, parent ->
       case Nesting.child_module(parent, name) do
-        {:ok, child} -> {:cont, child}
-        :error -> {:halt, nil}
+        {:ok, child} ->
+          {:cont, child}
+
+        :error ->
+          Logger.warning(
+            "reflection could not find the module for nested type #{nested_symbol} " <>
+              "(looked for #{inspect(Module.concat(parent, Macro.camelize(name)))}); " <>
+              "types only it refers to will not be traced"
+          )
+
+          {:halt, nil}
       end
     end)
   end
@@ -192,6 +204,23 @@ defmodule GrpcReflection.Service.Builder do
       end)
 
     %{state | files: resolved_files}
+  end
+
+  # A file that depends on a file we never built cannot be loaded by a client, and takes
+  # every file that depends on it along. That can only mean something was not traced, so
+  # say so loudly at startup, not as an obscure failure in a client later. The rest of the
+  # tree is still served.
+  defp report_missing_dependencies(%State{files: files} = state) do
+    for {filename, file} <- Enum.sort(files),
+        dependency <- file.dependency,
+        not is_map_key(files, dependency) do
+      Logger.error(
+        "reflection built #{filename}, but it depends on #{dependency}, which was never built; " <>
+          "clients will not be able to load it"
+      )
+    end
+
+    state
   end
 
   # protoc with the elixir generator and protobuf.generate slightly differ for how they
