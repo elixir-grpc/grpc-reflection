@@ -20,7 +20,7 @@
 
 ### Internal
 
-- Link-check the reflection tree built for every fixture service the way a client would (`GrpcReflection.GraphCheck`): dependencies exist, no cycles, every type resolves, every symbol is defined by its file
+- Link-check the reflection tree built for every fixture service the way a client would (`GrpcReflection.GraphCheck`): dependencies exist, no cycles, every type resolves, every symbol is defined by its file, and no symbol is defined by more than one file
 - The grpcurl graph walk in the tests follows types in snake_case packages and stops at types it already described
 - New fixtures for nested types referenced across messages, cycles through nested types, deeply nested dependencies, and short type names
 

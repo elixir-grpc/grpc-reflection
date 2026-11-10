@@ -16,7 +16,20 @@ defmodule GrpcReflection.GraphCheck do
     missing_dependencies(files) ++
       dependency_cycles(files) ++
       unresolved_types(files, defined) ++
-      misplaced_symbols(files, symbols, defined)
+      misplaced_symbols(files, symbols, defined) ++
+      duplicate_definitions(defined)
+  end
+
+  # a client rejects a symbol that more than one file defines
+  defp duplicate_definitions(defined) do
+    defined
+    |> Enum.flat_map(fn {name, symbols} -> Enum.map(symbols, &{&1, name}) end)
+    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+    |> Enum.filter(fn {_symbol, names} -> length(names) > 1 end)
+    |> Enum.sort()
+    |> Enum.map(fn {symbol, names} ->
+      "#{symbol} is defined by more than one file: #{names |> Enum.sort() |> Enum.join(", ")}"
+    end)
   end
 
   defp missing_dependencies(files) do
