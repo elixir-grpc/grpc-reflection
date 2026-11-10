@@ -26,6 +26,59 @@ defmodule GrpcReflection.Service.Builder.NestingTest do
     field(:value, 1, type: :string)
   end
 
+  # Generated before protoc-gen-elixir recorded `full_name`: no module has one, so the
+  # outer descriptor is the only record of what it declares.
+  defmodule Legacy do
+    use Protobuf, syntax: :proto3
+    field(:value, 1, type: :string)
+
+    def descriptor do
+      %Google.Protobuf.DescriptorProto{
+        name: "Legacy",
+        nested_type: [%Google.Protobuf.DescriptorProto{name: "Listed"}],
+        enum_type: [%Google.Protobuf.EnumDescriptorProto{name: "Kind"}]
+      }
+    end
+  end
+
+  defmodule Legacy.Listed do
+    use Protobuf, syntax: :proto3
+    field(:value, 1, type: :string)
+  end
+
+  defmodule Legacy.Kind do
+    use Protobuf, enum: true, syntax: :proto3
+    field(:ZERO, 0)
+  end
+
+  defmodule Legacy.Unlisted do
+    use Protobuf, syntax: :proto3
+    field(:value, 1, type: :string)
+  end
+
+  describe "parent/2 without full_names" do
+    test "finds the message whose descriptor declares the nested message" do
+      assert {"legacy.Legacy", Legacy} = Nesting.parent("legacy.Legacy.Listed", Legacy.Listed)
+    end
+
+    test "finds the message whose descriptor declares the nested enum" do
+      assert {"legacy.Legacy", Legacy} = Nesting.parent("legacy.Legacy.Kind", Legacy.Kind)
+    end
+
+    test "a module the descriptor does not declare is not nested" do
+      assert Nesting.parent("legacy.Legacy.Unlisted", Legacy.Unlisted) == nil
+    end
+
+    test "a descriptor for a different message does not make a module nested" do
+      assert Nesting.parent("legacy.Other.Listed", Legacy.Listed) == nil
+    end
+
+    test "finds a declared type by its proto name" do
+      assert {:ok, Legacy.Listed} = Nesting.child_module(Legacy, "Listed")
+      assert Nesting.child_module(Legacy, "Unlisted") == :error
+    end
+  end
+
   describe "parent/2" do
     test "finds the message enclosing a nested message" do
       assert {"nested.OuterMessage.MiddleMessage", Nested.OuterMessage.MiddleMessage} =

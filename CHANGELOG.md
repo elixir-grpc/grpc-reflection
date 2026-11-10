@@ -9,6 +9,7 @@
 - Types used only by a message nested two or more levels deep are now listed as dependencies of its file
 - A cycle that runs through a nested type is merged into one file like any other cycle, instead of leaving two files that depend on each other
 - A file's package is no longer guessed from capitalization, so single letter and lowercase type names (`message A`, `message lower`) stay out of the package
+- Nested types are found in modules generated before protoc-gen-elixir recorded `full_name`, from the enclosing message's descriptor. Referring to a nested type before its enclosing message no longer fails with `Symbols Conflict detected`
 - Without descriptors, map entry messages are marked as map entries, so clients see `map<k, v>` fields as maps
 
 ### Enhancements

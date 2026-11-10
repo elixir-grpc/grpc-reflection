@@ -46,7 +46,7 @@ defmodule GrpcReflection.Service.Builder.Nesting do
     with {:ok, parent_symbol} <- parent_symbol(symbol),
          parent_module = module |> Module.split() |> Enum.drop(-1) |> Module.concat(),
          true <- message?(parent_module),
-         ^parent_symbol <- full_name(parent_module) do
+         true <- encloses?(parent_module, parent_symbol, module, symbol) do
       {parent_symbol, parent_module}
     else
       _ -> nil
@@ -56,21 +56,69 @@ defmodule GrpcReflection.Service.Builder.Nesting do
   @doc """
   Finds the module for a type declared inside `parent_module`, by its proto name.
 
-  The module is only accepted if its `full_name` says it really is that type, so a module
-  that merely has a similar name is never mistaken for it.
+  The module is only accepted if the parent really declares that type, so a module that
+  merely has a similar name is never mistaken for it.
   """
   def child_module(parent_module, name) do
     child = Module.concat(parent_module, Macro.camelize(name))
 
     with true <- message?(parent_module),
          true <- Code.ensure_loaded?(child),
-         expected when is_binary(expected) <- full_name(parent_module),
-         true <- full_name(child) == expected <> "." <> name do
+         true <- declares?(parent_module, child, name) do
       {:ok, child}
     else
       _ -> :error
     end
   end
+
+  defp encloses?(parent_module, parent_symbol, module, symbol) do
+    case full_name(parent_module) do
+      nil -> legacy_encloses?(parent_module, parent_symbol, module, symbol)
+      name -> name == parent_symbol
+    end
+  end
+
+  defp declares?(parent_module, child, name) do
+    case full_name(parent_module) do
+      nil -> full_name(child) == nil and descriptor_declares?(parent_module, name)
+      expected -> full_name(child) == expected <> "." <> name
+    end
+  end
+
+  # Modules generated before protoc-gen-elixir recorded `full_name`: the module names
+  # and the parent's descriptor are all there is. Both have to agree before a type is
+  # treated as nested, so a module that only happens to be named like one never is.
+  defp legacy_encloses?(parent_module, parent_symbol, module, symbol) do
+    name = last_segment(symbol)
+
+    full_name(module) == nil and
+      Macro.camelize(name) == module |> Module.split() |> List.last() and
+      descriptor_declares?(parent_module, name) and
+      descriptor_name(parent_module) == last_segment(parent_symbol)
+  end
+
+  defp descriptor_declares?(parent_module, name) do
+    case descriptor(parent_module) do
+      %Google.Protobuf.DescriptorProto{nested_type: nested, enum_type: enums} ->
+        Enum.any?(nested ++ enums, &(&1.name == name))
+
+      _ ->
+        false
+    end
+  end
+
+  defp descriptor_name(module) do
+    case descriptor(module) do
+      %Google.Protobuf.DescriptorProto{name: name} -> name
+      _ -> nil
+    end
+  end
+
+  defp descriptor(module) do
+    if function_exported?(module, :descriptor, 0), do: module.descriptor()
+  end
+
+  defp last_segment(symbol), do: symbol |> String.split(".") |> List.last()
 
   defp enclosing_message(module) do
     case full_name(module) do

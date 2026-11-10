@@ -267,6 +267,66 @@ defmodule GrpcReflection.Service.BuilderTest do
     def descriptor, do: Fakes.service("Service", ".ghost.Outer", ".ghost.Outer")
   end
 
+  # Modules from protoc-gen-elixir before it recorded `full_name`: only the module names and
+  # the descriptors say that Legacy.Holder.Item is declared inside Legacy.Holder. The request
+  # refers to the nested type before the message that encloses it.
+  defmodule Legacy.Holder.Item do
+    use Protobuf, syntax: :proto3
+    field(:value, 1, type: :string)
+    def descriptor, do: Fakes.message("Item", [Fakes.string_field("value", 1)])
+  end
+
+  defmodule Legacy.Holder do
+    use Protobuf, syntax: :proto3
+
+    alias GrpcReflection.Service.BuilderTest.Legacy.Holder.Item
+
+    field(:name, 1, type: :string)
+
+    def descriptor,
+      do: Fakes.message("Holder", [Fakes.string_field("name", 1)], [Item.descriptor()])
+  end
+
+  defmodule Legacy.Request do
+    use Protobuf, syntax: :proto3
+    field(:item, 1, type: Legacy.Holder.Item)
+    field(:holder, 2, type: Legacy.Holder)
+
+    def descriptor,
+      do:
+        Fakes.message("Request", [
+          Fakes.message_field("item", 1, ".legacy.Holder.Item"),
+          Fakes.message_field("holder", 2, ".legacy.Holder")
+        ])
+  end
+
+  defmodule Legacy.Service do
+    use GRPC.Service, name: "legacy.Service"
+    rpc(:call, Legacy.Request, Legacy.Request)
+    def descriptor, do: Fakes.service("Service", ".legacy.Request", ".legacy.Request")
+  end
+
+  describe "a nested type in a module that does not record its full name" do
+    import ExUnit.CaptureLog
+
+    test "is filed under its enclosing message, even when referred to first" do
+      log =
+        capture_log(fn ->
+          assert {:ok, tree} = Builder.build_reflection_tree([Legacy.Service])
+
+          refute is_map_key(tree.files, "legacy.Holder.Item.proto")
+          assert tree.symbols["legacy.Holder.Item"] == "legacy.Holder.proto"
+
+          assert [%{name: "Holder", nested_type: [%{name: "Item"}]}] =
+                   tree.files["legacy.Holder.proto"].message_type
+
+          assert GrpcReflection.GraphCheck.violations(tree) == []
+        end)
+
+      assert log == ""
+    end
+  end
+
   describe "a nested type whose module cannot be found by name" do
     import ExUnit.CaptureLog
 
