@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package nested_self_reference;
+
+service Service {
+  rpc call (Request) returns (Reply) {}
+}
+
+message Request {
+  Outer outer = 1;
+}
+
+message Reply {
+  string message = 1;
+}
+
+// a nested type that refers back to its enclosing message
+message Outer {
+  message Inner {
+    Outer parent = 1;
+  }
+
+  Inner inner = 1;
+}

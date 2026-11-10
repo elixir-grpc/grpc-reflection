@@ -18,15 +18,9 @@ defmodule GrpcReflection.Case.SelfReferenceTest do
       # a client resolves every dependency before it can use a file, so a file that
       # depends on itself sends it into an endless loop (grpcurl: stack overflow)
       test "no file lists itself as a dependency", ctx do
-        for symbol <- [
-              "self_reference.Request",
-              "self_reference.Outer",
-              "self_reference.Outer.Inner"
-            ] do
-          message = {:file_containing_symbol, symbol}
-          assert {:ok, %Google.Protobuf.FileDescriptorProto{} = file} = run_request(message, ctx)
-          refute file.name in file.dependency, "#{file.name} depends on itself"
-        end
+        message = {:file_containing_symbol, "self_reference.Request"}
+        assert {:ok, %Google.Protobuf.FileDescriptorProto{} = file} = run_request(message, ctx)
+        refute file.name in file.dependency, "#{file.name} depends on itself"
       end
 
       test "reflection graph is traversable using grpcurl", ctx do

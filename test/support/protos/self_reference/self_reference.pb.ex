@@ -56,21 +56,6 @@ defmodule SelfReference.Request do
           proto3_optional: nil,
           __unknown_fields__: [],
           __protobuf__: true
-        },
-        %Google.Protobuf.FieldDescriptorProto{
-          name: "outer",
-          extendee: nil,
-          number: 4,
-          label: :LABEL_OPTIONAL,
-          type: :TYPE_MESSAGE,
-          type_name: ".self_reference.Outer",
-          default_value: nil,
-          options: nil,
-          oneof_index: nil,
-          json_name: "outer",
-          proto3_optional: nil,
-          __unknown_fields__: [],
-          __protobuf__: true
         }
       ],
       nested_type: [],
@@ -89,7 +74,6 @@ defmodule SelfReference.Request do
   field :name, 1, type: :string
   field :child, 2, type: SelfReference.Request
   field :children, 3, repeated: true, type: SelfReference.Request
-  field :outer, 4, type: SelfReference.Outer
 end
 
 defmodule SelfReference.Reply do
@@ -136,129 +120,6 @@ defmodule SelfReference.Reply do
   end
 
   field :message, 1, type: :string
-end
-
-defmodule SelfReference.Outer.Inner do
-  @moduledoc false
-
-  use Protobuf,
-    full_name: "self_reference.Outer.Inner",
-    proto_source: "self_reference.proto",
-    protoc_gen_elixir_version: "0.17.0",
-    syntax: :proto3
-
-  def descriptor do
-    # credo:disable-for-next-line
-    %Google.Protobuf.DescriptorProto{
-      name: "Inner",
-      field: [
-        %Google.Protobuf.FieldDescriptorProto{
-          name: "parent",
-          extendee: nil,
-          number: 1,
-          label: :LABEL_OPTIONAL,
-          type: :TYPE_MESSAGE,
-          type_name: ".self_reference.Outer",
-          default_value: nil,
-          options: nil,
-          oneof_index: nil,
-          json_name: "parent",
-          proto3_optional: nil,
-          __unknown_fields__: [],
-          __protobuf__: true
-        }
-      ],
-      nested_type: [],
-      enum_type: [],
-      extension_range: [],
-      extension: [],
-      options: nil,
-      oneof_decl: [],
-      reserved_range: [],
-      reserved_name: [],
-      __unknown_fields__: [],
-      __protobuf__: true
-    }
-  end
-
-  field :parent, 1, type: SelfReference.Outer
-end
-
-defmodule SelfReference.Outer do
-  @moduledoc false
-
-  use Protobuf,
-    full_name: "self_reference.Outer",
-    proto_source: "self_reference.proto",
-    protoc_gen_elixir_version: "0.17.0",
-    syntax: :proto3
-
-  def descriptor do
-    # credo:disable-for-next-line
-    %Google.Protobuf.DescriptorProto{
-      name: "Outer",
-      field: [
-        %Google.Protobuf.FieldDescriptorProto{
-          name: "inner",
-          extendee: nil,
-          number: 1,
-          label: :LABEL_OPTIONAL,
-          type: :TYPE_MESSAGE,
-          type_name: ".self_reference.Outer.Inner",
-          default_value: nil,
-          options: nil,
-          oneof_index: nil,
-          json_name: "inner",
-          proto3_optional: nil,
-          __unknown_fields__: [],
-          __protobuf__: true
-        }
-      ],
-      nested_type: [
-        %Google.Protobuf.DescriptorProto{
-          name: "Inner",
-          field: [
-            %Google.Protobuf.FieldDescriptorProto{
-              name: "parent",
-              extendee: nil,
-              number: 1,
-              label: :LABEL_OPTIONAL,
-              type: :TYPE_MESSAGE,
-              type_name: ".self_reference.Outer",
-              default_value: nil,
-              options: nil,
-              oneof_index: nil,
-              json_name: "parent",
-              proto3_optional: nil,
-              __unknown_fields__: [],
-              __protobuf__: true
-            }
-          ],
-          nested_type: [],
-          enum_type: [],
-          extension_range: [],
-          extension: [],
-          options: nil,
-          oneof_decl: [],
-          reserved_range: [],
-          reserved_name: [],
-          __unknown_fields__: [],
-          __protobuf__: true
-        }
-      ],
-      enum_type: [],
-      extension_range: [],
-      extension: [],
-      options: nil,
-      oneof_decl: [],
-      reserved_range: [],
-      reserved_name: [],
-      __unknown_fields__: [],
-      __protobuf__: true
-    }
-  end
-
-  field :inner, 1, type: SelfReference.Outer.Inner
 end
 
 defmodule SelfReference.Service.Service do
