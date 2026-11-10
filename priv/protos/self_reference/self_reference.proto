@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package self_reference;
+
+service Service {
+  rpc call (Request) returns (Reply) {}
+}
+
+// a message that refers to itself, directly and through a repeated field
+message Request {
+  string name = 1;
+  Request child = 2;
+  repeated Request children = 3;
+}
+
+message Reply {
+  string message = 1;
+}

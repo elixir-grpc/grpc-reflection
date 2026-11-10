@@ -155,6 +155,9 @@ defmodule GrpcReflection.Service.Builder do
   # build_response names deps as `type_symbol <> ".proto"`, but nested types share a file
   # with their ancestor, so that filename may not exist. Must run after shrink_cycles so
   # merged cycle filenames are already reflected in the symbol table.
+  #
+  # Drop self-dependencies: shrink_cycles skips single-file cycles, and a client loops
+  # forever on a file that depends on itself.
   defp resolve_dependencies(%State{files: files, symbols: symbols} = state) do
     resolved_files =
       Map.new(files, fn {filename, descriptor} ->
@@ -165,6 +168,7 @@ defmodule GrpcReflection.Service.Builder do
             symbols[type_symbol] || dep
           end)
           |> Enum.uniq()
+          |> Enum.reject(&(&1 == filename))
 
         {filename, %{descriptor | dependency: resolved_deps}}
       end)
