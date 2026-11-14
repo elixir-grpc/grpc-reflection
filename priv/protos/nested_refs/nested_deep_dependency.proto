@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package nested_deep_dependency;
+
+service Service {
+  rpc call (Request) returns (Reply) {}
+}
+
+message Request {
+  Outer outer = 1;
+}
+
+message Reply {
+  string message = 1;
+}
+
+message External {
+  string value = 1;
+}
+
+// External is only referenced from a type nested three levels deep
+message Outer {
+  message Middle {
+    message Deep {
+      External external = 1;
+    }
+
+    Deep deep = 1;
+  }
+
+  Middle middle = 1;
+}

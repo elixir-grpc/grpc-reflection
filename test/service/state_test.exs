@@ -41,6 +41,17 @@ defmodule GrpcReflection.Service.StateTest do
                    fn -> State.merge(state1, state2) end
     end
 
+    test "nested type indexes merge, and collide when they disagree" do
+      state1 = %State{nested: %{Parent => [ChildA]}}
+      state2 = %State{nested: %{Other => [ChildB]}}
+
+      assert State.merge(state1, state2).nested == %{Parent => [ChildA], Other => [ChildB]}
+
+      assert_raise RuntimeError, ~r/Nested Conflict detected: key Elixir.Parent/, fn ->
+        State.merge(state1, %State{nested: %{Parent => [ChildB]}})
+      end
+    end
+
     test "extension collisions raise with different payloads" do
       state1 = %State{extensions: %{"extension" => "payload"}}
       state2 = %State{extensions: %{"extension" => "payload"}}

@@ -3,32 +3,42 @@ defmodule GrpcReflection.Service.Builder do
 
   alias Google.Protobuf.FileDescriptorProto
   alias GrpcReflection.Service.Builder.Extensions
+  alias GrpcReflection.Service.Builder.Nesting
+  alias GrpcReflection.Service.Builder.Repair
   alias GrpcReflection.Service.Builder.Util
   alias GrpcReflection.Service.State
 
+  require Logger
+
   def build_reflection_tree(services) do
     with :ok <- Util.validate_services(services) do
+      nested = Nesting.index(services)
+
       tree =
         services
         |> Enum.reduce(State.new(), fn service, state ->
-          new_state = process_service(service)
+          new_state = process_service(service, nested)
           State.merge(state, new_state)
         end)
-        # shrink_cycles must run first so the symbol table reflects final merged filenames
-        # before resolve_dependencies rewrites dep strings through it
-        |> State.shrink_cycles()
+        |> Repair.drop_unresolvable_nested()
+        # dependencies must name real files before looking for cycles: an edge to a nested
+        # type only closes a cycle once it is rewritten to the file of its enclosing message
         |> resolve_dependencies()
+        |> State.shrink_cycles()
+        |> report_missing_dependencies()
+        # only needed while building
+        |> Map.merge(%{nested: %{}, traced: MapSet.new()})
 
       {:ok, tree}
     end
   end
 
-  defp process_service(service) do
+  defp process_service(service, nested) do
     service_name = service.__meta__(:name)
-    service_response = build_response(service_name, service)
+    state = State.new([service], nested)
+    service_response = build_response(state, service_name, service)
 
-    [service]
-    |> State.new()
+    state
     |> State.add_file(service_response)
     |> State.add_symbol(service_name, service_response.name)
     |> trace_service_refs(service, service_response.name)
@@ -36,7 +46,7 @@ defmodule GrpcReflection.Service.Builder do
 
   defp trace_service_refs(state, module, module_filename) do
     service_name = module.__meta__(:name)
-    methods = get_descriptor(module).method
+    methods = get_descriptor(state, module).method
 
     module.__rpc_calls__()
     |> Enum.reduce(state, fn call, state ->
@@ -47,40 +57,84 @@ defmodule GrpcReflection.Service.Builder do
 
       call_symbol = service_name <> "." <> to_string(function)
 
-      req_symbol = Util.trim_symbol(req_symbol)
-      req_response = build_response(req_symbol, request)
-      req_filename = req_symbol <> ".proto"
-      resp_symbol = Util.trim_symbol(resp_symbol)
-      resp_response = build_response(resp_symbol, response)
-      resp_filename = resp_symbol <> ".proto"
-
       state
-      |> Extensions.add_extensions(service_name, module)
-      |> State.add_file(req_response)
-      |> State.add_file(resp_response)
       |> State.add_symbol(call_symbol, module_filename)
-      |> State.add_symbol(req_symbol, req_filename)
-      |> State.add_symbol(resp_symbol, resp_filename)
-      |> Extensions.add_extensions(req_symbol, request)
-      |> Extensions.add_extensions(resp_symbol, response)
-      |> trace_message_refs(req_symbol, request)
-      |> trace_message_refs(resp_symbol, response)
+      |> trace_type(Util.trim_symbol(req_symbol), request)
+      |> trace_type(Util.trim_symbol(resp_symbol), response)
     end)
   end
 
-  defp trace_message_refs(state, parent_symbol, module) do
-    case get_descriptor(module) do
-      %{field: fields} ->
-        trace_message_fields(state, parent_symbol, module, fields)
+  # A nested type is not a file of its own: it lives in the file of the outermost message
+  # that encloses it. Whatever references a type, it is that message we trace, and then
+  # the nested type itself, whose module we were just handed.
+  defp trace_type(state, symbol, module) do
+    {top_symbol, top_module} = Nesting.top_level(symbol, module)
 
-      _ ->
-        state
+    state
+    |> trace_top_level(top_symbol, top_module)
+    |> trace_members([{symbol, module}])
+  end
+
+  defp trace_top_level(state, symbol, _module) when is_map_key(state.symbols, symbol), do: state
+
+  defp trace_top_level(state, symbol, module) do
+    response = build_response(state, symbol, module)
+    members = [{symbol, module} | nested_members(state, symbol, module)]
+
+    members
+    |> Enum.reduce(State.add_file(state, response), fn {member_symbol, _}, state ->
+      State.add_symbol(state, member_symbol, response.name)
+    end)
+    |> trace_members(members)
+  end
+
+  # every message and enum declared in a message's file, as `{symbol, module}`
+  defp nested_members(state, symbol, module) do
+    descriptor = get_descriptor(state, module)
+
+    for nested_symbol <- Util.get_nested_types(symbol, descriptor) do
+      {nested_symbol, nested_module(nested_symbol, module, symbol)}
     end
   end
 
-  defp trace_message_fields(state, parent_symbol, module, fields) do
-    nested_types = Util.get_nested_types(parent_symbol, get_descriptor(module))
+  defp nested_module(nested_symbol, top_module, top_symbol) do
+    nested_symbol
+    |> String.replace_prefix(top_symbol <> ".", "")
+    |> String.split(".")
+    |> Enum.reduce_while(top_module, fn name, parent ->
+      case Nesting.child_module(parent, name) do
+        {:ok, child} -> {:cont, child}
+        :error -> {:halt, nil}
+      end
+    end)
+  end
 
+  # Follow the types a message refers to, once. Members whose module we could not find are
+  # skipped: they are traced if something refers to them, and left out of the tree if not.
+  defp trace_members(state, members) do
+    Enum.reduce(members, state, fn
+      {_symbol, nil}, state ->
+        state
+
+      {symbol, module}, state ->
+        if MapSet.member?(state.traced, symbol) do
+          state
+        else
+          %{state | traced: MapSet.put(state.traced, symbol)}
+          |> Extensions.add_extensions(symbol, module)
+          |> trace_message_refs(module)
+        end
+    end)
+  end
+
+  defp trace_message_refs(state, module) do
+    case get_descriptor(state, module) do
+      %{field: fields} -> trace_message_fields(state, module, fields)
+      _ -> state
+    end
+  end
+
+  defp trace_message_fields(state, module, fields) do
     module.__message_props__().field_props
     |> Map.values()
     |> Enum.map(fn %{name: name, type: type} ->
@@ -92,47 +146,19 @@ defmodule GrpcReflection.Service.Builder do
 
       %{mod: mod, symbol: Enum.find(fields, fn f -> f.name == name end).type_name}
     end)
-    |> Enum.reject(fn %{symbol: s} -> is_nil(s) end)
+    # a proto2 group field has no module of its own: its message is declared inside the
+    # enclosing message, and traced with the rest of that message's nested types
+    |> Enum.reject(fn %{mod: mod, symbol: s} -> is_nil(s) or mod == :group end)
     |> Enum.reduce(state, fn %{mod: mod, symbol: symbol}, state ->
-      trace_field_ref(state, parent_symbol, Util.trim_symbol(symbol), mod, nested_types)
+      trace_type(state, Util.trim_symbol(symbol), mod)
     end)
   end
 
-  defp trace_field_ref(state, _parent_symbol, symbol, _mod, _nested_types)
-       when is_map_key(state.symbols, symbol),
-       do: state
-
-  defp trace_field_ref(state, parent_symbol, symbol, mod, nested_types) do
-    {file, filename} =
-      if symbol in nested_types do
-        # nested types belong in the same file as their ancestor — look it up rather
-        # than building a new synthetic file (which would have wrong FQDNs)
-        parent_filename = state.symbols[parent_symbol]
-        {state.files[parent_filename], parent_filename}
-      else
-        response = build_response(symbol, mod)
-        {response, response.name}
-      end
-
-    state
-    |> Extensions.add_extensions(symbol, mod)
-    |> State.add_file(file)
-    |> State.add_symbol(symbol, filename)
-    |> trace_message_refs(symbol, mod)
-  end
-
-  defp build_response(symbol, module) do
+  defp build_response(state, symbol, module) do
     # we build our own file responses, so unwrap any present
-    descriptor = get_descriptor(module)
+    descriptor = get_descriptor(state, module)
 
-    dependencies =
-      descriptor
-      |> Util.types_from_descriptor()
-      |> Enum.uniq()
-      |> Kernel.--(Util.get_nested_types(symbol, descriptor))
-      |> Enum.map(fn name ->
-        Util.trim_symbol(name) <> ".proto"
-      end)
+    dependencies = Util.dependencies(symbol, descriptor)
 
     syntax = Util.get_syntax(module)
 
@@ -153,11 +179,13 @@ defmodule GrpcReflection.Service.Builder do
 
   # Rewrite each file's dependency list to use actual filenames from the symbol table.
   # build_response names deps as `type_symbol <> ".proto"`, but nested types share a file
-  # with their ancestor, so that filename may not exist. Must run after shrink_cycles so
-  # merged cycle filenames are already reflected in the symbol table.
+  # with their ancestor, so that filename may not exist. Must run before shrink_cycles,
+  # which needs real filenames to see cycles that pass through nested types.
   #
-  # Drop self-dependencies: shrink_cycles skips single-file cycles, and a client loops
-  # forever on a file that depends on itself.
+  # Drop self-dependencies: a message that refers to itself, or a nested type that refers
+  # to its enclosing message, resolves to its own file. shrink_cycles skips single-file
+  # cycles, and a client resolves every dependency before using a file, so it would never
+  # finish loading a file that depends on itself.
   defp resolve_dependencies(%State{files: files, symbols: symbols} = state) do
     resolved_files =
       Map.new(files, fn {filename, descriptor} ->
@@ -176,10 +204,27 @@ defmodule GrpcReflection.Service.Builder do
     %{state | files: resolved_files}
   end
 
+  # A file that depends on a file we never built cannot be loaded by a client, and takes
+  # every file that depends on it along. That can only mean something was not traced, so
+  # say so loudly at startup, not as an obscure failure in a client later. The rest of the
+  # tree is still served.
+  defp report_missing_dependencies(%State{files: files} = state) do
+    for {filename, file} <- Enum.sort(files),
+        dependency <- file.dependency,
+        not is_map_key(files, dependency) do
+      Logger.error(
+        "reflection built #{filename}, but it depends on #{dependency}, which was never built; " <>
+          "clients will not be able to load it"
+      )
+    end
+
+    state
+  end
+
   # protoc with the elixir generator and protobuf.generate slightly differ for how they
   # generate descriptors.  Use this to potentially unwrap the service proto when dealing
   # with descriptors that could come from a service module.
-  defp get_descriptor(module) do
+  defp get_descriptor(%State{} = state, module) do
     cond do
       not Code.ensure_loaded?(module) ->
         raise "Module #{inspect(module)} is not loaded"
@@ -191,11 +236,11 @@ defmodule GrpcReflection.Service.Builder do
         end
 
       true ->
-        synthesize_descriptor(module)
+        synthesize_descriptor(module, state.nested)
     end
   end
 
-  defp synthesize_descriptor(module) do
+  defp synthesize_descriptor(module, nested) do
     cond do
       function_exported?(module, :__rpc_calls__, 0) ->
         GrpcReflection.Service.Builder.Synthesizer.service_descriptor(module)
@@ -204,7 +249,7 @@ defmodule GrpcReflection.Service.Builder do
         GrpcReflection.Service.Builder.Synthesizer.enum_descriptor(module)
 
       function_exported?(module, :__message_props__, 0) ->
-        GrpcReflection.Service.Builder.Synthesizer.message_descriptor(module)
+        GrpcReflection.Service.Builder.Synthesizer.message_descriptor(module, nested)
 
       true ->
         # unreachable in practice: validate_services/1 only admits modules that export

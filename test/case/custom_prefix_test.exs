@@ -81,7 +81,9 @@ defmodule GrpcReflection.Case.CustomPrefixServiceTest do
 
         assert ops == [
                  call: "custom_prefix.PrefixService.Echo",
-                 service: "custom_prefix.PrefixService"
+                 service: "custom_prefix.PrefixService",
+                 type: ".custom_prefix.EchoRequest",
+                 type: ".custom_prefix.EchoResponse"
                ]
       end
     end

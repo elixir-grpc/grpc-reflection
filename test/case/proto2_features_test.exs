@@ -128,7 +128,11 @@ defmodule GrpcReflection.Case.Proto2FeaturesTest do
 
         assert ops == [
                  {:call, "proto2_features.Proto2Service.ProcessProto2"},
-                 {:service, "proto2_features.Proto2Service"}
+                 {:service, "proto2_features.Proto2Service"},
+                 {:type, ".google.protobuf.Any"},
+                 {:type, ".proto2_features.Proto2Request"},
+                 {:type, ".proto2_features.Proto2Response"},
+                 {:type, ".proto2_features.Status"}
                ]
       end
     end

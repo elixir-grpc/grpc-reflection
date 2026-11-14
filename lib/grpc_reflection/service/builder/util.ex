@@ -36,14 +36,12 @@ defmodule GrpcReflection.Service.Builder.Util do
 
   def get_nested_types(_, _, acc), do: acc
 
+  # The package of a top-level symbol is everything before its last segment. Nested types
+  # never get here: they live in the file of their outermost message.
   def get_package(symbol) do
-    # assuming this symbol follows normal GRPC practices, Types are capilatized
-    #
-    # So if we split on "." and drop anything capitalized we arrive at the package name
-
     symbol
     |> String.split(".")
-    |> Enum.reject(fn s -> Regex.match?(~r/^[A-Z].+/, s) end)
+    |> Enum.drop(-1)
     |> Enum.join(".")
   end
 
@@ -163,7 +161,8 @@ defmodule GrpcReflection.Service.Builder.Util do
   end
 
   def types_from_descriptor(%Google.Protobuf.DescriptorProto{} = descriptor) do
-    (descriptor.field ++ Enum.flat_map(descriptor.nested_type, & &1.field))
+    descriptor
+    |> all_fields()
     |> Enum.map(fn field -> field.type_name end)
     |> Enum.reject(&is_nil/1)
     |> Enum.map(&String.trim_leading(&1, "."))
@@ -177,6 +176,21 @@ defmodule GrpcReflection.Service.Builder.Util do
   # Google.Protobuf.OneofDescriptorProto
   def types_from_descriptor(_) do
     []
+  end
+
+  # fields of a message and of every message nested inside it, at any depth
+  defp all_fields(%Google.Protobuf.DescriptorProto{field: fields, nested_type: nested_types}) do
+    fields ++ Enum.flat_map(nested_types, &all_fields/1)
+  end
+
+  # The files a type's file has to import: every type its descriptor refers to, except
+  # the ones declared in that same file, as `symbol <> ".proto"`.
+  def dependencies(symbol, descriptor) do
+    descriptor
+    |> types_from_descriptor()
+    |> Enum.uniq()
+    |> Kernel.--(get_nested_types(symbol, descriptor))
+    |> Enum.map(fn name -> trim_symbol(name) <> ".proto" end)
   end
 
   # in gRPC, the leading "." signifies it is a FQDN

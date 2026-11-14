@@ -8,7 +8,9 @@ defmodule GrpcReflection.Service.Builder.Extensions do
     if Code.ensure_loaded?(module) and function_exported?(module, :descriptor, 0) do
       extension_file = symbol <> "Extension.proto"
 
-      case process_extensions(module, symbol, extension_file, module.descriptor()) do
+      package = state.files[state.symbols[symbol]].package
+
+      case process_extensions(module, symbol, package, extension_file, module.descriptor()) do
         {:ok, {extension_numbers, extension_payload}} ->
           state
           |> State.add_file(extension_payload)
@@ -25,6 +27,7 @@ defmodule GrpcReflection.Service.Builder.Extensions do
   defp process_extensions(
          mod,
          symbol,
+         package,
          extension_file,
          %Google.Protobuf.DescriptorProto{extension_range: extension_range} = descriptor
        )
@@ -46,7 +49,7 @@ defmodule GrpcReflection.Service.Builder.Extensions do
 
     unencoded_extension_payload = %Google.Protobuf.FileDescriptorProto{
       name: extension_file,
-      package: Util.get_package(symbol),
+      package: package,
       dependency: [symbol <> ".proto"],
       syntax: Util.get_syntax(mod),
       extension: Enum.map(extensions, fn {_, _, ext} -> ext end),
@@ -56,5 +59,5 @@ defmodule GrpcReflection.Service.Builder.Extensions do
     {:ok, {Enum.map(extensions, fn {idx, _, _} -> idx end), unencoded_extension_payload}}
   end
 
-  defp process_extensions(_, _, _, _), do: :ignore
+  defp process_extensions(_, _, _, _, _), do: :ignore
 end

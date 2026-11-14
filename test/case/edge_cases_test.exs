@@ -68,7 +68,13 @@ defmodule GrpcReflection.Case.EdgeCasesTest do
                  {:call, "edge_cases.EdgeCaseService.BothEmpty"},
                  {:call, "edge_cases.EdgeCaseService.EmptyInput"},
                  {:call, "edge_cases.EdgeCaseService.EmptyOutput"},
-                 {:service, "edge_cases.EdgeCaseService"}
+                 {:service, "edge_cases.EdgeCaseService"},
+                 {:type, ".edge_cases.BothEmptyRequest"},
+                 {:type, ".edge_cases.BothEmptyResponse"},
+                 {:type, ".edge_cases.EmptyInputRequest"},
+                 {:type, ".edge_cases.EmptyInputResponse"},
+                 {:type, ".edge_cases.EmptyOutputRequest"},
+                 {:type, ".edge_cases.EmptyOutputResponse"}
                ]
       end
     end

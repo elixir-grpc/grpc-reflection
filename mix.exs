@@ -85,9 +85,7 @@ defmodule GrpcReflection.MixProject do
   # overrides package_prefix entirely, so the no-descriptor pass would emit modules with
   # the same name as the descriptor pass, causing a compile-time conflict.
   # Add any proto that uses the elixirpb.file module_prefix option to this list.
-  # nested_self_reference.proto is skipped because the descriptor-less builder does not
-  # support nested messages yet.
-  @skip_no_descriptor ["custom_prefix_service.proto", "nested_self_reference.proto"]
+  @skip_no_descriptor ["custom_prefix_service.proto"]
 
   defp build_protos(_argv) do
     {reflection, fixtures} =

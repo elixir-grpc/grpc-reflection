@@ -143,4 +143,383 @@ defmodule GrpcReflection.Service.BuilderTest do
              "recursive_message.Service.call"
            ]
   end
+
+  # Hand-built modules for shapes protoc-gen-elixir never generates: they break the
+  # naming convention the builder uses to find nested types.
+  defmodule Fakes do
+    alias Google.Protobuf.DescriptorProto
+    alias Google.Protobuf.FieldDescriptorProto
+    alias Google.Protobuf.MethodDescriptorProto
+    alias Google.Protobuf.ServiceDescriptorProto
+
+    def string_field(name, number),
+      do: %FieldDescriptorProto{name: name, number: number, type: :TYPE_STRING}
+
+    def message_field(name, number, type_name),
+      do: %FieldDescriptorProto{
+        name: name,
+        number: number,
+        type: :TYPE_MESSAGE,
+        type_name: type_name
+      }
+
+    def message(name, fields, nested \\ []),
+      do: %DescriptorProto{name: name, field: fields, nested_type: nested}
+
+    def service(name, request, response) do
+      %ServiceDescriptorProto{
+        name: name,
+        method: [%MethodDescriptorProto{name: "call", input_type: request, output_type: response}]
+      }
+    end
+  end
+
+  # Odd.Outer.Inner is declared as "odd.Outer.Inner", but its module is not named after it,
+  # so it cannot be found by name. The field that refers to it hands over its module.
+  defmodule Odd.External do
+    use Protobuf, full_name: "odd.External", syntax: :proto3
+    field(:value, 1, type: :string)
+    def descriptor, do: Fakes.message("External", [Fakes.string_field("value", 1)])
+  end
+
+  defmodule Odd.Outer.Renamed do
+    use Protobuf, full_name: "odd.Outer.Inner", syntax: :proto3
+    field(:external, 1, type: Odd.External)
+
+    def descriptor,
+      do: Fakes.message("Inner", [Fakes.message_field("external", 1, ".odd.External")])
+  end
+
+  defmodule Odd.Outer do
+    use Protobuf, full_name: "odd.Outer", syntax: :proto3
+
+    alias GrpcReflection.Service.BuilderTest.Odd.Outer.Renamed
+
+    field(:inner, 1, type: Odd.Outer.Renamed)
+
+    def descriptor do
+      Fakes.message(
+        "Outer",
+        [Fakes.message_field("inner", 1, ".odd.Outer.Inner")],
+        [Renamed.descriptor()]
+      )
+    end
+  end
+
+  defmodule Odd.Service do
+    use GRPC.Service, name: "odd.Service"
+    rpc(:call, Odd.Outer, Odd.Outer)
+    def descriptor, do: Fakes.service("Service", ".odd.Outer", ".odd.Outer")
+  end
+
+  # Orphan.Outer declares a nested type that has no module at all, that nothing refers to,
+  # and that uses a type nothing else does.
+  defmodule Orphan.External do
+    use Protobuf, full_name: "orphan.External", syntax: :proto3
+    field(:value, 1, type: :string)
+    def descriptor, do: Fakes.message("External", [Fakes.string_field("value", 1)])
+  end
+
+  defmodule Orphan.Outer do
+    use Protobuf, full_name: "orphan.Outer", syntax: :proto3
+    field(:value, 1, type: :string)
+
+    def descriptor do
+      Fakes.message(
+        "Outer",
+        [Fakes.string_field("value", 1)],
+        [
+          Fakes.message(
+            "Lost",
+            [Fakes.message_field("external", 1, ".orphan.External")],
+            [Fakes.message("Deeper", [Fakes.string_field("value", 1)])]
+          ),
+          # no module either, but it uses nothing that is missing
+          Fakes.message("Harmless", [Fakes.string_field("value", 1)])
+        ]
+      )
+    end
+  end
+
+  defmodule Orphan.Service do
+    use GRPC.Service, name: "orphan.Service"
+    rpc(:call, Orphan.Outer, Orphan.Outer)
+    def descriptor, do: Fakes.service("Service", ".orphan.Outer", ".orphan.Outer")
+  end
+
+  # The descriptor says Ghost.Outer uses a type that its fields do not (anymore), so
+  # nothing traces it.
+  defmodule Ghost.Outer do
+    use Protobuf, full_name: "ghost.Outer", syntax: :proto3
+    field(:value, 1, type: :string)
+
+    def descriptor do
+      Fakes.message("Outer", [
+        Fakes.string_field("value", 1),
+        Fakes.message_field("ghost", 2, ".ghost.Missing")
+      ])
+    end
+  end
+
+  defmodule Ghost.Service do
+    use GRPC.Service, name: "ghost.Service"
+    rpc(:call, Ghost.Outer, Ghost.Outer)
+    def descriptor, do: Fakes.service("Service", ".ghost.Outer", ".ghost.Outer")
+  end
+
+  # Modules from protoc-gen-elixir before it recorded `full_name`: only the module names and
+  # the descriptors say that Legacy.Holder.Item is declared inside Legacy.Holder. The request
+  # refers to the nested type before the message that encloses it.
+  defmodule Legacy.Holder.Item do
+    use Protobuf, syntax: :proto3
+    field(:value, 1, type: :string)
+    def descriptor, do: Fakes.message("Item", [Fakes.string_field("value", 1)])
+  end
+
+  defmodule Legacy.Holder do
+    use Protobuf, syntax: :proto3
+
+    alias GrpcReflection.Service.BuilderTest.Legacy.Holder.Item
+
+    field(:name, 1, type: :string)
+
+    def descriptor,
+      do: Fakes.message("Holder", [Fakes.string_field("name", 1)], [Item.descriptor()])
+  end
+
+  defmodule Legacy.Request do
+    use Protobuf, syntax: :proto3
+    field(:item, 1, type: Legacy.Holder.Item)
+    field(:holder, 2, type: Legacy.Holder)
+
+    def descriptor,
+      do:
+        Fakes.message("Request", [
+          Fakes.message_field("item", 1, ".legacy.Holder.Item"),
+          Fakes.message_field("holder", 2, ".legacy.Holder")
+        ])
+  end
+
+  defmodule Legacy.Service do
+    use GRPC.Service, name: "legacy.Service"
+    rpc(:call, Legacy.Request, Legacy.Request)
+    def descriptor, do: Fakes.service("Service", ".legacy.Request", ".legacy.Request")
+  end
+
+  # proto2 `group` fields: the field's type is the atom `:group`, not a module. The group's
+  # message is declared inside the enclosing message, like any nested type.
+  defmodule Grouped.Outer.Result do
+    use Protobuf, full_name: "grouped.Outer.Result", syntax: :proto2
+    field(:url, 1, optional: true, type: :string)
+
+    def descriptor, do: Fakes.message("Result", [Fakes.string_field("url", 1)])
+  end
+
+  defmodule Grouped.Outer do
+    use Protobuf, full_name: "grouped.Outer", syntax: :proto2
+
+    alias GrpcReflection.Service.BuilderTest.Grouped.Outer.Result
+
+    field(:result, 1, optional: true, type: :group)
+
+    def descriptor do
+      Fakes.message(
+        "Outer",
+        [
+          %Google.Protobuf.FieldDescriptorProto{
+            name: "result",
+            number: 1,
+            label: :LABEL_OPTIONAL,
+            type: :TYPE_GROUP,
+            type_name: ".grouped.Outer.Result"
+          }
+        ],
+        [Result.descriptor()]
+      )
+    end
+  end
+
+  defmodule Grouped.Service do
+    use GRPC.Service, name: "grouped.Service"
+    rpc(:call, Grouped.Outer, Grouped.Outer)
+    def descriptor, do: Fakes.service("Service", ".grouped.Outer", ".grouped.Outer")
+  end
+
+  # a nested message that can be extended: its extension file takes the package of the file
+  # it is declared in, not the name of its enclosing message
+  defmodule Extendable.Outer.Inner do
+    use Protobuf, full_name: "extendable.Outer.Inner", syntax: :proto2
+    field(:value, 1, optional: true, type: :string)
+
+    def descriptor do
+      %{
+        Fakes.message("Inner", [Fakes.string_field("value", 1)])
+        | extension_range: [%Google.Protobuf.DescriptorProto.ExtensionRange{start: 100, end: 200}]
+      }
+    end
+  end
+
+  defmodule Extendable.Outer do
+    use Protobuf, full_name: "extendable.Outer", syntax: :proto2
+
+    alias GrpcReflection.Service.BuilderTest.Extendable.Outer.Inner
+
+    field(:inner, 1, optional: true, type: Inner)
+
+    def descriptor do
+      Fakes.message(
+        "Outer",
+        [Fakes.message_field("inner", 1, ".extendable.Outer.Inner")],
+        [Inner.descriptor()]
+      )
+    end
+  end
+
+  defmodule Extendable.Service do
+    use GRPC.Service, name: "extendable.Service"
+    rpc(:call, Extendable.Outer, Extendable.Outer)
+    def descriptor, do: Fakes.service("Service", ".extendable.Outer", ".extendable.Outer")
+  end
+
+  describe "extensions of a nested message" do
+    test "are filed under the package of the file that declares it" do
+      assert {:ok, tree} = Builder.build_reflection_tree([Extendable.Service])
+
+      file = tree.files["extendable.Outer.InnerExtension.proto"]
+
+      assert file.package == "extendable"
+      assert file.dependency == ["extendable.Outer.proto"]
+      assert is_map_key(tree.extensions, "extendable.Outer.Inner")
+      assert GrpcReflection.GraphCheck.violations(tree) == []
+    end
+  end
+
+  describe "a message with a proto2 group field" do
+    import ExUnit.CaptureLog
+
+    test "serves the group inside the file of its enclosing message" do
+      log =
+        capture_log(fn ->
+          assert {:ok, tree} = Builder.build_reflection_tree([Grouped.Service])
+
+          assert tree.symbols["grouped.Outer.Result"] == "grouped.Outer.proto"
+
+          assert [%{name: "Outer", nested_type: [%{name: "Result"}]}] =
+                   tree.files["grouped.Outer.proto"].message_type
+
+          assert GrpcReflection.GraphCheck.violations(tree) == []
+        end)
+
+      assert log == ""
+    end
+  end
+
+  describe "a nested type in a module that does not record its full name" do
+    import ExUnit.CaptureLog
+
+    test "is filed under its enclosing message, even when referred to first" do
+      log =
+        capture_log(fn ->
+          assert {:ok, tree} = Builder.build_reflection_tree([Legacy.Service])
+
+          refute is_map_key(tree.files, "legacy.Holder.Item.proto")
+          assert tree.symbols["legacy.Holder.Item"] == "legacy.Holder.proto"
+
+          assert [%{name: "Holder", nested_type: [%{name: "Item"}]}] =
+                   tree.files["legacy.Holder.proto"].message_type
+
+          assert GrpcReflection.GraphCheck.violations(tree) == []
+        end)
+
+      assert log == ""
+    end
+  end
+
+  describe "a nested type whose module cannot be found by name" do
+    import ExUnit.CaptureLog
+
+    test "is traced through the module that refers to it" do
+      log =
+        capture_log(fn ->
+          assert {:ok, tree} = Builder.build_reflection_tree([Odd.Service])
+
+          assert is_map_key(tree.files, "odd.External.proto")
+          assert tree.files["odd.Outer.proto"].dependency == ["odd.External.proto"]
+          assert GrpcReflection.GraphCheck.violations(tree) == []
+        end)
+
+      assert log == ""
+    end
+  end
+
+  describe "a nested type that nothing refers to and cannot be traced" do
+    import ExUnit.CaptureLog
+
+    test "is left out, so the file can still be loaded" do
+      capture_log(fn ->
+        assert {:ok, tree} = Builder.build_reflection_tree([Orphan.Service])
+
+        assert [%{name: "Outer", nested_type: [%{name: "Harmless"}]}] =
+                 tree.files["orphan.Outer.proto"].message_type
+
+        assert tree.files["orphan.Outer.proto"].dependency == []
+        refute is_map_key(tree.symbols, "orphan.Outer.Lost")
+        refute is_map_key(tree.symbols, "orphan.Outer.Lost.Deeper")
+        assert tree.symbols["orphan.Outer.Harmless"] == "orphan.Outer.proto"
+        assert GrpcReflection.GraphCheck.violations(tree) == []
+      end)
+    end
+
+    test "says what was left out and why" do
+      log = capture_log(fn -> Builder.build_reflection_tree([Orphan.Service]) end)
+
+      assert log =~ "[warning]"
+      assert log =~ "orphan.Outer.Lost"
+      assert log =~ "orphan.External"
+      refute log =~ "[error]"
+    end
+
+    test "keeps nested types that can be loaded" do
+      capture_log(fn ->
+        assert {:ok, tree} = Builder.build_reflection_tree([NestedCrossReference.Service.Service])
+
+        assert tree.files["nested_cross_reference.Holder.proto"].message_type
+               |> hd()
+               |> Map.fetch!(:nested_type)
+               |> Enum.map(& &1.name) == ["Item", "Unused"]
+      end)
+    end
+  end
+
+  describe "a dependency no file provides" do
+    import ExUnit.CaptureLog
+
+    test "is reported as an error naming both files" do
+      log = capture_log(fn -> Builder.build_reflection_tree([Ghost.Service]) end)
+
+      assert log =~ "[error]"
+      assert log =~ "ghost.Outer.proto, but it depends on ghost.Missing.proto"
+      assert log =~ "clients will not be able to load it"
+    end
+
+    test "still serves everything it could build" do
+      capture_log(fn ->
+        assert {:ok, tree} = Builder.build_reflection_tree([Ghost.Service])
+        assert is_map_key(tree.files, "ghost.Outer.proto")
+        assert is_map_key(tree.files, "ghost.Service.proto")
+      end)
+    end
+
+    test "is never reported for valid services" do
+      log =
+        capture_log(fn ->
+          Builder.build_reflection_tree([
+            NestedCrossReference.Service.Service,
+            NoDescriptor.Nested.NestedService.Service
+          ])
+        end)
+
+      assert log == ""
+    end
+  end
 end

@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package short_names;
+
+service Service {
+  rpc call (A) returns (B) {}
+}
+
+// single letter and lowercase type names are legal, but do not look like the
+// usual CamelCase type names
+message A {
+  B b = 1;
+  lower lower = 2;
+}
+
+message B {
+  string value = 1;
+}
+
+message lower {
+  string value = 1;
+}

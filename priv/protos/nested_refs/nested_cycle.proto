@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package nested_cycle;
+
+service Service {
+  rpc call (Request) returns (Reply) {}
+}
+
+message Request {
+  First first = 1;
+}
+
+message Reply {
+  string message = 1;
+}
+
+// First -> Second.Inner -> First: the cycle runs through a nested type, so the
+// dependency edge points at Second's file, not at a file named after Second.Inner
+message First {
+  Second.Inner inner = 1;
+}
+
+message Second {
+  message Inner {
+    First first = 1;
+  }
+}
